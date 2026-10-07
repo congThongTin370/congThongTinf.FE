@@ -11,6 +11,11 @@ namespace congThongTinf.FE.Controllers
             return View();
         }
 
+        public IActionResult Introduction()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();
