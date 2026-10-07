@@ -1,3 +1,6 @@
 <Solution>
   <Project Path="congThongTinf.FE/congThongTinf.FE.csproj" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>

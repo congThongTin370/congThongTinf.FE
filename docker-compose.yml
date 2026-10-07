@@ -1,0 +1,6 @@
+services:
+  congthongtinf.fe:
+    image: ${DOCKER_REGISTRY-}congthongtinffe
+    build:
+      context: .
+      dockerfile: congThongTinf.FE/Dockerfile
