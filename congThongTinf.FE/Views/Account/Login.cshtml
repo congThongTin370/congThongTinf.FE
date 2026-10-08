@@ -1,0 +1,31 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<section class="login-panel" aria-labelledby="login-title">
+    <h1 id="login-title">Đăng nhập</h1>
+    <p class="login-lead">Dùng tài khoản được cấp để vào cổng thông tin.</p>
+
+    <form asp-controller="Account" asp-action="Login" method="post">
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <div class="login-field">
+            <label asp-for="Username"></label>
+            <input asp-for="Username" class="form-control" autocomplete="username" />
+            <span asp-validation-for="Username"></span>
+        </div>
+
+        <div class="login-field">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+            <span asp-validation-for="Password"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary login-submit">Đăng nhập</button>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

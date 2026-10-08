@@ -1,0 +1,55 @@
+---
+description: Frontend instructions for the CongThongTin news portal
+alwaysApply: true
+---
+
+# Project Instructions
+
+## Required Instructions
+
+- Before working on this project, read and follow `.cursor/instructions/ProjectOverall.instructions.md`.
+- Treat that file as project-wide guidance for every task.
+
+## Project
+
+This repository is the frontend only for an internal news and information portal of the 370 Air Division.
+
+The MVP should stay simple, maintainable, and easy to extend. Do not add backend, database, or infrastructure work in this repo.
+
+## Technology
+
+- ASP.NET Core 10
+- C#
+- ASP.NET Core MVC + Razor Views
+
+## Frontend
+
+Follow `docs/frontend-style.md` for visual design, colors, layout, typography, and UI conventions.
+
+Principles:
+
+- Traditional news-portal style.
+- Clean, professional, and simple.
+- Responsive.
+- Minimal animations and visual effects.
+- Prefer server-rendered Razor.
+- Keep JavaScript minimal.
+- Reuse existing layout, components, and CSS.
+- Do not introduce React, Vue, Angular, or another frontend framework unless explicitly requested.
+- Do not add dependencies unless they solve a clear requirement.
+- Do not modify unrelated files.
+
+When implementing a UI page:
+
+1. Inspect existing views and styles first.
+2. Reuse the existing layout and components.
+3. Follow the frontend style guide.
+4. Keep the page visually consistent with the rest of the system.
+
+## Code Quality
+
+- Prefer simple solutions appropriate for an MVP.
+- Follow existing naming conventions.
+- Avoid unnecessary abstractions.
+- Do not invent business rules when the requirements are unclear. Explain the assumption before implementing if a decision affects the UI.
+- Do not expose secrets, passwords, tokens, or internal exception details.
