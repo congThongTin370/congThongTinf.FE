@@ -4,3 +4,9 @@ services:
     build:
       context: .
       dockerfile: congThongTinf.FE/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ApiSettings__BaseUrl=http://host.docker.internal:5000

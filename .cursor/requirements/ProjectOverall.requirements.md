@@ -21,7 +21,7 @@ React, Vue, Angular, and other frontend frameworks must not be introduced unless
 
 ## 3. User Interface
 
-- Follow `docs/frontend-style.md`.
+- Follow `docs/frontend-style.md` and `docs/backend-for-frontend`.
 - Use a traditional news-portal structure with a compact header, navigation, main content, and footer.
 - Use the shared dark navy and Air Force sky-blue palette through CSS variables.
 - Reuse shared layouts, components, and styles instead of introducing page-specific visual systems.
