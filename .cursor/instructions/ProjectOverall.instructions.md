@@ -8,7 +8,9 @@ applyTo: "**"
 ## Scope and Technology
 
 - This repository contains only the frontend for the internal news portal of the 370 Air Division.
-- Use ASP.NET Core 10, C#, ASP.NET Core MVC, and server-rendered Razor Views.
+- Use ASP.NET Core 10, C#, and ASP.NET Core MVC.
+- Render pages as Razor Views (`.cshtml`) under `Views/`, returned by controller actions. Routing stays `{controller}/{action}/{id?}`.
+- This is MVC, not Razor Pages. Do not add `@page`, a `Pages/` folder, `PageModel`, `AddRazorPages`, or `MapRazorPages`.
 - Keep the MVP simple, maintainable, responsive, and easy to extend.
 - Do not add backend services, databases, or infrastructure.
 - Do not add a frontend framework or dependency unless explicitly requested and clearly necessary.
@@ -16,7 +18,7 @@ applyTo: "**"
 ## Implementation
 
 - Read `docs/frontend-style.md` before making UI changes.
-- Inspect and reuse existing layouts, views, components, and CSS.
+- Add UI through a controller action and a matching view. Inspect and reuse existing layouts, views, components, and CSS.
 - Follow existing naming and project conventions.
 - Prefer small, focused changes; do not modify unrelated files.
 - Keep JavaScript minimal and avoid unnecessary abstractions.

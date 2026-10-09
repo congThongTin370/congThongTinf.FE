@@ -11,9 +11,11 @@
 
 - ASP.NET Core 10
 - C#
-- ASP.NET Core MVC
-- Server-rendered Razor Views
+- ASP.NET Core MVC with controller actions and server-rendered Razor Views under `Views/`
+- Conventional routing: `{controller=Home}/{action=Index}/{id?}`
 - Minimal client-side JavaScript
+
+Razor Pages are out of scope. Do not introduce `@page`, a `Pages/` folder, `PageModel`, `AddRazorPages`, or `MapRazorPages`.
 
 React, Vue, Angular, and other frontend frameworks must not be introduced unless explicitly requested.
 

@@ -20,7 +20,8 @@ The MVP should stay simple, maintainable, and easy to extend. Do not add backend
 
 - ASP.NET Core 10
 - C#
-- ASP.NET Core MVC + Razor Views
+- ASP.NET Core MVC: controllers, actions, and Razor Views under `Views/`
+- Not Razor Pages. Do not use `@page`, a `Pages/` folder, `PageModel`, `AddRazorPages`, or `MapRazorPages`.
 
 ## Frontend
 
@@ -32,19 +33,20 @@ Principles:
 - Clean, professional, and simple.
 - Responsive.
 - Minimal animations and visual effects.
-- Prefer server-rendered Razor.
+- Prefer server-rendered MVC views returned by controller actions.
 - Keep JavaScript minimal.
 - Reuse existing layout, components, and CSS.
 - Do not introduce React, Vue, Angular, or another frontend framework unless explicitly requested.
 - Do not add dependencies unless they solve a clear requirement.
 - Do not modify unrelated files.
 
-When implementing a UI page:
+When implementing a screen:
 
-1. Inspect existing views and styles first.
-2. Reuse the existing layout and components.
-3. Follow the frontend style guide.
-4. Keep the page visually consistent with the rest of the system.
+1. Add or update a controller action, then the matching Razor View under `Views/`.
+2. Inspect existing views and styles first.
+3. Reuse the existing layout and components.
+4. Follow the frontend style guide.
+5. Keep the screen visually consistent with the rest of the system.
 
 ## Code Quality
 
