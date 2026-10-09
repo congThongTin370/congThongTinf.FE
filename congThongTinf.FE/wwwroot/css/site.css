@@ -291,9 +291,15 @@ a:hover {
     gap: 0.4rem;
     flex: none;
     margin: 0;
-    color: var(--color-text-muted);
+    padding: 0.25rem 0.6rem;
+    background: var(--color-surface-blue);
+    border-radius: var(--radius);
+    color: var(--color-primary-dark);
     font-size: 0.8125rem;
+    font-weight: 600;
     white-space: nowrap;
+    position: relative;
+    z-index: 1;
 }
 
 .ticker-marquee {
@@ -552,6 +558,29 @@ a:hover {
         radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.35), transparent 55%),
         linear-gradient(160deg, var(--color-primary-light), var(--color-primary-dark));
     border-color: transparent;
+    color: var(--color-text-on-primary);
+}
+
+.side-card-cover {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    border-color: var(--color-border);
+    color: var(--color-text-on-primary);
+}
+
+.side-card-image {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.side-card-cover .side-card-heading {
+    display: none;
+}
+
+.side-card-cover:hover {
     color: var(--color-text-on-primary);
 }
 

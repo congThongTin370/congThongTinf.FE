@@ -1,0 +1,233 @@
+@{
+    ViewData["Title"] = "Kho phần mềm BQP";
+
+    // Tạm thời hardcode danh sách tài liệu
+    var documentList = new List<(string name, string description, string fileType, DateTime uploadedDate, long fileSizeKB)>
+    {
+        ("Chỉ thị huấn luyện 2026", "Các chỉ thị và hướng dẫn huấn luyện bay", "PDF", new DateTime(2026, 10, 05), 2048),
+        ("Kế hoạch hoạt động quý IV", "Kế hoạch công tác và hoạt động quý 4/2026", "DOCX", new DateTime(2026, 09, 28), 512),
+        ("Báo cáo tình hình an ninh", "Báo cáo tình hình bảo vệ vùng trời", "PDF", new DateTime(2026, 09, 15), 1536),
+        ("Hướng dẫn sử dụng hệ thống", "Tài liệu hướng dẫn sử dụng phần mềm nội bộ", "DOCX", new DateTime(2026, 08, 30), 256),
+        ("Quy định về trang phục", "Quy định trang phục, chuẩn mực quân phục", "PDF", new DateTime(2026, 10, 02), 768),
+        ("Danh sách cán bộ 2026", "Danh sách cán bộ, quân nhân hiện tại", "XLSX", new DateTime(2026, 07, 10), 384),
+    };
+}
+
+<div class="documents-container">
+    <header class="documents-header">
+        <h1>Kho tài liệu BQP</h1>
+        <p class="documents-description">Danh sách tài liệu được cập nhật bởi quản trị viên hệ thống</p>
+    </header>
+
+    <div class="documents-list">
+        @foreach (var doc in documentList)
+        {
+            <article class="document-item">
+                <div class="document-icon" aria-hidden="true">
+                    @if (doc.fileType == "PDF")
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4.646 9.854a.5.5 0 1 1-.708-.708L5.793 8l-1.855-1.854a.5.5 0 1 1 .708-.708L6.5 7.293l1.854-1.855a.5.5 0 1 1 .708.708L7.207 8l1.855 1.854a.5.5 0 1 1-.708.708L6.5 8.707l-1.854 1.854z" />
+                        </svg>
+                    }
+                    else if (doc.fileType == "DOCX")
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4 9H3V7h1v2zm2 0H5V7h1v2zm2 0H7V7h1v2zm2 0H9V7h1v2z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 7.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" />
+                        </svg>
+                    }
+                </div>
+                <div class="document-content">
+                    <h3 class="document-name">@doc.name</h3>
+                    <p class="document-description">@doc.description</p>
+                    <div class="document-meta">
+                        <span class="meta-item">
+                            <strong>Loại:</strong> @doc.fileType
+                        </span>
+                        <span class="meta-item">
+                            <strong>Dung lượng:</strong> @(doc.fileSizeKB > 1024 ? $"{doc.fileSizeKB / 1024.0:F1} MB" : $"{doc.fileSizeKB} KB")
+                        </span>
+                        <span class="meta-item">
+                            <strong>Cập nhật:</strong> @doc.uploadedDate.ToString("dd/MM/yyyy")
+                        </span>
+                    </div>
+                </div>
+                <div class="document-actions">
+                    <a href="#download" class="btn btn-primary" aria-label="Tải xuống @doc.name">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                        </svg>
+                        Tải xuống
+                    </a>
+                </div>
+            </article>
+        }
+    </div>
+
+    @if (documentList.Count == 0)
+    {
+        <div class="documents-empty">
+            <p>Chưa có tài liệu nào trong kho.</p>
+        </div>
+    }
+</div>
+
+<style asp-append-version="true">
+    .documents-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .documents-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .documents-header h1 {
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--color-primary-dark);
+    }
+
+    .documents-header .documents-description {
+        margin: 0;
+        color: var(--color-text-muted);
+    }
+
+    .documents-list {
+        display: grid;
+        gap: 1.25rem;
+    }
+
+    .document-item {
+        display: grid;
+        grid-template-columns: 48px 1fr auto;
+        gap: 1rem;
+        align-items: start;
+        padding: 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-surface);
+        transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .document-item:hover {
+        border-color: var(--color-primary-light);
+        box-shadow: 0 2px 8px rgba(63, 128, 167, 0.12);
+    }
+
+    .document-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        background: var(--color-surface-blue);
+        border-radius: var(--radius);
+        color: var(--color-primary);
+        flex-shrink: 0;
+    }
+
+    .document-content {
+        min-width: 0;
+    }
+
+    .document-name {
+        margin: 0 0 0.35rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-text);
+    }
+
+    .document-item .document-description {
+        margin: 0 0 0.6rem;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+    }
+
+    .document-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.825rem;
+        color: var(--color-text-muted);
+    }
+
+    .meta-item {
+        display: inline-flex;
+        gap: 0.35rem;
+    }
+
+    .meta-item strong {
+        color: var(--color-text);
+        font-weight: 600;
+    }
+
+    .document-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .btn-primary {
+        background-color: var(--color-primary);
+        color: var(--color-text-on-primary);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--color-primary-dark);
+    }
+
+    .documents-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--color-text-muted);
+    }
+
+    @@media (max-width: 640px) {
+        .document-item {
+            grid-template-columns: 40px 1fr;
+            gap: 0.75rem;
+        }
+
+        .document-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .document-actions {
+            grid-column: 1 / -1;
+            margin-top: 0.5rem;
+        }
+
+        .document-meta {
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .documents-header h1 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
