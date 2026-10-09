@@ -50,7 +50,7 @@
                     @foreach (var news in Model)
                     {
                         <tr>
-                            <td>@news.Title</td>
+                            <td><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></td>
                             <td>@news.CategoryName</td>
                             <td>@StatusText(news.Status)</td>
                             <td>@news.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>

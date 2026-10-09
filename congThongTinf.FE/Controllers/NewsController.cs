@@ -10,11 +10,16 @@ namespace congThongTinf.FE.Controllers
     public class NewsController : Controller
     {
         private readonly INewsService _newsService;
+        private readonly IJournalistNewsService _journalistNewsService;
         private readonly ILogger<NewsController> _logger;
 
-        public NewsController(INewsService newsService, ILogger<NewsController> logger)
+        public NewsController(
+            INewsService newsService,
+            IJournalistNewsService journalistNewsService,
+            ILogger<NewsController> logger)
         {
             _newsService = newsService;
+            _journalistNewsService = journalistNewsService;
             _logger = logger;
         }
 
@@ -53,11 +58,11 @@ namespace congThongTinf.FE.Controllers
 
                 _logger.LogInformation($"Filtering news with parameters - From: {fromDate}, To: {toDate}, Categories: {categoryIds}");
                 var news = await _newsService.GetAllNewsAsync(query);
-                
+
                 ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
                 ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
                 ViewBag.CategoryIds = categoryIds;
-                
+
                 return View("Index", news);
             }
             catch (Exception ex)
@@ -69,22 +74,19 @@ namespace congThongTinf.FE.Controllers
         }
 
         /// <summary>
-        /// Hiển thị chi tiết một bài báo
+        /// Chi tiết một bài báo. Công khai cho mọi role (GET /api/news/{id} không cần token).
         /// </summary>
+        [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            try
+            var news = await _journalistNewsService.GetNewsByIdAsync(id);
+            if (news == null)
             {
-                _logger.LogInformation($"Loading news details for ID: {id}");
-                var news = await _newsService.GetNewsByIdAsync(id);
-                return View(news);
+                return NotFound();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error loading news details: {ex.Message}");
-                ViewBag.Error = $"Failed to load news: {ex.Message}";
-                return RedirectToAction("Index");
-            }
+
+            ViewData["Title"] = news.Title;
+            return View(news);
         }
 
         /// <summary>

@@ -1,0 +1,50 @@
+@model congThongTinf.FE.Models.ApiModels.NewsDto
+@{
+    ViewData["Title"] = Model.Title;
+    var published = Model.PublishedAt ?? Model.CreatedAt;
+}
+
+<article class="news-detail">
+    <nav class="news-detail-crumb" aria-label="Đường dẫn">
+        <a asp-controller="Home" asp-action="Index">Tin tức</a>
+        @if (!string.IsNullOrEmpty(Model.CategoryName))
+        {
+            <span aria-hidden="true">/</span>
+            <span>@Model.CategoryName</span>
+        }
+    </nav>
+
+    <h1 class="news-detail-title">@Model.Title</h1>
+
+    <p class="news-detail-meta">
+        @if (!string.IsNullOrEmpty(Model.AuthorName))
+        {
+            <span>@Model.AuthorName</span>
+            <span aria-hidden="true">·</span>
+        }
+        <time datetime="@published.ToString("o")">@published.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Summary))
+    {
+        <p class="news-detail-summary">@Model.Summary</p>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+    {
+        <figure class="news-detail-cover">
+            <img src="@Model.CoverImageUrl" alt="@Model.Title" loading="lazy" />
+        </figure>
+    }
+
+    <div class="news-detail-body">
+        @foreach (var paragraph in (Model.Content ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            <p>@paragraph.Trim()</p>
+        }
+    </div>
+
+    <p class="news-detail-back">
+        <a asp-controller="Home" asp-action="Index">&larr; Quay lại trang tin tức</a>
+    </p>
+</article>

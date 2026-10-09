@@ -12,7 +12,7 @@
         @if (latestNews != null)
         {
             <article class="home-feature">
-                <a class="home-feature-media" href="#">
+                <a class="home-feature-media" asp-controller="News" asp-action="Details" asp-route-id="@latestNews.Id">
                     @{
                         var coverOverride = ViewData["LatestNewsCoverOverride"] as string;
                         var coverUrl = !string.IsNullOrWhiteSpace(coverOverride) ? coverOverride : latestNews.CoverImageUrl;
@@ -45,7 +45,7 @@
                     }
                 </a>
                 <h1 class="home-feature-title">
-                    <a href="#">@latestNews.Title</a>
+                    <a asp-controller="News" asp-action="Details" asp-route-id="@latestNews.Id">@latestNews.Title</a>
                 </h1>
             </article>
         }
@@ -63,7 +63,7 @@
                 <ul>
                     @foreach (var news in Model.Skip(1))
                     {
-                        <li><a href="#">@news.Title</a></li>
+                        <li><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></li>
                     }
                 </ul>
             </section>
