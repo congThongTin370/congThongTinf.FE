@@ -9,14 +9,16 @@ namespace congThongTinf.FE.Controllers
         private const string JournalistRole = "Journalist";
 
         private readonly IJournalistNewsService _newsService;
+        private readonly IMeService _meService;
 
-        public JournalistController(IJournalistNewsService newsService)
+        public JournalistController(IJournalistNewsService newsService, IMeService meService)
         {
             _newsService = newsService;
+            _meService = meService;
         }
 
         // Trang mặc định của phóng viên: thông tin cá nhân chi tiết
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
             if (!IsJournalist())
             {
@@ -24,7 +26,8 @@ namespace congThongTinf.FE.Controllers
             }
 
             SetLayoutData("Profile", "Trang cá nhân");
-            return View();
+            var user = await _meService.GetCurrentUserDetailsAsync(GetToken());
+            return View(user);
         }
 
         // Danh sách bài báo của chính phóng viên

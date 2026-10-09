@@ -38,10 +38,7 @@
     }
 
     <div class="news-detail-body">
-        @foreach (var paragraph in (Model.Content ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries))
-        {
-            <p>@paragraph.Trim()</p>
-        }
+        @Html.Raw(congThongTinf.FE.Utilities.HtmlSanitizer.Sanitize(Model.Content))
     </div>
 
     <p class="news-detail-back">

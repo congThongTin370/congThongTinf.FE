@@ -1,3 +1,6 @@
+@using congThongTinf.FE.Models.ApiModels
+@model UserDto?
+
 @{
     Layout = "_JournalistLayout";
     ViewData["Title"] = "Trang cá nhân";
@@ -10,25 +13,32 @@
         <h2 id="profile-title">Hồ sơ phóng viên</h2>
     </div>
     <div class="admin-panel-body">
-        <dl class="admin-detail">
-            <dt>Họ và tên</dt>
-            <dd>@ViewData["FullName"]</dd>
+        @if (Model == null)
+        {
+            <p class="admin-empty">Không tải được thông tin tài khoản. Vui lòng thử lại sau.</p>
+        }
+        else
+        {
+            <dl class="admin-detail">
+                <dt>Họ và tên</dt>
+                <dd>@Model.FullName</dd>
 
-            <dt>Vai trò</dt>
-            <dd>Phóng viên</dd>
+                <dt>Vai trò</dt>
+                <dd>Phóng viên</dd>
 
-            <dt>Email</dt>
-            <dd>--</dd>
+                <dt>Email</dt>
+                <dd>@Model.Email</dd>
 
-            <dt>Tên đăng nhập</dt>
-            <dd>--</dd>
+                <dt>Tên đăng nhập</dt>
+                <dd>@Model.Username</dd>
 
-            <dt>Trạng thái tài khoản</dt>
-            <dd>Đang hoạt động</dd>
+                <dt>Trạng thái tài khoản</dt>
+                <dd>@(Model.IsActive ? "Đang hoạt động" : "Đã khóa")</dd>
 
-            <dt>Ngày tạo tài khoản</dt>
-            <dd>--</dd>
-        </dl>
+                <dt>Ngày tạo tài khoản</dt>
+                <dd>@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</dd>
+            </dl>
+        }
     </div>
 </section>
 

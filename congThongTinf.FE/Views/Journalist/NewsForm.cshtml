@@ -35,8 +35,11 @@
             </div>
 
             <div class="admin-form-field">
-                <label asp-for="Content"></label>
-                <textarea asp-for="Content" class="form-control" rows="12"></textarea>
+                <label asp-for="Content" for="rich-editor-content"></label>
+                <div class="rich-editor" data-rich-editor>
+                    <div class="rich-editor-content" id="rich-editor-content"></div>
+                    <textarea asp-for="Content" hidden></textarea>
+                </div>
                 <span asp-validation-for="Content" class="field-validation-error"></span>
             </div>
 
@@ -60,6 +63,12 @@
     </div>
 </section>
 
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="~/js/rich-editor.js" asp-append-version="true"></script>
 }
