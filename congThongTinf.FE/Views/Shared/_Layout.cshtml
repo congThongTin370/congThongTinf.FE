@@ -122,18 +122,7 @@
                     </svg>
                     @tickerDate
                 </p>
-                <div class="ticker-marquee">
-                    <ul class="ticker-list">
-                        <li><a asp-controller="Home" asp-action="Index">Hội nghị quán triệt nhiệm vụ bảo vệ vùng trời phía Nam</a></li>
-                        <li><a asp-controller="Home" asp-action="Index">Sư đoàn 370 kiểm tra công tác huấn luyện bay</a></li>
-                        <li><a asp-controller="Home" asp-action="Introduction">Giới thiệu Sư đoàn Không quân 370</a></li>
-                    </ul>
-                    <ul class="ticker-list ticker-list-clone" aria-hidden="true">
-                        <li><a asp-controller="Home" asp-action="Index" tabindex="-1">Hội nghị quán triệt nhiệm vụ bảo vệ vùng trời phía Nam</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" tabindex="-1">Sư đoàn 370 kiểm tra công tác huấn luyện bay</a></li>
-                        <li><a asp-controller="Home" asp-action="Introduction" tabindex="-1">Giới thiệu Sư đoàn Không quân 370</a></li>
-                    </ul>
-                </div>
+                @await Component.InvokeAsync("LatestNewsTicker")
             </div>
         </div>
     </header>

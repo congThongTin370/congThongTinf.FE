@@ -1,0 +1,19 @@
+@model List<congThongTinf.FE.Models.ApiModels.NewsDto>
+
+@if (Model.Count > 0)
+{
+    <div class="ticker-marquee">
+        <ul class="ticker-list">
+            @foreach (var news in Model)
+            {
+                <li><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></li>
+            }
+        </ul>
+        <ul class="ticker-list ticker-list-clone" aria-hidden="true">
+            @foreach (var news in Model)
+            {
+                <li><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id" tabindex="-1">@news.Title</a></li>
+            }
+        </ul>
+    </div>
+}
