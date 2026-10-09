@@ -26,12 +26,12 @@ public class NewsService : INewsService
     {
         try
         {
-            var endpoint = $"{_apiBaseUrl}/api/news";
-            var queryParams = BuildQueryParameters(query);
+            // categoryIds phải lặp lại dạng ?categoryIds=a&categoryIds=b (theo docs backend)
+            var endpoint = $"{_apiBaseUrl}/api/news{BuildQueryString(query)}";
 
             _logger.LogInformation($"Fetching news from: {endpoint}");
 
-            var response = await _apiClient.GetAsync<ApiResponse<List<NewsDto>>>(endpoint, queryParams);
+            var response = await _apiClient.GetAsync<ApiResponse<List<NewsDto>>>(endpoint);
 
             if (response?.IsSuccess == true && response.Value?.Data != null)
             {
@@ -80,24 +80,24 @@ public class NewsService : INewsService
     }
 
     /// <summary>
-    /// Xây dựng query parameters từ NewsQueryDto
+    /// Xây dựng query string từ NewsQueryDto. categoryIds được lặp lại cho từng Guid.
     /// </summary>
-    private Dictionary<string, string>? BuildQueryParameters(NewsQueryDto? query)
+    private static string BuildQueryString(NewsQueryDto? query)
     {
         if (query == null)
-            return null;
+            return string.Empty;
 
-        var queryParams = new Dictionary<string, string>();
+        var parts = new List<string>();
 
         if (query.FromDate.HasValue)
-            queryParams.Add("fromDate", query.FromDate.Value.ToString("o"));
+            parts.Add($"fromDate={Uri.EscapeDataString(query.FromDate.Value.ToString("o"))}");
 
         if (query.ToDate.HasValue)
-            queryParams.Add("toDate", query.ToDate.Value.ToString("o"));
+            parts.Add($"toDate={Uri.EscapeDataString(query.ToDate.Value.ToString("o"))}");
 
-        if (query.CategoryIds != null && query.CategoryIds.Count > 0)
-            queryParams.Add("categoryIds", string.Join(",", query.CategoryIds));
+        if (query.CategoryIds != null)
+            parts.AddRange(query.CategoryIds.Select(id => $"categoryIds={id}"));
 
-        return queryParams.Count > 0 ? queryParams : null;
+        return parts.Count > 0 ? "?" + string.Join("&", parts) : string.Empty;
     }
 }

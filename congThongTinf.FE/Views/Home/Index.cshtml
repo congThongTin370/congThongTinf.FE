@@ -5,6 +5,15 @@
 }
 
 <div class="home-layout">
+    @if (ViewData["CategoryFilterActive"] is true)
+    {
+        <div class="home-filter-bar">
+            <span>Chuyên mục:</span>
+            <strong>@(ViewData["CategoryFilterName"] as string ?? "Đã chọn")</strong>
+            <a asp-controller="Home" asp-action="Index">Xem tất cả</a>
+        </div>
+    }
+
     @if (Model != null && Model.Count > 0)
     {
         <!-- Main Feature: Tin mới nhất -->
@@ -61,7 +70,8 @@
                     Tin nổi bật
                 </h2>
                 <ul>
-                    @foreach (var news in Model.Skip(1))
+                    @* Chỉ lấy 5 bài mới nhất (danh sách đã sắp xếp mới nhất trước) *@
+                    @foreach (var news in Model.Skip(1).Take(5))
                     {
                         <li><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></li>
                     }

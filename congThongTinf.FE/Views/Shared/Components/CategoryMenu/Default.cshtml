@@ -1,0 +1,19 @@
+@model List<congThongTinf.FE.Models.ApiModels.CategoryDto>
+
+@{
+    var activeCategories = Model.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name).ToList();
+}
+
+@if (activeCategories.Count == 0)
+{
+    <li role="none" class="nav-dropdown-empty">Chưa có chuyên mục.</li>
+}
+else
+{
+    foreach (var category in activeCategories)
+    {
+        <li role="none">
+            <a role="menuitem" asp-controller="Home" asp-action="Index" asp-route-categoryIds="@category.Id">@category.Name</a>
+        </li>
+    }
+}
