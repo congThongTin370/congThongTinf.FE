@@ -7,8 +7,26 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Session lưu access token và role sau khi đăng nhập
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 // Configure HttpClient for API communication
 builder.Services.AddHttpClient<ApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+// Auth gọi API backend; đọc lỗi từ body nên dùng HttpClient riêng
+builder.Services.AddHttpClient<IAuthService, AuthService>(client =>
 {
     var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
     client.BaseAddress = new Uri(baseUrl);
@@ -31,6 +49,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 

@@ -5,15 +5,15 @@
 
 <section class="login-panel" aria-labelledby="login-title">
     <h1 id="login-title">Đăng nhập</h1>
-    <p class="login-lead">Dùng tài khoản được cấp để vào cổng thông tin.</p>
+    <p class="login-lead">Dùng email và mật khẩu được cấp để vào cổng thông tin.</p>
 
     <form asp-controller="Account" asp-action="Login" method="post">
         <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
         <div class="login-field">
-            <label asp-for="Username"></label>
-            <input asp-for="Username" class="form-control" autocomplete="username" />
-            <span asp-validation-for="Username"></span>
+            <label asp-for="Email"></label>
+            <input asp-for="Email" type="email" class="form-control" autocomplete="username" />
+            <span asp-validation-for="Email"></span>
         </div>
 
         <div class="login-field">

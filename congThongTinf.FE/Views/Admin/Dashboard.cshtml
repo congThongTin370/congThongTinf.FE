@@ -1,0 +1,41 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Bảng điều khiển";
+}
+
+<h1 class="admin-page-title">Bảng điều khiển</h1>
+
+<section class="admin-stat-grid" aria-label="Thống kê tổng quan">
+    <div class="admin-stat-card">
+        <p class="admin-stat-label">Người dùng</p>
+        <p class="admin-stat-value">--</p>
+    </div>
+    <div class="admin-stat-card">
+        <p class="admin-stat-label">Tin tức</p>
+        <p class="admin-stat-value">--</p>
+    </div>
+    <div class="admin-stat-card">
+        <p class="admin-stat-label">Tài liệu</p>
+        <p class="admin-stat-value">--</p>
+    </div>
+</section>
+
+<div class="admin-panel-grid">
+    <section class="admin-panel" aria-labelledby="recent-activity-title">
+        <div class="admin-panel-header">
+            <h2 id="recent-activity-title">Hoạt động gần đây</h2>
+        </div>
+        <div class="admin-panel-body">
+            <p class="admin-empty">Chưa có dữ liệu hoạt động.</p>
+        </div>
+    </section>
+
+    <section class="admin-panel" aria-labelledby="recent-news-title">
+        <div class="admin-panel-header">
+            <h2 id="recent-news-title">Tin mới nhất</h2>
+        </div>
+        <div class="admin-panel-body">
+            <p class="admin-empty">Chưa có tin tức để hiển thị.</p>
+        </div>
+    </section>
+</div>
