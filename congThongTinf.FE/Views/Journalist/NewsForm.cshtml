@@ -1,0 +1,65 @@
+@model congThongTinf.FE.Models.ApiModels.NewsFormViewModel
+@{
+    Layout = "_JournalistLayout";
+    var isEdit = Model.Id.HasValue;
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@(isEdit ? "Sửa bài viết" : "Viết bài mới")</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Journalist" asp-action="Articles">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="news-form-title">
+    <div class="admin-panel-header">
+        <h2 id="news-form-title">Nội dung bài viết</h2>
+    </div>
+    <div class="admin-panel-body">
+        @if (isEdit && !string.IsNullOrEmpty(Model.StatusLabel))
+        {
+            <p class="admin-form-status">Trạng thái hiện tại: <strong>@Model.StatusLabel</strong></p>
+        }
+
+        <form asp-controller="Journalist" asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="admin-form-field">
+                <label asp-for="Title"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Summary"></label>
+                <textarea asp-for="Summary" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Summary" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Content"></label>
+                <textarea asp-for="Content" class="form-control" rows="12"></textarea>
+                <span asp-validation-for="Content" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="CoverImageUrl"></label>
+                <input asp-for="CoverImageUrl" class="form-control" type="url" />
+                <span asp-validation-for="CoverImageUrl" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="CategoryId"></label>
+                <input asp-for="CategoryId" class="form-control" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                <span asp-validation-for="CategoryId" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">@(isEdit ? "Lưu thay đổi" : "Lưu bản nháp")</button>
+                <a class="btn btn-outline-secondary" asp-controller="Journalist" asp-action="Articles">Hủy</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -281,6 +281,51 @@
     text-align: center;
 }
 
+.admin-alert {
+    margin-bottom: 1rem;
+    padding: 0.7rem 1rem;
+    background: var(--color-surface-blue);
+    border: 1px solid var(--color-primary-light);
+    border-radius: var(--radius);
+    color: var(--color-primary-dark);
+}
+
+.admin-inline-form {
+    display: inline;
+    margin: 0;
+}
+
+.admin-table-actions .btn + .btn,
+.admin-table-actions .btn + .admin-inline-form {
+    margin-left: 0.35rem;
+}
+
+.admin-form {
+    max-width: 48rem;
+}
+
+.admin-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+}
+
+.admin-form-field label {
+    font-weight: 600;
+}
+
+.admin-form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.admin-form-status {
+    margin: 0 0 1rem;
+    color: var(--color-text-muted);
+}
+
 .admin-empty {
     margin: 0;
     padding: 1rem 0;

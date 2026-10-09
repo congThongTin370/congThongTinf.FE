@@ -1,0 +1,22 @@
+using congThongTinf.FE.Models.ApiModels;
+
+namespace congThongTinf.FE.Services.Interfaces;
+
+public class NewsWriteResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public NewsDto? Data { get; set; }
+}
+
+/// <summary>
+/// Thao tác CRUD bài báo của phóng viên. Gọi backend bằng access token trong session.
+/// </summary>
+public interface IJournalistNewsService
+{
+    Task<List<NewsDto>> GetMyNewsAsync(string accessToken, Guid authorId);
+    Task<NewsDto?> GetNewsByIdAsync(Guid id);
+    Task<NewsWriteResult> CreateAsync(string accessToken, CreateNewsRequestDto request);
+    Task<NewsWriteResult> UpdateAsync(string accessToken, Guid id, UpdateNewsRequestDto request);
+    Task<NewsWriteResult> DeleteAsync(string accessToken, Guid id);
+}

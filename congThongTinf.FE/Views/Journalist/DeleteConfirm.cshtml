@@ -1,0 +1,23 @@
+@model congThongTinf.FE.Models.ApiModels.NewsDto
+@{
+    Layout = "_JournalistLayout";
+    ViewData["Title"] = "Xác nhận xóa bài viết";
+}
+
+<section class="admin-panel" aria-labelledby="delete-title">
+    <div class="admin-panel-header">
+        <h2 id="delete-title">Xác nhận xóa bài viết</h2>
+    </div>
+    <div class="admin-panel-body">
+        <p class="admin-form-status">Bạn có chắc chắn muốn xóa bài viết sau không?</p>
+        <p class="admin-confirm-title"><strong>@Model.Title</strong></p>
+        <p class="admin-form-status">Bài viết sẽ được xóa mềm và không hiển thị nữa.</p>
+
+        <div class="admin-form-actions">
+            <form asp-controller="Journalist" asp-action="DeleteConfirm" asp-route-id="@Model.Id" method="post">
+                <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+            </form>
+            <a class="btn btn-outline-secondary" asp-controller="Journalist" asp-action="Articles">Hủy</a>
+        </div>
+    </div>
+</section>
