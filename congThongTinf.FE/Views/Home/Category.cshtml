@@ -1,0 +1,62 @@
+@model congThongTinf.FE.Models.ApiModels.CategoryPageViewModel
+@{
+    ViewData["Title"] = Model.Category.Name;
+}
+
+<nav class="news-detail-crumb category-crumb" aria-label="Đường dẫn">
+    <a asp-controller="Home" asp-action="Index">Tin tức</a>
+    <span aria-hidden="true">/</span>
+    <span>@Model.Category.Name</span>
+</nav>
+
+<header class="category-header">
+    <h1 class="category-title">@Model.Category.Name</h1>
+    @if (!string.IsNullOrWhiteSpace(Model.Category.Description))
+    {
+        <p class="category-description">@Model.Category.Description</p>
+    }
+</header>
+
+<section class="category-list" aria-label="Danh sách bài báo">
+    @if (Model.News.Count == 0)
+    {
+        <p class="category-empty">Chưa có bài báo nào trong chuyên mục này.</p>
+    }
+    else
+    {
+        <ul class="category-items">
+            @foreach (var news in Model.News)
+            {
+                <li class="category-item">
+                    <a class="category-item-media" asp-controller="News" asp-action="Details" asp-route-id="@news.Id">
+                        @if (!string.IsNullOrEmpty(news.CoverImageUrl))
+                        {
+                            <img src="@news.CoverImageUrl" alt="@news.Title" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span class="category-item-placeholder" aria-hidden="true"></span>
+                        }
+                    </a>
+                    <div class="category-item-body">
+                        <h2 class="category-item-title">
+                            <a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a>
+                        </h2>
+                        @if (!string.IsNullOrEmpty(news.Summary))
+                        {
+                            <p class="category-item-summary">@news.Summary</p>
+                        }
+                        <p class="category-item-meta">
+                            @if (!string.IsNullOrEmpty(news.AuthorName))
+                            {
+                                <span>@news.AuthorName</span>
+                                <span aria-hidden="true">·</span>
+                            }
+                            <time datetime="@news.CreatedAt.ToString("o")">@news.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+                        </p>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>

@@ -144,9 +144,30 @@
     </main>
 
     <footer class="site-footer">
-        <div class="site-container site-footer-inner">
-            <p class="site-footer-name">Cổng thông tin Sư đoàn Không quân 370</p>
-            <p class="site-footer-copy">&copy; 2026 Sư đoàn Không quân 370</p>
+        <div class="site-container site-footer-grid">
+            <div class="site-footer-brand">
+                <p class="site-footer-name">Cổng thông tin điện tử</p>
+                <p class="site-footer-unit">Sư đoàn Không quân 370</p>
+                <p class="site-footer-address">
+                    <span>Địa chỉ:</span> 18E Cộng Hòa, Phường Tân Sơn Nhất, TP. Hồ Chí Minh
+                </p>
+            </div>
+
+            <nav class="site-footer-links" aria-label="Liên kết chân trang">
+                <p class="site-footer-heading">Liên kết</p>
+                <ul>
+                    <li><a asp-controller="Home" asp-action="Index">Tin tức</a></li>
+                    <li><a asp-controller="Home" asp-action="Introduction">Giới thiệu</a></li>
+                    <li><a asp-controller="Home" asp-action="Documents">Tài liệu</a></li>
+                    <li><a asp-controller="Home" asp-action="Privacy">Liên hệ</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="site-footer-bottom">
+            <div class="site-container">
+                <p class="site-footer-copy">&copy; 2026 Sư đoàn Không quân 370. Bảo lưu mọi quyền.</p>
+            </div>
         </div>
     </footer>
 

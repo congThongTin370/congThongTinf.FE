@@ -8,4 +8,5 @@ namespace congThongTinf.FE.Services.Interfaces;
 public interface ICategoryService
 {
     Task<List<CategoryDto>> GetActiveCategoriesAsync();
+    Task<CategoryDto?> GetCategoryByIdAsync(Guid id);
 }

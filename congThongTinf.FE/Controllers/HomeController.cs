@@ -11,12 +11,18 @@ namespace congThongTinf.FE.Controllers
         private readonly INewsService _newsService;
         private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ICategoryService _categoryService;
 
-        public HomeController(INewsService newsService, ILogger<HomeController> logger, IConfiguration configuration)
+        public HomeController(
+            INewsService newsService,
+            ILogger<HomeController> logger,
+            IConfiguration configuration,
+            ICategoryService categoryService)
         {
             _newsService = newsService;
             _logger = logger;
             _configuration = configuration;
+            _categoryService = categoryService;
         }
 
         public async Task<IActionResult> Index(string? categoryIds)
@@ -54,6 +60,28 @@ namespace congThongTinf.FE.Controllers
                 // Trả về view với danh sách trống nếu có lỗi
                 return View(new List<NewsDto>());
             }
+        }
+
+        /// <summary>
+        /// Trang danh sách bài báo của một chuyên mục. Giữ layout header như trang chủ.
+        /// </summary>
+        public async Task<IActionResult> Category(Guid id)
+        {
+            var category = await _categoryService.GetCategoryByIdAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            var news = await _newsService.GetAllNewsAsync(
+                new NewsQueryDto { CategoryIds = new List<Guid> { id } });
+
+            ViewData["Title"] = category.Name;
+            return View(new CategoryPageViewModel
+            {
+                Category = category,
+                News = news.OrderByDescending(n => n.CreatedAt).ToList()
+            });
         }
 
         /// <summary>

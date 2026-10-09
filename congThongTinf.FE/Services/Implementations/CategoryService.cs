@@ -36,4 +36,20 @@ public class CategoryService : ICategoryService
             return new List<CategoryDto>();
         }
     }
+
+    public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id)
+    {
+        try
+        {
+            using var response = await _httpClient.GetAsync($"api/categories/{id}");
+            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<CategoryDto>>();
+
+            return response.IsSuccessStatusCode && body?.IsSuccess == true ? body.Value?.Data : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load category {CategoryId}", id);
+            return null;
+        }
+    }
 }
