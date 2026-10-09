@@ -5,7 +5,19 @@ using congThongTinf.FE.Utilities;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    var messages = options.ModelBindingMessageProvider;
+    messages.SetAttemptedValueIsInvalidAccessor((_, name) => $"{name} chưa đúng. Vui lòng kiểm tra lại.");
+    messages.SetNonPropertyAttemptedValueIsInvalidAccessor(_ => "Thông tin nhập chưa đúng. Vui lòng kiểm tra lại.");
+    messages.SetUnknownValueIsInvalidAccessor(name => $"{name} chưa đúng. Vui lòng kiểm tra lại.");
+    messages.SetNonPropertyUnknownValueIsInvalidAccessor(() => "Thông tin nhập chưa đúng. Vui lòng kiểm tra lại.");
+    messages.SetValueIsInvalidAccessor(_ => "Thông tin nhập chưa đúng. Vui lòng kiểm tra lại.");
+    messages.SetValueMustBeANumberAccessor(name => $"{name} phải là số.");
+    messages.SetMissingBindRequiredValueAccessor(name => $"Vui lòng nhập {name}.");
+    messages.SetMissingKeyOrValueAccessor(() => "Thiếu thông tin bắt buộc.");
+    messages.SetMissingRequestBodyRequiredValueAccessor(() => "Thiếu thông tin bắt buộc.");
+});
 
 // Session lưu access token và role sau khi đăng nhập
 builder.Services.AddDistributedMemoryCache();
@@ -67,10 +79,11 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+
+app.UseStatusCodePagesWithReExecute("/Home/Status", "?code={0}");
 
 app.UseRouting();
 

@@ -1,5 +1,6 @@
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
+using congThongTinf.FE.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace congThongTinf.FE.Controllers
@@ -37,7 +38,7 @@ namespace congThongTinf.FE.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Error loading news: {ex.Message}");
-                ViewBag.Error = $"Failed to load news: {ex.Message}";
+                ViewBag.Error = UserFacingErrors.LoadNewsFailed;
                 return View(new List<NewsDto>());
             }
         }
@@ -68,7 +69,7 @@ namespace congThongTinf.FE.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Error filtering news: {ex.Message}");
-                ViewBag.Error = $"Failed to filter news: {ex.Message}";
+                ViewBag.Error = UserFacingErrors.LoadNewsFailed;
                 return View("Index", new List<NewsDto>());
             }
         }

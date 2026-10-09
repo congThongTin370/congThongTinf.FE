@@ -121,5 +121,21 @@ namespace congThongTinf.FE.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Status(int code)
+        {
+            var (title, message) = code switch
+            {
+                404 => ("Không tìm thấy trang", "Trang bạn mở không có trên cổng thông tin."),
+                403 => ("Không xem được nội dung", "Bạn không có quyền xem nội dung này."),
+                _ => ("Có lỗi xảy ra", "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.")
+            };
+
+            ViewData["Title"] = title;
+            ViewData["StatusMessage"] = message;
+            Response.StatusCode = code > 0 ? code : StatusCodes.Status500InternalServerError;
+            return View();
+        }
     }
 }

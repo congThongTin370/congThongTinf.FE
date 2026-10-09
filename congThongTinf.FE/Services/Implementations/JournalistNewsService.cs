@@ -2,13 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
+using congThongTinf.FE.Utilities;
 
 namespace congThongTinf.FE.Services.Implementations;
 
 public class JournalistNewsService : IJournalistNewsService
 {
-    private const string DefaultError = "Không thực hiện được thao tác. Vui lòng thử lại.";
-
     private readonly HttpClient _httpClient;
     private readonly ILogger<JournalistNewsService> _logger;
 
@@ -79,7 +78,7 @@ public class JournalistNewsService : IJournalistNewsService
 
             if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
             {
-                return Failure(body?.Error?.Message);
+                return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
             }
 
             return new NewsWriteResult { Success = true };
@@ -87,7 +86,7 @@ public class JournalistNewsService : IJournalistNewsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete news {NewsId}", id);
-            return Failure(null);
+            return Failure(0, null, null);
         }
     }
 
@@ -106,7 +105,7 @@ public class JournalistNewsService : IJournalistNewsService
 
             if (!response.IsSuccessStatusCode || body?.IsSuccess != true || body.Value?.Data == null)
             {
-                return Failure(body?.Error?.Message);
+                return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
             }
 
             return new NewsWriteResult { Success = true, Data = body.Value.Data };
@@ -114,13 +113,13 @@ public class JournalistNewsService : IJournalistNewsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "News request {Method} {Url} failed", method, url);
-            return Failure(null);
+            return Failure(0, null, null);
         }
     }
 
-    private static NewsWriteResult Failure(string? message) => new()
+    private static NewsWriteResult Failure(int statusCode, string? code, string? message) => new()
     {
         Success = false,
-        ErrorMessage = string.IsNullOrWhiteSpace(message) ? DefaultError : message
+        ErrorMessage = UserFacingErrors.ForNews(statusCode, code, message)
     };
 }

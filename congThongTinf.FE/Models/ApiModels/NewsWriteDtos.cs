@@ -50,8 +50,8 @@ public class NewsFormViewModel
     [Display(Name = "Ảnh bìa (URL)")]
     public string? CoverImageUrl { get; set; }
 
-    [Required(ErrorMessage = "Nhập mã danh mục.")]
-    [Display(Name = "Mã danh mục (Guid)")]
+    [Required(ErrorMessage = "Chọn chuyên mục cho bài viết.")]
+    [Display(Name = "Chuyên mục")]
     public Guid? CategoryId { get; set; }
 
     public string? StatusLabel { get; set; }

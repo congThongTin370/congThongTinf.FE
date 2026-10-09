@@ -2,13 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
+using congThongTinf.FE.Utilities;
 
 namespace congThongTinf.FE.Services.Implementations;
 
 public class AuthService : IAuthService
 {
-    private const string DefaultLoginError = "Không đăng nhập được. Vui lòng thử lại.";
-
     private readonly HttpClient _httpClient;
     private readonly ILogger<AuthService> _logger;
 
@@ -29,11 +28,10 @@ public class AuthService : IAuthService
 
             if (!response.IsSuccessStatusCode || body?.IsSuccess != true || body.Value?.Data == null)
             {
-                var message = body?.Error?.Message;
                 return new AuthResult
                 {
                     Success = false,
-                    ErrorMessage = string.IsNullOrWhiteSpace(message) ? DefaultLoginError : message
+                    ErrorMessage = UserFacingErrors.ForLogin(body?.Error?.Code, body?.Error?.Message)
                 };
             }
 
@@ -49,7 +47,11 @@ public class AuthService : IAuthService
 
             if (string.IsNullOrEmpty(role))
             {
-                return new AuthResult { Success = false, ErrorMessage = DefaultLoginError };
+                return new AuthResult
+                {
+                    Success = false,
+                    ErrorMessage = "Tài khoản chưa được cấp quyền sử dụng. Vui lòng liên hệ quản trị viên."
+                };
             }
 
             return new AuthResult
@@ -64,7 +66,11 @@ public class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Login request failed");
-            return new AuthResult { Success = false, ErrorMessage = DefaultLoginError };
+            return new AuthResult
+            {
+                Success = false,
+                ErrorMessage = UserFacingErrors.ForLogin(null, null)
+            };
         }
     }
 

@@ -1,0 +1,10 @@
+@{
+    var title = ViewData["Title"]?.ToString() ?? "Có lỗi xảy ra";
+    var message = ViewData["StatusMessage"]?.ToString() ?? "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.";
+}
+
+<section class="login-panel" aria-labelledby="status-title">
+    <h1 id="status-title">@title</h1>
+    <p class="login-lead">@message</p>
+    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Về trang chủ</a>
+</section>
