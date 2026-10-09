@@ -6,14 +6,15 @@ namespace congThongTinf.FE.Controllers
     {
         public IActionResult Dashboard()
         {
+            // Chỉ Admin được vào dashboard; role khác chuyển về trang chủ
             if (HttpContext.Session.GetString(AccountController.SessionRole) != "Admin")
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Index", "Home");
             }
 
             ViewData["Title"] = "Bảng điều khiển";
             ViewData["ActiveMenu"] = "Dashboard";
-            ViewData["FullName"] = HttpContext.Session.GetString(AccountController.SessionFullName);
+            ViewData["FullName"] = HttpContext.Session.GetString(AccountController.SessionFullName) ?? "Quản trị viên";
             return View();
         }
     }

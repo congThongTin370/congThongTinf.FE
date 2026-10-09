@@ -1,0 +1,55 @@
+@{
+    Layout = "_JournalistLayout";
+    ViewData["Title"] = "Trang cá nhân";
+}
+
+<h1 class="admin-page-title">Thông tin cá nhân</h1>
+
+<section class="admin-panel" aria-labelledby="profile-title">
+    <div class="admin-panel-header">
+        <h2 id="profile-title">Hồ sơ phóng viên</h2>
+    </div>
+    <div class="admin-panel-body">
+        <dl class="admin-detail">
+            <dt>Họ và tên</dt>
+            <dd>@ViewData["FullName"]</dd>
+
+            <dt>Vai trò</dt>
+            <dd>Phóng viên</dd>
+
+            <dt>Email</dt>
+            <dd>--</dd>
+
+            <dt>Tên đăng nhập</dt>
+            <dd>--</dd>
+
+            <dt>Trạng thái tài khoản</dt>
+            <dd>Đang hoạt động</dd>
+
+            <dt>Ngày tạo tài khoản</dt>
+            <dd>--</dd>
+        </dl>
+    </div>
+</section>
+
+<section class="admin-panel admin-section-gap" aria-labelledby="profile-stats-title">
+    <div class="admin-panel-header">
+        <h2 id="profile-stats-title">Thống kê bài viết</h2>
+    </div>
+    <div class="admin-panel-body">
+        <div class="admin-stat-grid admin-stat-grid-compact">
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Bản nháp</p>
+                <p class="admin-stat-value">--</p>
+            </div>
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Chờ duyệt</p>
+                <p class="admin-stat-value">--</p>
+            </div>
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Đã xuất bản</p>
+                <p class="admin-stat-value">--</p>
+            </div>
+        </div>
+    </div>
+</section>

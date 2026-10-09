@@ -231,6 +231,85 @@ a:hover {
     cursor: pointer;
 }
 
+/* Avatar + hover profile card (chỉ hiện khi đã đăng nhập) */
+.nav-profile {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.nav-profile-trigger {
+    border: 0;
+    background: transparent;
+    padding: 0;
+}
+
+.nav-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-primary-dark);
+    font-size: 0.875rem;
+    font-weight: 800;
+}
+
+.nav-profile-card {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 6;
+    width: min(16rem, calc(100vw - 2rem));
+    padding: 0.85rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.nav-profile:hover .nav-profile-card,
+.nav-profile:focus-within .nav-profile-card {
+    display: block;
+}
+
+.nav-profile-name {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-dark);
+}
+
+.nav-profile-role {
+    margin: 0 0 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.nav-profile-menu {
+    margin: 0 0 0.75rem;
+    padding: 0.35rem 0 0;
+    border-top: 1px solid var(--color-border);
+    list-style: none;
+}
+
+.nav-profile-menu a {
+    display: block;
+    padding: 0.4rem 0;
+    color: var(--color-text);
+    font-size: 0.9375rem;
+    text-decoration: none;
+}
+
+.nav-profile-menu a:hover {
+    color: var(--color-primary-dark);
+}
+
+.nav-profile-logout {
+    width: 100%;
+}
+
 .search-toggle-input {
     position: absolute;
     width: 1px;

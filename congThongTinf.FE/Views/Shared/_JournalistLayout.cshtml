@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cổng thông tin Sư đoàn 370</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+    <div class="admin-shell">
+        <aside class="admin-sidebar" aria-label="Menu phóng viên">
+            <a class="admin-brand" asp-controller="Journalist" asp-action="Profile">
+                <span class="admin-brand-kicker">Phóng viên</span>
+                <span class="admin-brand-name">Sư đoàn 370</span>
+            </a>
+            <nav>
+                <ul class="admin-menu">
+                    <li><a class="@(ViewData["ActiveMenu"] as string == "Profile" ? "is-active" : null)" asp-controller="Journalist" asp-action="Profile">Trang cá nhân</a></li>
+                    <li><a class="@(ViewData["ActiveMenu"] as string == "Articles" ? "is-active" : null)" asp-controller="Journalist" asp-action="Articles">Quản lý bài báo</a></li>
+                </ul>
+            </nav>
+            <div class="admin-sidebar-footer">
+                <a asp-controller="Home" asp-action="Index">Về trang tin tức</a>
+            </div>
+        </aside>
+
+        <div class="admin-content">
+            <header class="admin-topbar">
+                <span class="admin-topbar-title">@ViewData["Title"]</span>
+                <span class="admin-topbar-user">@(ViewData["FullName"] as string ?? "Phóng viên")</span>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="admin-logout-form">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
+                </form>
+            </header>
+            <main class="admin-main" role="main">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
