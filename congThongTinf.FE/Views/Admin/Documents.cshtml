@@ -1,0 +1,154 @@
+@model DocumentListViewModel
+@{
+    Layout = "_AdminLayout";
+
+    string FileSizeText(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+        {
+            return $"{bytes / (1024d * 1024d):0.#} MB";
+        }
+
+        if (bytes >= 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return $"{bytes} B";
+    }
+
+    string FileKind(string fileName)
+    {
+        var ext = System.IO.Path.GetExtension(fileName);
+        return string.IsNullOrEmpty(ext) ? "—" : ext.TrimStart('.').ToUpperInvariant();
+    }
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Tài liệu nội bộ</h1>
+    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="UploadDocument">Tải lên tài liệu</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="admin-alert" role="status">@message</div>
+}
+
+<section class="admin-panel" aria-labelledby="document-filter-title">
+    <div class="admin-panel-header">
+        <h2 id="document-filter-title">Tìm kiếm</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form method="get" asp-controller="Admin" asp-action="Documents" class="admin-filter">
+            <div class="admin-form-field">
+                <label for="search">Từ khóa</label>
+                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tiêu đề, tên tệp hoặc mô tả" />
+            </div>
+            <div class="admin-form-field">
+                <label for="category">Danh mục</label>
+                <select id="category" name="category" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var option in DocumentCategories.Options)
+                    {
+                        if (Model.Category == option.Value)
+                        {
+                            <option value="@option.Value" selected>@option.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Documents">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="admin-panel admin-section-gap" aria-labelledby="document-list-title">
+    <div class="admin-panel-header">
+        <h2 id="document-list-title">Danh sách tài liệu</h2>
+    </div>
+    <div class="admin-panel-body admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th scope="col">Tiêu đề</th>
+                    <th scope="col">Danh mục</th>
+                    <th scope="col">Tệp</th>
+                    <th scope="col">Dung lượng</th>
+                    <th scope="col">Người tải</th>
+                    <th scope="col">Ngày tải</th>
+                    <th scope="col" class="admin-table-actions">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="admin-table-empty">Chưa có tài liệu phù hợp.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var document in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@document.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(document.Description))
+                                {
+                                    <div class="admin-table-sub">@document.Description</div>
+                                }
+                            </td>
+                            <td><span class="admin-badge">@DocumentCategories.Label(document.Category)</span></td>
+                            <td>@FileKind(document.FileName)</td>
+                            <td>@FileSizeText(document.FileSize)</td>
+                            <td>@(string.IsNullOrWhiteSpace(document.UploadedByUserName) ? "—" : document.UploadedByUserName)</td>
+                            <td>@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="admin-table-actions">
+                                @if (!string.IsNullOrWhiteSpace(document.FileUrl))
+                                {
+                                    <a class="btn btn-outline-secondary btn-sm" href="@document.FileUrl" target="_blank" rel="noopener">Xem</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(document.DownloadUrl))
+                                {
+                                    <a class="btn btn-primary btn-sm" href="@document.DownloadUrl" download="@document.FileName">Tải xuống</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@if (Model.HasPrevious || Model.HasNext)
+{
+    <nav class="admin-pagination" aria-label="Phân trang tài liệu">
+        @if (Model.HasPrevious)
+        {
+            <a class="btn btn-outline-secondary btn-sm"
+               asp-controller="Admin"
+               asp-action="Documents"
+               asp-route-search="@Model.Search"
+               asp-route-category="@Model.Category"
+               asp-route-pageIndex="@(Model.PageIndex - 1)">Trang trước</a>
+        }
+        <span class="admin-pagination-status">Trang @Model.PageIndex</span>
+        @if (Model.HasNext)
+        {
+            <a class="btn btn-outline-secondary btn-sm"
+               asp-controller="Admin"
+               asp-action="Documents"
+               asp-route-search="@Model.Search"
+               asp-route-category="@Model.Category"
+               asp-route-pageIndex="@(Model.PageIndex + 1)">Trang sau</a>
+        }
+    </nav>
+}

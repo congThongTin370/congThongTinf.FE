@@ -9,27 +9,34 @@
     var textarea = host.querySelector('textarea');
     var form = host.closest('form');
 
-    // Kích thước chữ hiển thị trong Quill
-    var sizeWhitelist = ['12px', '14px', '16px', '18px', '20px', '24px', '28px'];
-    var Size = Quill.import('attributors/style/size');
-    Size.whitelist = sizeWhitelist;
-    Quill.register(Size, true);
-
     var toolbarOptions = [
-        [{ header: [2, 3, 4, false] }, { size: sizeWhitelist }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ color: [] }, { background: [] }],
+        [{ header: [2, 3, false] }],
+        ['bold', 'italic'],
         [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ align: [] }],
-        ['blockquote', 'code-block'],
-        ['link', 'image'],
-        ['clean']
+        ['blockquote'],
+        ['link', 'image']
     ];
 
     var quill = new Quill(host.querySelector('.rich-editor-content'), {
         theme: 'snow',
         modules: { toolbar: toolbarOptions },
         placeholder: 'Viết nội dung bài báo...'
+    });
+
+    var tooltips = {
+        '.ql-bold': 'In đậm',
+        '.ql-italic': 'In nghiêng',
+        '.ql-blockquote': 'Trích dẫn',
+        '.ql-link': 'Liên kết',
+        '.ql-image': 'Chèn ảnh',
+        '.ql-header': 'Heading',
+        '.ql-list[value="ordered"]': 'Danh sách đánh số',
+        '.ql-list[value="bullet"]': 'Danh sách dấu đầu dòng'
+    };
+    Object.keys(tooltips).forEach(function (selector) {
+        host.querySelectorAll(selector).forEach(function (button) {
+            button.setAttribute('title', tooltips[selector]);
+        });
     });
 
     // Chèn ảnh bằng URL thay vì base64, để nội dung nhẹ và dễ quản lý

@@ -12,17 +12,20 @@ namespace congThongTinf.FE.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
         private readonly ICategoryService _categoryService;
+        private readonly IDocumentService _documentService;
 
         public HomeController(
             INewsService newsService,
             ILogger<HomeController> logger,
             IConfiguration configuration,
-            ICategoryService categoryService)
+            ICategoryService categoryService,
+            IDocumentService documentService)
         {
             _newsService = newsService;
             _logger = logger;
             _configuration = configuration;
             _categoryService = categoryService;
+            _documentService = documentService;
         }
 
         public async Task<IActionResult> Index(string? categoryIds)
@@ -111,9 +114,15 @@ namespace congThongTinf.FE.Controllers
             return View();
         }
 
-        public IActionResult Documents()
+        public async Task<IActionResult> Documents()
         {
-            return View();
+            // pageIndex = 0: API trả toàn bộ danh sách, không phân trang
+            var documents = await _documentService.GetDocumentsAsync(new DocumentQuery
+            {
+                PageIndex = 0,
+                PageSize = 10
+            });
+            return View(documents);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

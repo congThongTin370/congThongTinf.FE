@@ -20,7 +20,7 @@
                     <li><a class="@(ViewData["ActiveMenu"] as string == "Dashboard" ? "is-active" : null)" asp-controller="Admin" asp-action="Dashboard">Bảng điều khiển</a></li>
                     <li><a class="@(ViewData["ActiveMenu"] as string == "News" ? "is-active" : null)" href="#">Quản lý tin tức</a></li>
                     <li><a class="@(ViewData["ActiveMenu"] as string == "Users" ? "is-active" : null)" href="#">Quản lý người dùng</a></li>
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Documents" ? "is-active" : null)" href="#">Tài liệu</a></li>
+                    <li><a class="@(ViewData["ActiveMenu"] as string == "Documents" ? "is-active" : null)" asp-controller="Admin" asp-action="Documents">Tài liệu</a></li>
                     <li><a class="@(ViewData["ActiveMenu"] as string == "Categories" ? "is-active" : null)" href="#">Danh mục</a></li>
                 </ul>
             </nav>

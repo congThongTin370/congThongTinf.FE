@@ -37,7 +37,6 @@ public class ApiClient
             
             var content = await response.Content.ReadAsStringAsync();
             _logger.LogInformation($"Response status: {response.StatusCode}");
-            _logger.LogInformation($"Response content: {content}");
 
             if (!response.IsSuccessStatusCode)
             {

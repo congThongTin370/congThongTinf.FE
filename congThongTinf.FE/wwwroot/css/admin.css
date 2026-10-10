@@ -356,6 +356,59 @@
     font-size: 0.9375rem;
 }
 
+.admin-filter {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.7fr) auto;
+    gap: 0.85rem 1rem;
+    align-items: end;
+}
+
+.admin-filter .admin-form-field {
+    margin-bottom: 0;
+}
+
+.admin-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-bottom: 0.15rem;
+}
+
+.admin-field-hint {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+}
+
+.admin-table-sub {
+    margin-top: 0.2rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+}
+
+.admin-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: var(--color-surface-blue);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-primary-dark);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.admin-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.admin-pagination-status {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
 /* Responsive: sidebar collapses above the content on small screens */
 @media (max-width: 767.98px) {
     .admin-shell {
@@ -388,5 +441,383 @@
 
     .admin-main {
         padding: 1rem;
+    }
+
+    .admin-filter {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Trang soạn bài của phóng viên */
+.composer-page {
+    max-width: 1200px;
+}
+
+.composer-header {
+    margin-bottom: 1.15rem;
+}
+
+.composer-crumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.45rem;
+    margin-bottom: 0.45rem;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.composer-crumb a {
+    color: var(--color-primary-dark);
+    text-decoration: none;
+}
+
+.composer-crumb a:hover {
+    text-decoration: underline;
+}
+
+.composer-heading .admin-page-title {
+    margin-bottom: 0.45rem;
+}
+
+.composer-status-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 0.75rem;
+}
+
+.composer-saved {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.composer-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 1rem;
+    align-items: start;
+}
+
+.composer-canvas {
+    padding: 1.25rem 1.35rem 1.5rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.composer-label {
+    font-weight: 600;
+}
+
+.composer-title-field {
+    margin-bottom: 0.35rem;
+}
+
+.composer-title.form-control {
+    padding: 0.15rem 0 0.45rem;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-dark);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.composer-title.form-control::placeholder {
+    color: #98a2b3;
+    font-weight: 600;
+}
+
+.composer-title.form-control:focus {
+    border-bottom-color: var(--color-primary);
+    box-shadow: none;
+}
+
+.composer-title.input-validation-error {
+    border-bottom-color: var(--color-danger);
+}
+
+.composer-slug-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.15rem;
+}
+
+.composer-slug-label {
+    flex: none;
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.composer-slug-input {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.composer-slug-input:focus {
+    outline: none;
+}
+
+.composer-cover {
+    overflow: hidden;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.composer-cover-preview {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 9;
+    background: var(--color-surface-blue);
+}
+
+.composer-cover-empty {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+}
+
+.composer-cover-preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.composer-cover-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+}
+
+.composer-canvas .ql-toolbar.ql-snow {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.composer-canvas .rich-editor .ql-editor {
+    min-height: 28rem;
+    font-size: 1.0625rem;
+    line-height: 1.75;
+}
+
+.composer-canvas .ql-editor img,
+.composer-preview-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1rem auto;
+}
+
+.composer-side {
+    position: sticky;
+    top: 0.75rem;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-height: calc(100vh - 6.5rem);
+    overflow: auto;
+}
+
+.composer-panel-body {
+    padding-top: 0.9rem;
+}
+
+.composer-panel-body .admin-form-field:last-child {
+    margin-bottom: 0.35rem;
+}
+
+.composer-panel-body > .admin-field-hint {
+    margin: 0.15rem 0 0.35rem;
+}
+
+.composer-actions {
+    position: sticky;
+    bottom: 0.75rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.composer-actions-end {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.composer-dialog {
+    width: min(32rem, calc(100vw - 2rem));
+    padding: 0;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.composer-dialog::backdrop {
+    background: rgba(11, 18, 32, 0.45);
+}
+
+.composer-dialog-wide {
+    width: min(46rem, calc(100vw - 2rem));
+}
+
+.composer-dialog-body {
+    padding: 1.15rem 1.25rem 1.25rem;
+}
+
+.composer-dialog-body h2,
+.composer-dialog-toolbar h2 {
+    margin: 0 0 0.55rem;
+    color: var(--color-dark);
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.composer-dialog-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.composer-dialog-toolbar h2 {
+    margin: 0;
+}
+
+.composer-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.composer-preview {
+    max-height: min(70vh, 42rem);
+    overflow: auto;
+    padding-right: 0.15rem;
+}
+
+.composer-preview-kicker {
+    margin: 0 0 0.35rem;
+    color: var(--color-primary);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.composer-preview-title {
+    margin: 0 0 0.85rem;
+    color: var(--color-dark);
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.composer-preview-cover {
+    margin: 0 0 1rem;
+}
+
+.composer-preview-cover img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.composer-preview-body p,
+.composer-preview-empty {
+    margin: 0 0 1rem;
+    font-size: 1.0625rem;
+    line-height: 1.75;
+}
+
+.composer-preview-empty {
+    color: var(--color-text-muted);
+}
+
+.composer-preview-body h2,
+.composer-preview-body h3 {
+    margin: 1.35rem 0 0.65rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.composer-preview-body ul,
+.composer-preview-body ol {
+    margin: 0 0 1rem;
+    padding-left: 1.4rem;
+    line-height: 1.7;
+}
+
+.composer-preview-body blockquote {
+    margin: 0 0 1rem;
+    padding-left: 0.9rem;
+    border-left: 3px solid var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.composer-preview-body a {
+    color: var(--color-primary-dark);
+}
+
+@media (max-width: 991.98px) {
+    .composer-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .composer-side {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .composer-title.form-control {
+        font-size: 1.4rem;
+    }
+
+    .composer-canvas .rich-editor .ql-editor {
+        min-height: 18rem;
+    }
+
+    .composer-preview-title {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .composer-actions,
+    .composer-actions-end {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .composer-actions .btn {
+        width: 100%;
     }
 }

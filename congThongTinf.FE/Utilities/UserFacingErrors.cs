@@ -96,6 +96,54 @@ public static class UserFacingErrors
         return TryAgain;
     }
 
+    public static string ForDocuments(int statusCode, string? code, string? message)
+    {
+        var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;
+        var text = message ?? string.Empty;
+
+        if (status == "401")
+        {
+            return SessionExpired;
+        }
+
+        if (status == "403")
+        {
+            return NoPermission;
+        }
+
+        if (Contains(text, "10 MB", "10MB", "exceeds"))
+        {
+            return "Tệp không được lớn hơn 10 MB.";
+        }
+
+        if (Contains(text, "pdf", "docx", "xlsx", "pptx", "loại file", "phải là"))
+        {
+            return "Chỉ nhận tệp pdf, doc, docx, xls, xlsx, ppt, pptx hoặc txt.";
+        }
+
+        if (Contains(text, "danh mục"))
+        {
+            return "Danh mục tài liệu chưa đúng. Vui lòng chọn lại.";
+        }
+
+        if (Contains(text, "bắt buộc", "file"))
+        {
+            return "Vui lòng chọn tệp tài liệu.";
+        }
+
+        if (status == "400")
+        {
+            return "Thông tin tài liệu chưa đúng. Vui lòng kiểm tra lại.";
+        }
+
+        if (status == "404")
+        {
+            return "Không xác định được tài khoản. Vui lòng đăng nhập lại.";
+        }
+
+        return TryAgain;
+    }
+
     private static bool Contains(string text, params string[] parts)
     {
         foreach (var part in parts)

@@ -70,6 +70,13 @@ builder.Services.AddHttpClient<IMeService, MeService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+builder.Services.AddHttpClient<IDocumentService, DocumentService>(client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
 // Register Services
 builder.Services.AddScoped<INewsService, NewsService>();
 

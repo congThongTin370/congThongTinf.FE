@@ -1,16 +1,27 @@
+@model List<DocumentDto>
 @{
-    ViewData["Title"] = "Kho phần mềm BQP";
+    ViewData["Title"] = "Kho tài liệu BQP";
 
-    // Tạm thời hardcode danh sách tài liệu
-    var documentList = new List<(string name, string description, string fileType, DateTime uploadedDate, long fileSizeKB)>
+    string FileSizeText(long bytes)
     {
-        ("Chỉ thị huấn luyện 2026", "Các chỉ thị và hướng dẫn huấn luyện bay", "PDF", new DateTime(2026, 10, 05), 2048),
-        ("Kế hoạch hoạt động quý IV", "Kế hoạch công tác và hoạt động quý 4/2026", "DOCX", new DateTime(2026, 09, 28), 512),
-        ("Báo cáo tình hình an ninh", "Báo cáo tình hình bảo vệ vùng trời", "PDF", new DateTime(2026, 09, 15), 1536),
-        ("Hướng dẫn sử dụng hệ thống", "Tài liệu hướng dẫn sử dụng phần mềm nội bộ", "DOCX", new DateTime(2026, 08, 30), 256),
-        ("Quy định về trang phục", "Quy định trang phục, chuẩn mực quân phục", "PDF", new DateTime(2026, 10, 02), 768),
-        ("Danh sách cán bộ 2026", "Danh sách cán bộ, quân nhân hiện tại", "XLSX", new DateTime(2026, 07, 10), 384),
-    };
+        if (bytes >= 1024 * 1024)
+        {
+            return $"{bytes / (1024d * 1024d):0.#} MB";
+        }
+
+        if (bytes >= 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return $"{bytes} B";
+    }
+
+    string FileKind(string fileName)
+    {
+        var ext = System.IO.Path.GetExtension(fileName);
+        return string.IsNullOrEmpty(ext) ? "—" : ext.TrimStart('.').ToUpperInvariant();
+    }
 }
 
 <div class="documents-container">
@@ -20,17 +31,18 @@
     </header>
 
     <div class="documents-list">
-        @foreach (var doc in documentList)
+        @foreach (var doc in Model)
         {
+            var kind = FileKind(doc.FileName);
             <article class="document-item">
                 <div class="document-icon" aria-hidden="true">
-                    @if (doc.fileType == "PDF")
+                    @if (kind == "PDF")
                     {
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4.646 9.854a.5.5 0 1 1-.708-.708L5.793 8l-1.855-1.854a.5.5 0 1 1 .708-.708L6.5 7.293l1.854-1.855a.5.5 0 1 1 .708.708L7.207 8l1.855 1.854a.5.5 0 1 1-.708.708L6.5 8.707l-1.854 1.854z" />
                         </svg>
                     }
-                    else if (doc.fileType == "DOCX")
+                    else if (kind is "DOC" or "DOCX")
                     {
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4 9H3V7h1v2zm2 0H5V7h1v2zm2 0H7V7h1v2zm2 0H9V7h1v2z" />
@@ -44,34 +56,47 @@
                     }
                 </div>
                 <div class="document-content">
-                    <h3 class="document-name">@doc.name</h3>
-                    <p class="document-description">@doc.description</p>
+                    <h3 class="document-name">@doc.Title</h3>
+                    @if (!string.IsNullOrWhiteSpace(doc.Description))
+                    {
+                        <p class="document-description">@doc.Description</p>
+                    }
                     <div class="document-meta">
                         <span class="meta-item">
-                            <strong>Loại:</strong> @doc.fileType
+                            <strong>Loại:</strong> @kind
                         </span>
                         <span class="meta-item">
-                            <strong>Dung lượng:</strong> @(doc.fileSizeKB > 1024 ? $"{doc.fileSizeKB / 1024.0:F1} MB" : $"{doc.fileSizeKB} KB")
+                            <strong>Danh mục:</strong> @DocumentCategories.Label(doc.Category)
                         </span>
                         <span class="meta-item">
-                            <strong>Cập nhật:</strong> @doc.uploadedDate.ToString("dd/MM/yyyy")
+                            <strong>Dung lượng:</strong> @FileSizeText(doc.FileSize)
+                        </span>
+                        <span class="meta-item">
+                            <strong>Cập nhật:</strong> @doc.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
                         </span>
                     </div>
                 </div>
                 <div class="document-actions">
-                    <a href="#download" class="btn btn-primary" aria-label="Tải xuống @doc.name">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-                        </svg>
-                        Tải xuống
-                    </a>
+                    @if (!string.IsNullOrWhiteSpace(doc.FileUrl))
+                    {
+                        <a href="@doc.FileUrl" class="btn btn-outline" target="_blank" rel="noopener" aria-label="Xem @doc.Title">Xem</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(doc.DownloadUrl))
+                    {
+                        <a href="@doc.DownloadUrl" class="btn btn-primary" download="@doc.FileName" aria-label="Tải xuống @doc.Title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                            </svg>
+                            Tải xuống
+                        </a>
+                    }
                 </div>
             </article>
         }
     </div>
 
-    @if (documentList.Count == 0)
+    @if (Model.Count == 0)
     {
         <div class="documents-empty">
             <p>Chưa có tài liệu nào trong kho.</p>
@@ -197,6 +222,17 @@
 
     .btn-primary:hover {
         background-color: var(--color-primary-dark);
+    }
+
+    .btn-outline {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        color: var(--color-dark);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary-dark);
     }
 
     .documents-empty {

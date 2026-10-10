@@ -10,11 +10,16 @@ namespace congThongTinf.FE.Controllers
 
         private readonly IJournalistNewsService _newsService;
         private readonly IMeService _meService;
+        private readonly ICategoryService _categoryService;
 
-        public JournalistController(IJournalistNewsService newsService, IMeService meService)
+        public JournalistController(
+            IJournalistNewsService newsService,
+            IMeService meService,
+            ICategoryService categoryService)
         {
             _newsService = newsService;
             _meService = meService;
+            _categoryService = categoryService;
         }
 
         // Trang mặc định của phóng viên: thông tin cá nhân chi tiết
@@ -45,15 +50,17 @@ namespace congThongTinf.FE.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             if (!IsJournalist())
             {
                 return RedirectToAction("Index", "Home");
             }
 
-            SetLayoutData("Articles", "Viết bài mới");
-            return View("NewsForm", new NewsFormViewModel());
+            SetLayoutData("Articles", "Tạo bài viết mới");
+            var model = new NewsFormViewModel();
+            await PrepareNewsFormAsync(model);
+            return View("NewsForm", model);
         }
 
         [HttpPost]
@@ -65,9 +72,10 @@ namespace congThongTinf.FE.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            SetLayoutData("Articles", "Viết bài mới");
+            SetLayoutData("Articles", "Tạo bài viết mới");
             if (!ModelState.IsValid)
             {
+                await PrepareNewsFormAsync(model);
                 return View("NewsForm", model);
             }
 
@@ -84,6 +92,7 @@ namespace congThongTinf.FE.Controllers
             if (!result.Success)
             {
                 ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Không lưu được bài viết.");
+                await PrepareNewsFormAsync(model);
                 return View("NewsForm", model);
             }
 
@@ -120,8 +129,11 @@ namespace congThongTinf.FE.Controllers
                 Content = news.Content ?? string.Empty,
                 CoverImageUrl = news.CoverImageUrl,
                 CategoryId = news.CategoryId,
-                StatusLabel = StatusLabel(news.Status)
+                CategoryName = news.CategoryName,
+                StatusLabel = StatusLabel(news.Status),
+                LastSavedLabel = news.UpdatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
             };
+            await PrepareNewsFormAsync(model);
             return View("NewsForm", model);
         }
 
@@ -138,6 +150,7 @@ namespace congThongTinf.FE.Controllers
             model.Id = id;
             if (!ModelState.IsValid)
             {
+                await PrepareNewsFormAsync(model);
                 return View("NewsForm", model);
             }
 
@@ -154,6 +167,7 @@ namespace congThongTinf.FE.Controllers
             if (!result.Success)
             {
                 ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Không cập nhật được bài viết.");
+                await PrepareNewsFormAsync(model);
                 return View("NewsForm", model);
             }
 
@@ -221,6 +235,16 @@ namespace congThongTinf.FE.Controllers
             3 => "Lưu trữ",
             _ => "Không xác định"
         };
+
+        private async Task PrepareNewsFormAsync(NewsFormViewModel model)
+        {
+            model.Categories = await _categoryService.GetActiveCategoriesAsync();
+            model.AuthorName = HttpContext.Session.GetString(AccountController.SessionFullName) ?? "Phóng viên";
+            if (string.IsNullOrWhiteSpace(model.StatusLabel))
+            {
+                model.StatusLabel = "Bản nháp";
+            }
+        }
 
         private void SetLayoutData(string activeMenu, string title)
         {

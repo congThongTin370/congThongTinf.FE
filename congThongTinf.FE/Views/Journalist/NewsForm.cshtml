@@ -2,66 +2,179 @@
 @{
     Layout = "_JournalistLayout";
     var isEdit = Model.Id.HasValue;
+    var pageTitle = isEdit ? "Sửa bài viết" : "Tạo bài viết mới";
+    var selectedCategoryMissing = Model.CategoryId.HasValue
+        && Model.Categories.All(category => category.Id != Model.CategoryId);
 }
 
-<div class="admin-page-header">
-    <h1 class="admin-page-title">@(isEdit ? "Sửa bài viết" : "Viết bài mới")</h1>
-    <a class="btn btn-outline-secondary btn-sm" asp-controller="Journalist" asp-action="Articles">Quay lại danh sách</a>
-</div>
+<div class="composer-page">
+    <header class="composer-header">
+        <nav class="composer-crumb" aria-label="Đường dẫn">
+            <a asp-controller="Journalist" asp-action="Articles">Quản lý bài báo</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">@pageTitle</span>
+        </nav>
+        <div class="composer-heading">
+            <h1 class="admin-page-title">@pageTitle</h1>
+            <div class="composer-status-row">
+                <span class="admin-badge">@(Model.StatusLabel ?? "Bản nháp")</span>
+                <span class="composer-saved">Lưu gần nhất: @(string.IsNullOrWhiteSpace(Model.LastSavedLabel) ? "Chưa lưu" : Model.LastSavedLabel)</span>
+            </div>
+        </div>
+    </header>
 
-<section class="admin-panel" aria-labelledby="news-form-title">
-    <div class="admin-panel-header">
-        <h2 id="news-form-title">Nội dung bài viết</h2>
-    </div>
-    <div class="admin-panel-body">
-        @if (isEdit && !string.IsNullOrEmpty(Model.StatusLabel))
-        {
-            <p class="admin-form-status">Trạng thái hiện tại: <strong>@Model.StatusLabel</strong></p>
-        }
+    <form asp-controller="Journalist" asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" class="composer-form" id="news-composer-form">
+        <input type="hidden" asp-for="StatusLabel" />
+        <input type="hidden" asp-for="LastSavedLabel" />
+        <input type="hidden" asp-for="CategoryName" />
 
-        <form asp-controller="Journalist" asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" class="admin-form">
-            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
-            <div class="admin-form-field">
-                <label asp-for="Title"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="field-validation-error"></span>
+        <div class="composer-layout">
+            <div class="composer-main">
+                <section class="composer-canvas" aria-label="Nội dung bài viết">
+                    <div class="admin-form-field composer-title-field">
+                        <label asp-for="Title"></label>
+                        <input asp-for="Title" class="form-control composer-title" maxlength="300" placeholder="Nhập tiêu đề bài viết" data-news-title />
+                        <span asp-validation-for="Title" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="composer-slug-row">
+                        <label class="composer-slug-label" for="news-slug">Đường dẫn</label>
+                        <input id="news-slug" class="composer-slug-input" type="text" readonly tabindex="-1" data-news-slug aria-describedby="news-slug-hint" />
+                    </div>
+                    <p id="news-slug-hint" class="admin-field-hint">Tự động tạo từ tiêu đề.</p>
+
+                    <div class="admin-form-field">
+                        <span class="composer-label" id="cover-label">Ảnh đại diện</span>
+                        <div class="composer-cover" data-cover>
+                            <div class="composer-cover-preview" data-cover-preview>
+                                <p class="composer-cover-empty" data-cover-empty>Chưa có ảnh đại diện</p>
+                                <img alt="" hidden data-cover-image />
+                            </div>
+                            <div class="composer-cover-toolbar">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-cover-upload>Tải ảnh lên</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-cover-library>Chọn từ thư viện</button>
+                                <input asp-for="CoverImageUrl" type="hidden" data-cover-url />
+                                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-cover-file />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-form-field composer-editor-field">
+                        <label asp-for="Content" for="rich-editor-content"></label>
+                        <div class="rich-editor" data-rich-editor>
+                            <div class="rich-editor-content" id="rich-editor-content"></div>
+                            <textarea asp-for="Content" hidden></textarea>
+                        </div>
+                        <span asp-validation-for="Content" class="field-validation-error"></span>
+                    </div>
+                </section>
             </div>
 
-            <div class="admin-form-field">
-                <label asp-for="Summary"></label>
-                <textarea asp-for="Summary" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Summary" class="field-validation-error"></span>
-            </div>
+            <aside class="composer-side" aria-label="Cài đặt bài viết">
+                <section class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Chuyên mục</h2>
+                    </div>
+                    <div class="admin-panel-body composer-panel-body">
+                        <div class="admin-form-field">
+                            <label asp-for="CategoryId" class="visually-hidden"></label>
+                            <select asp-for="CategoryId" class="form-select">
+                                <option value="">Chọn chuyên mục</option>
+                                @if (selectedCategoryMissing)
+                                {
+                                    <option value="@Model.CategoryId">@(string.IsNullOrWhiteSpace(Model.CategoryName) ? "Chuyên mục hiện tại" : Model.CategoryName)</option>
+                                }
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoryId" class="field-validation-error"></span>
+                            @if (Model.Categories.Count == 0)
+                            {
+                                <p class="admin-field-hint">Chưa có chuyên mục đang hoạt động.</p>
+                            }
+                        </div>
+                    </div>
+                </section>
 
-            <div class="admin-form-field">
-                <label asp-for="Content" for="rich-editor-content"></label>
-                <div class="rich-editor" data-rich-editor>
-                    <div class="rich-editor-content" id="rich-editor-content"></div>
-                    <textarea asp-for="Content" hidden></textarea>
+                <section class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Loại bài viết</h2>
+                    </div>
+                    <div class="admin-panel-body composer-panel-body">
+                        <div class="admin-form-field">
+                            <label class="visually-hidden" for="news-type">Loại bài viết</label>
+                            <select id="news-type" class="form-select" data-news-type>
+                                <option value="">Chọn loại bài viết</option>
+                                <option>Tin tức</option>
+                                <option>Phóng sự</option>
+                                <option>Phỏng vấn</option>
+                                <option>Bình luận</option>
+                                <option>Thông báo</option>
+                            </select>
+                            <p class="admin-field-hint">Chỉ dùng khi soạn. Hệ thống chưa lưu loại bài.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Tác giả</h2>
+                    </div>
+                    <div class="admin-panel-body composer-panel-body">
+                        <div class="admin-form-field">
+                            <label class="visually-hidden" for="news-author">Tác giả</label>
+                            <input id="news-author" class="form-control" value="@Model.AuthorName" readonly />
+                            <p class="admin-field-hint">Gắn theo tài khoản đang đăng nhập.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </aside>
+        </div>
+
+        <div class="composer-actions">
+            @if (isEdit)
+            {
+                <button type="submit" class="btn btn-outline-secondary">Lưu thay đổi</button>
+            }
+            <div class="composer-actions-end">
+                <button type="button" class="btn btn-outline-secondary" data-preview-open>Xem trước</button>
+                <button type="submit" class="btn btn-primary" asp-controller="Journalist" asp-action="Create">Đăng bài</button>
+            </div>
+        </div>
+
+        <dialog class="composer-dialog" id="library-dialog" aria-labelledby="library-dialog-title">
+            <div class="composer-dialog-body">
+                <h2 id="library-dialog-title">Thư viện ảnh</h2>
+                <p>Chưa có ảnh trong thư viện. Hãy dùng Tải ảnh lên.</p>
+                <div class="composer-dialog-actions">
+                    <button type="button" class="btn btn-outline-secondary" data-dialog-close>Đóng</button>
                 </div>
-                <span asp-validation-for="Content" class="field-validation-error"></span>
             </div>
+        </dialog>
 
-            <div class="admin-form-field">
-                <label asp-for="CoverImageUrl"></label>
-                <input asp-for="CoverImageUrl" class="form-control" type="url" />
-                <span asp-validation-for="CoverImageUrl" class="field-validation-error"></span>
+        <dialog class="composer-dialog composer-dialog-wide" id="preview-dialog" aria-labelledby="preview-dialog-title">
+            <div class="composer-dialog-body">
+                <div class="composer-dialog-toolbar">
+                    <h2 id="preview-dialog-title">Xem trước</h2>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dialog-close>Đóng</button>
+                </div>
+                <article class="composer-preview" data-preview-article>
+                    <p class="composer-preview-kicker" data-preview-kicker></p>
+                    <h3 class="composer-preview-title" data-preview-title>Chưa có tiêu đề</h3>
+                    <figure class="composer-preview-cover" data-preview-figure hidden>
+                        <img alt="" data-preview-image />
+                    </figure>
+                    <div class="composer-preview-body" data-preview-body></div>
+                </article>
             </div>
-
-            <div class="admin-form-field">
-                <label asp-for="CategoryId"></label>
-                <input asp-for="CategoryId" class="form-control" />
-                <span asp-validation-for="CategoryId" class="field-validation-error"></span>
-            </div>
-
-            <div class="admin-form-actions">
-                <button type="submit" class="btn btn-primary">@(isEdit ? "Lưu thay đổi" : "Lưu bản nháp")</button>
-                <a class="btn btn-outline-secondary" asp-controller="Journalist" asp-action="Articles">Hủy</a>
-            </div>
-        </form>
-    </div>
-</section>
+        </dialog>
+    </form>
+</div>
 
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
@@ -71,4 +184,5 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <script src="~/js/rich-editor.js" asp-append-version="true"></script>
+    <script src="~/js/news-composer.js" asp-append-version="true"></script>
 }

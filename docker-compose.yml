@@ -10,3 +10,4 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ApiSettings__BaseUrl=http://host.docker.internal:5000
+      - ApiSettings__PublicBaseUrl=http://localhost:5000

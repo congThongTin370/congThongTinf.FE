@@ -1,0 +1,61 @@
+@model DocumentUploadViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Tải lên tài liệu</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="Documents">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="upload-form-title">
+    <div class="admin-panel-header">
+        <h2 id="upload-form-title">Thông tin tài liệu</h2>
+    </div>
+    <div class="admin-panel-body">
+        <p class="admin-form-status">Tài liệu nội bộ chỉ quản trị viên được tải lên. Tệp lưu trên kho lưu trữ, tối đa 10 MB.</p>
+
+        <form asp-controller="Admin" asp-action="UploadDocument" method="post" enctype="multipart/form-data" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="admin-form-field">
+                <label asp-for="File"></label>
+                <input asp-for="File" class="form-control" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
+                <span class="admin-field-hint">Định dạng: pdf, doc, docx, xls, xlsx, ppt, pptx, txt. Tối đa 10 MB.</span>
+                <span asp-validation-for="File" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Title"></label>
+                <input asp-for="Title" class="form-control" placeholder="Để trống sẽ lấy tên tệp" />
+                <span asp-validation-for="Title" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Category"></label>
+                <select asp-for="Category" class="form-select">
+                    @foreach (var option in DocumentCategories.Options)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <span asp-validation-for="Category" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">Tải lên</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Documents">Hủy</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
