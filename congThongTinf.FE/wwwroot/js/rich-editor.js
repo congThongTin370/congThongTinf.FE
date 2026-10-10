@@ -41,16 +41,25 @@
 
     // Chèn ảnh bằng URL thay vì base64, để nội dung nhẹ và dễ quản lý
     quill.getModule('toolbar').addHandler('image', function () {
-        var url = window.prompt('Nhập địa chỉ ảnh (https://...):', 'https://');
-        if (!url) {
-            return;
-        }
-        if (!/^https?:\/\//i.test(url)) {
-            window.alert('Ảnh phải là địa chỉ http:// hoặc https://');
-            return;
-        }
         var range = quill.getSelection(true);
-        quill.insertEmbed(range.index, 'image', url, 'user');
+        window.AppDialog.prompt({
+            title: 'Chèn ảnh từ địa chỉ',
+            label: 'Địa chỉ ảnh',
+            placeholder: 'https://...',
+            value: 'https://',
+            okText: 'Chèn ảnh',
+            validate: function (value) {
+                if (!value || value === 'https://') {
+                    return 'Vui lòng nhập địa chỉ ảnh.';
+                }
+                return /^https?:\/\//i.test(value) ? '' : 'Ảnh phải là địa chỉ http:// hoặc https://';
+            }
+        }).then(function (url) {
+            if (!url) {
+                return;
+            }
+            quill.insertEmbed(range ? range.index : quill.getLength(), 'image', url, 'user');
+        });
     });
 
     quill.root.innerHTML = textarea.value;

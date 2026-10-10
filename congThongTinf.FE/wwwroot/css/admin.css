@@ -668,52 +668,6 @@
     margin-left: auto;
 }
 
-.composer-dialog {
-    width: min(32rem, calc(100vw - 2rem));
-    padding: 0;
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-}
-
-.composer-dialog::backdrop {
-    background: rgba(11, 18, 32, 0.45);
-}
-
-.composer-dialog-wide {
-    width: min(46rem, calc(100vw - 2rem));
-}
-
-.composer-dialog-body {
-    padding: 1.15rem 1.25rem 1.25rem;
-}
-
-.composer-dialog-body h2,
-.composer-dialog-toolbar h2 {
-    margin: 0 0 0.55rem;
-    color: var(--color-dark);
-    font-size: 1.125rem;
-    font-weight: 700;
-}
-
-.composer-dialog-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.85rem;
-}
-
-.composer-dialog-toolbar h2 {
-    margin: 0;
-}
-
-.composer-dialog-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-}
-
 .composer-preview {
     max-height: min(70vh, 42rem);
     overflow: auto;

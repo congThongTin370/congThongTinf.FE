@@ -147,32 +147,41 @@
             </div>
         </div>
 
-        <dialog class="composer-dialog" id="library-dialog" aria-labelledby="library-dialog-title">
-            <div class="composer-dialog-body">
-                <h2 id="library-dialog-title">Thư viện ảnh</h2>
-                <p>Chưa có ảnh trong thư viện. Hãy dùng Tải ảnh lên.</p>
-                <div class="composer-dialog-actions">
+        <div class="app-dialog" id="library-dialog" data-dialog-root>
+            <div class="app-dialog-backdrop" data-dialog-dismiss></div>
+            <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="library-dialog-title">
+                <div class="app-dialog-header">
+                    <h2 id="library-dialog-title" class="app-dialog-title">Thư viện ảnh</h2>
+                    <button type="button" class="app-dialog-close" data-dialog-close aria-label="Đóng">&times;</button>
+                </div>
+                <div class="app-dialog-body">
+                    <p class="app-dialog-message">Chưa có ảnh trong thư viện. Hãy dùng Tải ảnh lên.</p>
+                </div>
+                <div class="app-dialog-footer">
                     <button type="button" class="btn btn-outline-secondary" data-dialog-close>Đóng</button>
                 </div>
             </div>
-        </dialog>
+        </div>
 
-        <dialog class="composer-dialog composer-dialog-wide" id="preview-dialog" aria-labelledby="preview-dialog-title">
-            <div class="composer-dialog-body">
-                <div class="composer-dialog-toolbar">
-                    <h2 id="preview-dialog-title">Xem trước</h2>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dialog-close>Đóng</button>
+        <div class="app-dialog" id="preview-dialog" data-dialog-root>
+            <div class="app-dialog-backdrop" data-dialog-dismiss></div>
+            <div class="app-dialog-panel app-dialog-panel-wide" role="dialog" aria-modal="true" aria-labelledby="preview-dialog-title">
+                <div class="app-dialog-header">
+                    <h2 id="preview-dialog-title" class="app-dialog-title">Xem trước</h2>
+                    <button type="button" class="app-dialog-close" data-dialog-close aria-label="Đóng">&times;</button>
                 </div>
-                <article class="composer-preview" data-preview-article>
-                    <p class="composer-preview-kicker" data-preview-kicker></p>
-                    <h3 class="composer-preview-title" data-preview-title>Chưa có tiêu đề</h3>
-                    <figure class="composer-preview-cover" data-preview-figure hidden>
-                        <img alt="" data-preview-image />
-                    </figure>
-                    <div class="composer-preview-body" data-preview-body></div>
-                </article>
+                <div class="app-dialog-body">
+                    <article class="composer-preview" data-preview-article>
+                        <p class="composer-preview-kicker" data-preview-kicker></p>
+                        <h3 class="composer-preview-title" data-preview-title>Chưa có tiêu đề</h3>
+                        <figure class="composer-preview-cover" data-preview-figure hidden>
+                            <img alt="" data-preview-image />
+                        </figure>
+                        <div class="composer-preview-body" data-preview-body></div>
+                    </article>
+                </div>
             </div>
-        </dialog>
+        </div>
     </form>
 </div>
 

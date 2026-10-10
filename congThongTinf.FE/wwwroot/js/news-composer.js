@@ -98,36 +98,11 @@
         refreshCoverPreview();
     }
 
-    function openDialog(dialog) {
-        if (dialog && typeof dialog.showModal === 'function') {
-            dialog.showModal();
-        }
-    }
-
-    function closeDialog(dialog) {
-        if (dialog && dialog.open) {
-            dialog.close();
-        }
-    }
-
-    form.querySelectorAll('dialog').forEach(function (dialog) {
-        dialog.addEventListener('click', function (event) {
-            if (event.target === dialog) {
-                dialog.close();
-            }
-        });
-        dialog.querySelectorAll('[data-dialog-close]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                closeDialog(dialog);
-            });
-        });
-    });
-
     var libraryDialog = document.getElementById('library-dialog');
     var libraryOpen = form.querySelector('[data-cover-library]');
     if (libraryOpen) {
         libraryOpen.addEventListener('click', function () {
-            openDialog(libraryDialog);
+            window.AppDialog.open(libraryDialog);
         });
     }
 
@@ -184,7 +159,7 @@
                 body.innerHTML = html || '<p class="composer-preview-empty">Chưa có nội dung.</p>';
             }
 
-            openDialog(previewDialog);
+            window.AppDialog.open(previewDialog);
         });
     }
 })();
