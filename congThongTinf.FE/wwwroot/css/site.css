@@ -55,55 +55,23 @@ a:hover {
 }
 
 .site-banner {
-    position: relative;
-    overflow: hidden;
-    background:
-        radial-gradient(circle at 12% 50%, rgba(63, 128, 167, 0.07) 0 70px, transparent 71px),
-        radial-gradient(circle at 88% 42%, rgba(63, 128, 167, 0.08) 0 110px, transparent 111px),
-        repeating-linear-gradient(90deg, transparent 0 18px, rgba(63, 128, 167, 0.035) 18px 19px),
-        var(--color-surface);
+    background: var(--color-surface);
 }
 
 .site-brand {
-    position: relative;
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 0.9rem;
-    padding: 1.15rem 0 1rem;
-    color: var(--color-primary);
+    padding: 0.65rem 0 0.75rem;
     text-decoration: none;
 }
 
-.site-brand:hover {
-    color: var(--color-primary-dark);
-}
-
-.site-emblem {
-    display: inline-flex;
-    flex: none;
-    color: var(--color-primary);
-}
-
-.site-brand-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.15;
-    text-align: center;
-}
-
-.site-kicker {
-    font-size: clamp(0.95rem, 1.6vw, 1.25rem);
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.site-name {
-    font-size: clamp(1.25rem, 2.6vw, 2rem);
-    font-weight: 800;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+.site-banner-logo {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 9rem;
+    object-fit: contain;
 }
 
 .site-nav {
@@ -1418,5 +1386,343 @@ a:hover {
     .home-layout,
     .home-side {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Trang giới thiệu Sư đoàn */
+.unit-page {
+    font-size: 1.125rem;
+}
+
+.unit-page > * {
+    animation: unit-rise 0.45s ease both;
+}
+
+.unit-page > *:nth-child(2) { animation-delay: 0.06s; }
+.unit-page > *:nth-child(3) { animation-delay: 0.12s; }
+.unit-page > *:nth-child(4) { animation-delay: 0.18s; }
+.unit-page > *:nth-child(5) { animation-delay: 0.24s; }
+.unit-page > *:nth-child(6) { animation-delay: 0.3s; }
+.unit-page > *:nth-child(7) { animation-delay: 0.36s; }
+
+@keyframes unit-rise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.unit-header {
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.unit-kicker {
+    margin: 0.35rem 0 0.35rem;
+    color: var(--color-primary);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.unit-page h1 {
+    margin: 0;
+    font-size: clamp(1.95rem, 3.4vw, 2.55rem);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+.unit-lead {
+    max-width: 68ch;
+    margin: 0.75rem 0 0;
+    font-size: 1.3rem;
+    line-height: 1.7;
+}
+
+.unit-lead sup,
+.unit-prose sup {
+    margin-left: 0.1em;
+    color: var(--color-text-muted);
+    font-size: 0.7em;
+}
+
+.unit-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 1.25rem 0 0;
+}
+
+.unit-facts > div {
+    padding: 0.85rem 0.95rem;
+    background: var(--color-surface-blue);
+    border: 1px solid var(--color-border);
+    border-top: 3px solid var(--color-primary);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.unit-facts > div:hover {
+    border-color: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+.unit-facts dt {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.unit-facts dd {
+    margin: 0.2rem 0 0;
+}
+
+.unit-facts dd:first-of-type {
+    color: var(--color-dark);
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.unit-facts dd + dd {
+    color: var(--color-text-muted);
+    font-size: 1.0625rem;
+}
+
+.unit-section {
+    margin-top: 2rem;
+}
+
+.unit-page h2 {
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-primary);
+    color: var(--color-dark);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.unit-note {
+    margin: -0.35rem 0 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.unit-timeline {
+    margin: 0 0 1.15rem;
+    padding: 0;
+    list-style: none;
+    border-left: 2px solid var(--color-border);
+}
+
+.unit-timeline li {
+    position: relative;
+    padding: 0 0 1rem 1.15rem;
+}
+
+.unit-timeline li:last-child {
+    padding-bottom: 0;
+}
+
+.unit-timeline li::before {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    left: -5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+}
+
+.unit-timeline-year {
+    display: block;
+    color: var(--color-primary-dark);
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.unit-timeline p,
+.unit-prose p {
+    margin: 0.2rem 0 0;
+    font-size: 1.1875rem;
+    line-height: 1.75;
+}
+
+.unit-prose {
+    max-width: 75ch;
+}
+
+.unit-prose p + p {
+    margin-top: 0.85rem;
+}
+
+.unit-roster {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.unit-person,
+.unit-organ,
+.unit-regiment {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.unit-person:hover,
+.unit-organ:hover,
+.unit-regiment:hover,
+.unit-gear li:hover {
+    border-color: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+.unit-person {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.9rem 1rem;
+    border-left: 3px solid var(--color-border);
+}
+
+.unit-person.is-lead {
+    border-left-color: var(--color-primary);
+    background: var(--color-surface-blue);
+}
+
+.unit-person-role,
+.unit-organ li span,
+.unit-regiment li span {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.unit-person-name {
+    color: var(--color-dark);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.unit-organs,
+.unit-regiments {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.unit-organs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.unit-regiments {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.unit-organ,
+.unit-regiment {
+    padding: 1rem 1rem 0.35rem;
+}
+
+.unit-organ h3,
+.unit-regiment h3 {
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-size: 1.3rem;
+}
+
+.unit-regiment-place {
+    margin: 0.25rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 1.0625rem;
+}
+
+.unit-organ ul,
+.unit-regiment ul {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.unit-organ li,
+.unit-regiment li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--color-border);
+}
+
+.unit-organ li strong,
+.unit-regiment li strong {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.unit-gear {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 0.9rem;
+    padding: 0;
+    list-style: none;
+}
+
+.unit-gear li {
+    padding: 0.4rem 0.75rem;
+    background: var(--color-surface-blue);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-primary-dark);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+@media (max-width: 991.98px) {
+    .unit-facts,
+    .unit-roster,
+    .unit-regiments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    .unit-facts,
+    .unit-roster,
+    .unit-organs,
+    .unit-regiments {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .unit-page > * {
+        animation: none;
+    }
+
+    .unit-facts > div:hover,
+    .unit-person:hover,
+    .unit-organ:hover,
+    .unit-regiment:hover,
+    .unit-gear li:hover {
+        transform: none;
     }
 }
