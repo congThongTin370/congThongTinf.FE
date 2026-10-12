@@ -480,6 +480,3 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
-
-# Session cache ch?a access token, không commit
-**/App_Data/session-cache/
