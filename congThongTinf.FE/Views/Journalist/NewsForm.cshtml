@@ -39,6 +39,12 @@
                         <span asp-validation-for="Title" class="field-validation-error"></span>
                     </div>
 
+                    <div class="admin-form-field">
+                        <label asp-for="Summary"></label>
+                        <textarea asp-for="Summary" class="form-control composer-summary" rows="3" maxlength="1000" placeholder="Tóm tắt ngắn hiển thị ở danh sách tin (không bắt buộc)"></textarea>
+                        <span asp-validation-for="Summary" class="field-validation-error"></span>
+                    </div>
+
                     <div class="composer-slug-row">
                         <label class="composer-slug-label" for="news-slug">Đường dẫn</label>
                         <input id="news-slug" class="composer-slug-input" type="text" readonly tabindex="-1" data-news-slug aria-describedby="news-slug-hint" />
@@ -62,12 +68,44 @@
                     </div>
 
                     <div class="admin-form-field composer-editor-field">
-                        <div class="composer-editor-header">
-                            <label asp-for="Content" for="news-content"></label>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-image-insert data-upload-url="@Url.Action("UploadImage", "Journalist")">Chèn ảnh</button>
-                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-image-file />
+                        <span class="composer-label" id="news-editor-label">Nội dung</span>
+                        <div class="rich-editor" data-rich-editor data-upload-url="@Url.Action("UploadImage", "Journalist")">
+                            <div class="rich-editor-toolbar" role="toolbar" aria-label="Công cụ định dạng">
+                                <button type="button" class="rich-editor-btn" data-cmd="bold" title="In đậm" aria-label="In đậm">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h8a4 4 0 0 1 0 8H6zM6 12h9a4 4 0 0 1 0 8H6z"/></svg>
+                                </button>
+                                <button type="button" class="rich-editor-btn" data-cmd="italic" title="In nghiêng" aria-label="In nghiêng">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 4h-9M14 20H5M15 4L9 20"/></svg>
+                                </button>
+                                <span class="rich-editor-sep" aria-hidden="true"></span>
+                                <button type="button" class="rich-editor-btn" data-cmd="h2" title="Tiêu đề lớn" aria-label="Tiêu đề lớn">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h8M4 5v14M12 5v14M16 8c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5c0 3-6 5-6 9h6"/></svg>
+                                </button>
+                                <button type="button" class="rich-editor-btn" data-cmd="h3" title="Tiêu đề nhỏ" aria-label="Tiêu đề nhỏ">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h8M4 5v14M12 5v14M16 9.5c.8-.8 1.8-1.2 3-1.2 1.6 0 2.5.9 2.5 2s-1 1.8-2.5 1.8c1.5 0 2.5.7 2.5 1.9s-1 2.1-2.5 2.1c-1.2 0-2.2-.4-3-1.2"/></svg>
+                                </button>
+                                <span class="rich-editor-sep" aria-hidden="true"></span>
+                                <button type="button" class="rich-editor-btn" data-cmd="ul" title="Danh sách dấu đầu dòng" aria-label="Danh sách dấu đầu dòng">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>
+                                </button>
+                                <button type="button" class="rich-editor-btn" data-cmd="ol" title="Danh sách đánh số" aria-label="Danh sách đánh số">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 4.5l1.5-1v5M3.5 14.5a1.5 1.5 0 0 1 3 0c0 1.5-3 2.5-3 4.5h3"/></svg>
+                                </button>
+                                <button type="button" class="rich-editor-btn" data-cmd="quote" title="Trích dẫn" aria-label="Trích dẫn">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12M9 8h11M9 12h11M9 16h7"/></svg>
+                                </button>
+                                <span class="rich-editor-sep" aria-hidden="true"></span>
+                                <button type="button" class="rich-editor-btn" data-cmd="link" title="Liên kết" aria-label="Liên kết">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+                                </button>
+                                <button type="button" class="rich-editor-btn" data-cmd="image" title="Chèn ảnh" aria-label="Chèn ảnh">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>
+                                </button>
+                                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-image-file />
+                            </div>
+                            <div class="rich-editor-content" id="news-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nội dung bài viết" data-editor-surface></div>
+                            <textarea asp-for="Content" hidden data-content-editor></textarea>
                         </div>
-                        <textarea asp-for="Content" id="news-content" class="form-control composer-content" rows="20" placeholder="Viết nội dung bài báo. Hỗ trợ Markdown, ví dụ: **in đậm**, ## Tiêu đề." data-content-editor></textarea>
                         <p class="admin-field-hint" data-image-status role="status" aria-live="polite"></p>
                         <span asp-validation-for="Content" class="field-validation-error"></span>
                     </div>
@@ -144,7 +182,7 @@
                 <button type="submit" class="btn btn-outline-secondary">Lưu thay đổi</button>
             }
             <div class="composer-actions-end">
-                <button type="button" class="btn btn-outline-secondary" data-preview-open>Xem trước</button>
+                <button type="button" class="btn btn-outline-secondary" data-preview-open data-preview-url="@Url.Action("PreviewContent", "Journalist")">Xem trước</button>
                 <button type="submit" class="btn btn-primary" asp-controller="Journalist" asp-action="Create">Đăng bài</button>
             </div>
         </div>
@@ -189,5 +227,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/rich-editor.js" asp-append-version="true"></script>
     <script src="~/js/news-composer.js" asp-append-version="true"></script>
 }

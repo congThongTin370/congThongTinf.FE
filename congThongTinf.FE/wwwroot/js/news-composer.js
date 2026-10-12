@@ -1,4 +1,4 @@
-// Hỗ trợ giao diện soạn bài: đường dẫn, xem trước ảnh và hộp thoại.
+﻿// Hỗ trợ giao diện soạn bài: đường dẫn, xem trước ảnh và hộp thoại.
 (function () {
     var form = document.getElementById('news-composer-form');
     if (!form) {
@@ -118,76 +118,9 @@
         return option && option.value ? option.text : '';
     }
 
-    // Chèn ảnh: upload qua endpoint frontend (token nằm ở server), rồi chèn ![image](url) tại vị trí con trỏ
     var contentEditor = form.querySelector('[data-content-editor]');
-    var imageButton = form.querySelector('[data-image-insert]');
-    var imageFile = form.querySelector('[data-image-file]');
-    var imageStatus = form.querySelector('[data-image-status]');
-    var uploadUrl = imageButton ? imageButton.getAttribute('data-upload-url') : '';
     var antiForgery = form.querySelector('input[name="__RequestVerificationToken"]');
-
-    function setImageStatus(text) {
-        if (imageStatus) {
-            imageStatus.textContent = text || '';
-        }
-    }
-
-    function insertAtCursor(text) {
-        var start = contentEditor.selectionStart;
-        var end = contentEditor.selectionEnd;
-        var value = contentEditor.value;
-        var prefix = start > 0 && value.charAt(start - 1) !== '\n' ? '\n' : '';
-        var suffix = end < value.length && value.charAt(end) !== '\n' ? '\n' : '';
-        var insert = prefix + text + suffix;
-        contentEditor.value = value.slice(0, start) + insert + value.slice(end);
-        var caret = start + insert.length;
-        contentEditor.setSelectionRange(caret, caret);
-        contentEditor.focus();
-    }
-
-    if (imageButton && imageFile && contentEditor) {
-        imageButton.addEventListener('click', function () {
-            imageFile.click();
-        });
-
-        imageFile.addEventListener('change', function () {
-            var file = imageFile.files && imageFile.files[0];
-            imageFile.value = '';
-            if (!file) {
-                return;
-            }
-
-            setImageStatus('Đang tải ảnh lên...');
-            imageButton.disabled = true;
-
-            var data = new FormData();
-            data.append('file', file);
-            if (antiForgery) {
-                data.append('__RequestVerificationToken', antiForgery.value);
-            }
-
-            fetch(uploadUrl, { method: 'POST', body: data, credentials: 'same-origin' })
-                .then(function (response) {
-                    return response.json().catch(function () {
-                        return { success: false, message: 'Chưa tải được ảnh. Vui lòng thử lại.' };
-                    });
-                })
-                .then(function (result) {
-                    if (result && result.success && result.url) {
-                        insertAtCursor('![image](' + result.url + ')');
-                        setImageStatus('Đã chèn ảnh vào nội dung.');
-                    } else {
-                        setImageStatus((result && result.message) || 'Chưa tải được ảnh. Vui lòng thử lại.');
-                    }
-                })
-                .catch(function () {
-                    setImageStatus('Chưa tải được ảnh. Vui lòng kiểm tra kết nối và thử lại.');
-                })
-                .finally(function () {
-                    imageButton.disabled = false;
-                });
-        });
-    }
+    var previewUrl = previewOpen ? previewOpen.getAttribute('data-preview-url') : '';
 
     if (previewOpen) {
         previewOpen.addEventListener('click', function () {
@@ -223,22 +156,40 @@
                 }
             }
             if (body) {
-                body.textContent = '';
-                if (text) {
-                    text.split(/\n\s*\n/).forEach(function (block) {
-                        var p = document.createElement('p');
-                        p.textContent = block;
-                        body.appendChild(p);
-                    });
-                } else {
-                    var empty = document.createElement('p');
-                    empty.className = 'composer-preview-empty';
-                    empty.textContent = 'Chưa có nội dung.';
-                    body.appendChild(empty);
-                }
+                body.textContent = 'Đang tải xem trước...';
+            }
+
+            var previewData = new FormData();
+            previewData.append('content', text);
+            if (antiForgery) {
+                previewData.append('__RequestVerificationToken', antiForgery.value);
             }
 
             window.AppDialog.open(previewDialog);
+
+            // Render phía server (Markdown -> HTML đã làm sạch) để xem trước đúng như bài đã đăng, gồm cả ảnh
+            fetch(previewUrl, { method: 'POST', body: previewData, credentials: 'same-origin' })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (result) {
+                    if (!body) {
+                        return;
+                    }
+                    if (result && result.success && result.html) {
+                        body.innerHTML = result.html;
+                    } else if (text) {
+                        body.textContent = 'Chưa xem trước được nội dung.';
+                    } else {
+                        body.innerHTML = '<p class="composer-preview-empty">Chưa có nội dung.</p>';
+                    }
+                })
+                .catch(function () {
+                    if (body) {
+                        body.textContent = 'Chưa xem trước được nội dung.';
+                    }
+                });
         });
     }
 })();
+

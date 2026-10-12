@@ -200,6 +200,19 @@ namespace congThongTinf.FE.Controllers
             return Json(new { success = true, url = result.Url });
         }
 
+        // Xem trước nội dung: render Markdown giống trang chi tiết (đã làm sạch HTML)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PreviewContent(string? content)
+        {
+            if (!IsJournalist())
+            {
+                return Json(new { success = false, message = UserFacingErrors.NoPermission });
+            }
+
+            return Json(new { success = true, html = HtmlSanitizer.RenderMarkdown(content) });
+        }
+
         // Bước 1: hỏi xác nhận trước khi xóa. Chưa xóa gì ở bước này.
         [HttpGet]
         public async Task<IActionResult> DeleteConfirm(Guid id)
