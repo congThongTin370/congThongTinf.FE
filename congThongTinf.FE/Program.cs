@@ -1,6 +1,7 @@
 using congThongTinf.FE.Services.Implementations;
 using congThongTinf.FE.Services.Interfaces;
 using congThongTinf.FE.Utilities;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,8 +20,11 @@ builder.Services.AddControllersWithViews(options =>
     messages.SetMissingRequestBodyRequiredValueAccessor(() => "Thiếu thông tin bắt buộc.");
 });
 
-// Session lưu access token và role sau khi đăng nhập
-builder.Services.AddDistributedMemoryCache();
+// Session lưu access token và role sau khi đăng nhập.
+// Lưu trên ổ đĩa để không mất khi restart ứng dụng.
+var sessionCachePath = builder.Configuration["Session:CachePath"]
+    ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data", "session-cache");
+builder.Services.AddSingleton<IDistributedCache>(_ => new FileDistributedCache(sessionCachePath));
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
