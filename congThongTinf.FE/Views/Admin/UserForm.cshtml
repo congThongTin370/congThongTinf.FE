@@ -1,0 +1,80 @@
+@model UserFormViewModel
+@{
+    Layout = "_AdminLayout";
+    var heading = Model.IsEdit ? "Sửa tài khoản" : "Tạo tài khoản";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@heading</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="Users">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="user-form-title">
+    <div class="admin-panel-header">
+        <h2 id="user-form-title">Thông tin tài khoản</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditUser" : "CreateUser")" asp-route-id="@Model.Id" method="post" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="admin-form-field">
+                <label asp-for="FullName"></label>
+                <input asp-for="FullName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="FullName" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Username"></label>
+                <input asp-for="Username" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Username" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" type="email" autocomplete="email" />
+                <span asp-validation-for="Email" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                @if (Model.IsEdit)
+                {
+                    <span class="admin-field-hint">Để trống nếu giữ mật khẩu hiện tại.</span>
+                }
+                <span asp-validation-for="Password" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="RoleName"></label>
+                <select asp-for="RoleName" class="form-select">
+                    @foreach (var option in UserRoles.Options)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <span asp-validation-for="RoleName" class="field-validation-error"></span>
+            </div>
+
+            @if (Model.IsEdit)
+            {
+                <div class="admin-form-field">
+                    <label class="admin-check">
+                        <input asp-for="IsActive" />
+                        <span>Đang hoạt động</span>
+                    </label>
+                    <span class="admin-field-hint">Bỏ chọn để khóa tài khoản. Chọn lại để mở khóa.</span>
+                </div>
+            }
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">@(Model.IsEdit ? "Lưu thay đổi" : "Tạo tài khoản")</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Users">Hủy</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

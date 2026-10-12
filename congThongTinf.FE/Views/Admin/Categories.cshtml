@@ -1,0 +1,70 @@
+@model List<CategoryDto>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Danh mục</h1>
+    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateCategory">Tạo danh mục</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="admin-alert" role="status">@message</div>
+}
+
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert-error" role="alert">@error</div>
+}
+
+<p class="admin-form-status">Danh mục đang hiển thị trên cổng thông tin, sắp theo thứ tự rồi đến tên. Xóa danh mục chỉ ẩn mục đó. Danh mục còn bài báo thì chưa xóa được.</p>
+
+<section class="admin-panel" aria-labelledby="category-list-title">
+    <div class="admin-panel-header">
+        <h2 id="category-list-title">Danh sách danh mục</h2>
+    </div>
+    <div class="admin-panel-body admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th scope="col">Tên</th>
+                    <th scope="col">Thứ tự</th>
+                    <th scope="col">Biểu tượng</th>
+                    <th scope="col">Cập nhật</th>
+                    <th scope="col" class="admin-table-actions">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="admin-table-empty">Chưa có danh mục.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var category in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@category.Name</strong>
+                                @if (!string.IsNullOrWhiteSpace(category.Description))
+                                {
+                                    <div class="admin-table-sub">@category.Description</div>
+                                }
+                            </td>
+                            <td>@category.DisplayOrder</td>
+                            <td>@(string.IsNullOrWhiteSpace(category.Icon) ? "—" : category.Icon)</td>
+                            <td>@category.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="admin-table-actions">
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditCategory" asp-route-id="@category.Id">Sửa</a>
+                                <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteCategory" asp-route-id="@category.Id">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,26 @@
+@model CategoryDto
+@{
+    Layout = "_AdminLayout";
+}
+
+<section class="admin-panel" aria-labelledby="delete-category-title">
+    <div class="admin-panel-header">
+        <h2 id="delete-category-title">Xác nhận xóa danh mục</h2>
+    </div>
+    <div class="admin-panel-body">
+        <p class="admin-form-status">Danh mục sẽ không còn hiển thị trên cổng thông tin. Bài báo đã gắn danh mục này vẫn giữ tên danh mục.</p>
+        <p class="admin-confirm-title"><strong>@Model.Name</strong></p>
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="admin-form-status">@Model.Description</p>
+        }
+        <p class="admin-form-status">Nếu danh mục còn bài báo, hệ thống sẽ không xóa.</p>
+
+        <div class="admin-form-actions">
+            <form asp-controller="Admin" asp-action="DeleteCategory" asp-route-id="@Model.Id" method="post">
+                <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+            </form>
+            <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Categories">Hủy</a>
+        </div>
+    </div>
+</section>

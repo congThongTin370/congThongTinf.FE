@@ -1,0 +1,176 @@
+@model AdminUserListViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Quản lý người dùng</h1>
+    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateUser">Tạo tài khoản</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="admin-alert" role="status">@message</div>
+}
+
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert-error" role="alert">@error</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="admin-alert-error" role="alert">@Model.LoadError</div>
+}
+
+<p class="admin-form-status">Khóa tài khoản là xóa mềm: người dùng không đăng nhập được, bản ghi vẫn còn. Có thể bật lại khi sửa tài khoản. Không khóa được tài khoản đang đăng nhập.</p>
+
+<section class="admin-panel" aria-labelledby="user-filter-title">
+    <div class="admin-panel-header">
+        <h2 id="user-filter-title">Tìm kiếm</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form method="get" asp-controller="Admin" asp-action="Users" class="admin-filter-grid">
+            <div class="admin-form-field">
+                <label for="search">Từ khóa</label>
+                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Họ tên, email hoặc tên đăng nhập" />
+            </div>
+            <div class="admin-form-field">
+                <label for="roleName">Vai trò</label>
+                <select id="roleName" name="roleName" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var option in UserRoles.Options)
+                    {
+                        if (Model.RoleName == option.Value)
+                        {
+                            <option value="@option.Value" selected>@option.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label for="isActive">Trạng thái</label>
+                <select id="isActive" name="isActive" class="form-select">
+                    <option value="">Tất cả</option>
+                    @if (Model.IsActive == true)
+                    {
+                        <option value="true" selected>Đang hoạt động</option>
+                    }
+                    else
+                    {
+                        <option value="true">Đang hoạt động</option>
+                    }
+                    @if (Model.IsActive == false)
+                    {
+                        <option value="false" selected>Đã khóa</option>
+                    }
+                    else
+                    {
+                        <option value="false">Đã khóa</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Users">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="admin-panel admin-section-gap" aria-labelledby="user-list-title">
+    <div class="admin-panel-header">
+        <h2 id="user-list-title">Danh sách người dùng</h2>
+    </div>
+    <div class="admin-panel-body admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th scope="col">Họ tên</th>
+                    <th scope="col">Tên đăng nhập</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Vai trò</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Ngày tạo</th>
+                    <th scope="col" class="admin-table-actions">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="admin-table-empty">Chưa có người dùng phù hợp.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var user in Model.Items)
+                    {
+                        var isSelf = user.UserId == Model.CurrentUserId;
+                        <tr>
+                            <td>
+                                <strong>@user.FullName</strong>
+                                @if (isSelf)
+                                {
+                                    <div class="admin-table-sub">Tài khoản của bạn</div>
+                                }
+                            </td>
+                            <td>@user.Username</td>
+                            <td>@user.Email</td>
+                            <td>@UserRoles.Label(user.RoleName)</td>
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="admin-badge admin-badge-success">Đang hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="admin-badge admin-badge-muted">Đã khóa</span>
+                                }
+                            </td>
+                            <td>@user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="admin-table-actions">
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditUser" asp-route-id="@user.UserId">Sửa</a>
+                                @if (user.IsActive && !isSelf)
+                                {
+                                    <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteUser" asp-route-id="@user.UserId">Khóa</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@if (Model.HasPrevious || Model.HasNext)
+{
+    <nav class="admin-pagination" aria-label="Phân trang người dùng">
+        @if (Model.HasPrevious)
+        {
+            <a class="btn btn-outline-secondary btn-sm"
+               asp-controller="Admin"
+               asp-action="Users"
+               asp-route-search="@Model.Search"
+               asp-route-roleName="@Model.RoleName"
+               asp-route-isActive="@Model.IsActive"
+               asp-route-pageIndex="@(Model.PageIndex - 1)">Trang trước</a>
+        }
+        <span class="admin-pagination-status">Trang @Model.PageIndex</span>
+        @if (Model.HasNext)
+        {
+            <a class="btn btn-outline-secondary btn-sm"
+               asp-controller="Admin"
+               asp-action="Users"
+               asp-route-search="@Model.Search"
+               asp-route-roleName="@Model.RoleName"
+               asp-route-isActive="@Model.IsActive"
+               asp-route-pageIndex="@(Model.PageIndex + 1)">Trang sau</a>
+        }
+    </nav>
+}

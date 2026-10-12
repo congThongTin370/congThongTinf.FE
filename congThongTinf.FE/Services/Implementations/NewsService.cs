@@ -85,9 +85,15 @@ public class NewsService : INewsService
     private static string BuildQueryString(NewsQueryDto? query)
     {
         if (query == null)
-            return string.Empty;
+            return "?pageIndex=0";
 
         var parts = new List<string>();
+
+        // Không gửi pageIndex thì API mặc định trang 1, 10 bài. Chỗ cần đủ danh sách phải gửi 0.
+        parts.Add($"pageIndex={query.PageIndex ?? 0}");
+
+        if (query.PageSize.HasValue)
+            parts.Add($"pageSize={query.PageSize.Value}");
 
         if (query.FromDate.HasValue)
             parts.Add($"fromDate={Uri.EscapeDataString(query.FromDate.Value.ToString("o"))}");
@@ -98,6 +104,6 @@ public class NewsService : INewsService
         if (query.CategoryIds != null)
             parts.AddRange(query.CategoryIds.Select(id => $"categoryIds={id}"));
 
-        return parts.Count > 0 ? "?" + string.Join("&", parts) : string.Empty;
+        return "?" + string.Join("&", parts);
     }
 }

@@ -1,0 +1,56 @@
+@model CategoryFormViewModel
+@{
+    Layout = "_AdminLayout";
+    var heading = Model.IsEdit ? "Sửa danh mục" : "Tạo danh mục";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@heading</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="Categories">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="category-form-title">
+    <div class="admin-panel-header">
+        <h2 id="category-form-title">Thông tin danh mục</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditCategory" : "CreateCategory")" asp-route-id="@Model.Id" method="post" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="admin-form-field">
+                <label asp-for="Name"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Icon"></label>
+                <input asp-for="Icon" class="form-control" />
+                <span class="admin-field-hint">Tên ngắn để nhận diện, có thể để trống.</span>
+                <span asp-validation-for="Icon" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="DisplayOrder"></label>
+                <input asp-for="DisplayOrder" class="form-control" type="number" />
+                <span class="admin-field-hint">Số nhỏ hơn được xếp trước.</span>
+                <span asp-validation-for="DisplayOrder" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">@(Model.IsEdit ? "Lưu thay đổi" : "Tạo danh mục")</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Categories">Hủy</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

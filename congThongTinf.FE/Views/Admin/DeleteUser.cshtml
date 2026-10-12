@@ -1,0 +1,29 @@
+@model UserDto
+@{
+    Layout = "_AdminLayout";
+}
+
+<section class="admin-panel" aria-labelledby="delete-user-title">
+    <div class="admin-panel-header">
+        <h2 id="delete-user-title">Xác nhận khóa tài khoản</h2>
+    </div>
+    <div class="admin-panel-body">
+        <p class="admin-form-status">Tài khoản sẽ bị khóa và không đăng nhập được. Bản ghi vẫn còn, có thể mở lại khi sửa tài khoản.</p>
+        <p class="admin-confirm-title"><strong>@Model.FullName</strong></p>
+        <dl class="admin-detail">
+            <dt>Tên đăng nhập</dt>
+            <dd>@Model.Username</dd>
+            <dt>Email</dt>
+            <dd>@Model.Email</dd>
+            <dt>Vai trò</dt>
+            <dd>@UserRoles.Label(Model.RoleName)</dd>
+        </dl>
+
+        <div class="admin-form-actions">
+            <form asp-controller="Admin" asp-action="DeleteUser" asp-route-id="@Model.UserId" method="post">
+                <button type="submit" class="btn btn-danger">Xác nhận khóa</button>
+            </form>
+            <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Users">Hủy</a>
+        </div>
+    </div>
+</section>

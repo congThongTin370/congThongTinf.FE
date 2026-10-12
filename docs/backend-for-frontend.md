@@ -40,11 +40,11 @@ API đã mở:
 - News: lấy danh sách (lọc theo ngày tạo và danh mục), lấy chi tiết, tạo, sửa, xóa
 - Category: lấy danh sách, lấy chi tiết, tạo, sửa, xóa mềm (chỉ Admin ghi)
 - Document: lấy danh sách có phân trang, tải file (`downloadUrl`), admin upload tài liệu nội bộ
-- Admin: upload web banner
+- Admin: CRUD tài khoản (phân trang), upload web banner
 - Blob: endpoint test upload/xóa file Cloudflare R2
 - System: seed / xóa dữ liệu local
 
-Chưa có API: dashboard, quản lý user đầy đủ, xuất bản bài viết (chuyển status sang `Published`), lấy/sửa/xóa banner, sửa/xóa tài liệu.
+Chưa có API: dashboard, xuất bản bài viết (chuyển status sang `Published`), lấy/sửa/xóa banner, sửa/xóa tài liệu.
 
 ## Vai trò
 
@@ -214,7 +214,7 @@ Thành công: HTTP `200`, `value.data` là `UserDto` (cùng shape với `user` k
 
 ## Envelope `ApiResult<T>`
 
-Mọi action auth, me, news, category, documents (trừ download file), admin banner, blobs, và nhánh thành công của system dùng class `ApiResult<T>` trong `congThongTinf.Service/Utils/ApiResult.cs`.
+Mọi action auth, me, news, category, documents (trừ download file), admin users/banner, blobs, và nhánh thành công của system dùng class `ApiResult<T>` trong `congThongTinf.Service/Utils/ApiResult.cs`.
 
 Ngoại lệ: `GET /api/documents/{id}/download` trả **binary file**, không bọc `ApiResult`. Thành công thì body là bytes, header `Content-Disposition: attachment`.
 
@@ -384,15 +384,19 @@ Danh mục đã xóa mềm vẫn gắn vào bài báo cũ; `categoryName` của 
 
 Query:
 
-| Param | Kiểu | Rule |
-| --- | --- | --- |
-| `fromDate` | date/datetime, optional | Lọc `CreatedAt >=` đầu ngày |
-| `toDate` | date/datetime, optional | Lọc `CreatedAt <` ngày kế tiếp, tức gồm cả ngày `toDate` |
-| `categoryIds` | Guid lặp lại, optional | `?categoryIds={guid}&categoryIds={guid}` |
+| Param | Kiểu | Mặc định | Rule |
+| --- | --- | --- | --- |
+| `pageIndex` | number, optional | `1` | Trang bắt đầu từ `1`. `0` = trả toàn bộ, bỏ `Skip`/`Take` |
+| `pageSize` | number, optional | `10` | Nếu `<= 0` server gán lại `10` |
+| `fromDate` | date/datetime, optional | — | Lọc `CreatedAt >=` đầu ngày |
+| `toDate` | date/datetime, optional | — | Lọc `CreatedAt <` ngày kế tiếp, tức gồm cả ngày `toDate` |
+| `categoryIds` | Guid lặp lại, optional | — | `?categoryIds={guid}&categoryIds={guid}` |
 
 `fromDate` lớn hơn `toDate` (so theo ngày): HTTP `400`, message `Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.`
 
-Danh sách sort `CreatedAt` giảm dần. Không phân trang. Trả mọi status, kể cả Draft và Pending.
+Danh sách sort `CreatedAt` giảm dần. Trả mọi status, kể cả Draft và Pending.
+
+`Pagination<T>` kế thừa `List<T>`. System.Text.Json serialize `IEnumerable` thành **JSON array**, nên `value.data` là mảng `NewsDto` của trang hiện tại. Các field `currentPage`, `totalPages`, `pageSize`, `totalCount`, `hasPrevious`, `hasNext` **không** có trong JSON. Frontend tự giữ `pageIndex`/`pageSize` đã gửi.
 
 ### Chi tiết
 
@@ -653,6 +657,86 @@ Không có API sửa, xóa, hoặc lấy chi tiết JSON theo id. Tải file dù
 | `uploadedByUserName` | string hoặc null, `User.FullName` của người upload (list có include; upload mới thường `null`) |
 | `createdAt` | datetime UTC |
 
+## Quản lý người dùng (Admin)
+
+Toàn bộ endpoint dưới đây nằm trên `AdminController`, class gắn `[Authorize(Roles = "Admin")]`. Cần token role `Admin`. `UserDto` cùng shape với login / `GET /api/me/details`.
+
+### Danh sách
+
+`GET /api/admin/users`
+
+| Param | Kiểu | Mặc định | Rule |
+| --- | --- | --- | --- |
+| `pageIndex` | number, optional | `1` | Trang bắt đầu từ `1`. `0` = trả toàn bộ, bỏ `Skip`/`Take` |
+| `pageSize` | number, optional | `10` | Nếu `<= 0` server gán lại `10` |
+| `search` | string, optional | — | Không phân biệt hoa thường, khớp `fullName`, `email`, hoặc `username` |
+| `isActive` | bool, optional | — | Lọc đúng trạng thái. Bỏ trống thì gồm cả tài khoản đã xóa mềm |
+| `roleName` | number, optional | — | `0` Admin, `1` Journalist. Giá trị không thuộc enum: HTTP `400`, `Vai trò không hợp lệ.` |
+| `desc` | bool, optional | `true` | Sort `CreatedAt` giảm dần khi `true`, tăng dần khi `false` |
+
+`Pagination<T>` kế thừa `List<T>`. `value.data` là mảng `UserDto` của trang hiện tại. Frontend tự giữ `pageIndex`/`pageSize` đã gửi.
+
+Thành công: HTTP `200`, message `Lấy danh sách người dùng thành công.`
+
+### Chi tiết
+
+`GET /api/admin/users/{id}` — gồm cả tài khoản đã xóa mềm (`isActive == false`).
+
+- Thành công: HTTP `200`, `value.data` là `UserDto`.
+- Không tồn tại: HTTP `404`, `Người dùng với ID {id} không tồn tại.`
+
+### Tạo
+
+`POST /api/admin/users`
+
+```json
+{
+  "username": "pv02",
+  "email": "pv02@370.local",
+  "password": "Secret@123",
+  "fullName": "Phóng viên 02",
+  "roleName": 1
+}
+```
+
+`roleName` mặc định `1` (Journalist) nếu không gửi. Tài khoản mới luôn `isActive = true`.
+
+- Thiếu username, email, password hoặc fullName: HTTP `400`, `Username, email, mật khẩu và họ tên là bắt buộc.`
+- `roleName` không thuộc enum: HTTP `400`, `Vai trò không hợp lệ.`
+- Email đã tồn tại: HTTP `409`, `Email này đã được đăng ký.`
+- Username đã tồn tại: HTTP `409`, `Tên đăng nhập đã được sử dụng.`
+- Chưa seed role: HTTP `404`, `Chưa có vai trò {roleName}. Hãy seed roles trước.`
+
+Thành công: HTTP `200`, `value.data` là `UserDto`, message `Tạo tài khoản thành công.`
+
+`POST /api/auth/create-journalist` vẫn tạo phóng viên như cũ; endpoint này cho phép Admin chọn role.
+
+### Cập nhật
+
+`PUT /api/admin/users/{id}` — body từng field optional. Field không gửi thì giữ nguyên. Có thể cập nhật tài khoản đã xóa mềm (kể cả bật lại `isActive`).
+
+| Field | Kiểu | Rule |
+| --- | --- | --- |
+| `username` | string, optional | Không được chỉ có khoảng trắng. Trùng người khác: HTTP `409` |
+| `email` | string, optional | Không được chỉ có khoảng trắng. Trùng người khác: HTTP `409` |
+| `password` | string, optional | Có giá trị thì hash lại. Trống/null thì giữ mật khẩu cũ |
+| `fullName` | string, optional | Không được chỉ có khoảng trắng |
+| `roleName` | number, optional | `0` hoặc `1` |
+| `isActive` | bool, optional | Bật lại tài khoản đã xóa mềm |
+
+Không tồn tại: HTTP `404`.
+
+Thành công: HTTP `200`, message `Cập nhật người dùng thành công.`
+
+### Xóa mềm
+
+`DELETE /api/admin/users/{id}` — đặt `isActive = false`. Không xóa hàng trong DB. Đăng nhập sau đó bị `403`.
+
+- Xóa chính mình: HTTP `400`, `Không thể xóa tài khoản đang đăng nhập.`
+- Không tồn tại hoặc đã xóa mềm: HTTP `404`, `Người dùng với ID {id} không tồn tại.`
+
+Thành công: HTTP `200`, `value.data` là `true`, message `Xóa người dùng thành công.`
+
 ## Banner
 
 Banner trang chủ. File ảnh lưu R2 folder `banners`, metadata bảng `Banners`. Chưa có API lấy danh sách / chi tiết / xóa.
@@ -735,7 +819,7 @@ Thành công trả `ApiResult`, `value.data` có `message` và count tương ứ
 
 ## Việc frontend nên làm
 
-- Gửi `Authorization: Bearer {accessToken}` cho `/api/auth/logout`, `/api/auth/create-journalist`, `/api/me/*`, `POST`/`PUT`/`DELETE` `/api/categories`, `POST`/`PUT`/`DELETE` `/api/news`, `POST /api/news/images`, `POST /api/admin/banners`, `POST /api/documents`.
+- Gửi `Authorization: Bearer {accessToken}` cho `/api/auth/logout`, `/api/auth/create-journalist`, `/api/me/*`, `POST`/`PUT`/`DELETE` `/api/categories`, `POST`/`PUT`/`DELETE` `/api/news`, `POST /api/news/images`, `/api/admin/users`, `POST /api/admin/banners`, `POST /api/documents`.
 - `GET /api/news`, `GET /api/news/{id}`, `GET /api/categories`, `GET /api/documents`, `GET /api/documents/{id}/download` là public.
 - Tạo bài báo, upload ảnh bài, upload banner và tài liệu dùng `multipart/form-data`, không dùng JSON. Riêng `POST /api/news` gửi ảnh bìa qua field `coverImage`, không gửi `coverImageUrl`.
 - Giữ token phía client. Hết 30 phút hoặc gặp 401 framework thì bắt đăng nhập lại.
@@ -744,8 +828,8 @@ Thành công trả `ApiResult`, `value.data` có `message` và count tương ứ
 - Map `user.roleName`: `0` Admin, `1` Journalist.
 - Map `news.status`: `0` Draft, `1` Pending, `2` Published, `3` Archived.
 - Map `document.category`: `0` General, `1` Policy, `2` Procedure, `3` Report, `4` Guideline.
-- `GET /api/documents`: `value.data` là **mảng** item của trang; tự giữ `pageIndex`/`pageSize`. Mỗi item có `downloadUrl`.
+- `GET /api/news`, `GET /api/documents`, `GET /api/admin/users`: `value.data` là **mảng** item của trang; tự giữ `pageIndex`/`pageSize`. Tài liệu còn có `downloadUrl`.
 - Nút tải tài liệu: `<a href="@item.DownloadUrl" download="@item.FileName">Tải xuống</a>`. Không dùng `fileUrl` cho nút download. Không `fetch` endpoint download.
 - `GET /api/me/role` trả `role` dạng chuỗi khi cần label đúng với claim.
-- Ẩn tạo phóng viên, upload banner, upload tài liệu, và gọi `check-admin` khi role không phải `Admin`.
+- Ẩn tạo phóng viên, quản lý user (`/api/admin/users`), upload banner, upload tài liệu, và gọi `check-admin` khi role không phải `Admin`.
 - Coi `/api/system/*` và `/api/blobs/*` là công cụ local/test, không đưa vào UI người dùng.

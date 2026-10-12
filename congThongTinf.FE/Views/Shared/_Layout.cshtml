@@ -93,13 +93,17 @@
                             <div class="nav-profile-card" role="region" aria-label="Thông tin tài khoản">
                                 <p class="nav-profile-name">@sessionFullName</p>
                                 <p class="nav-profile-role">@(sessionRole == "Admin" ? "Quản trị viên" : "Phóng viên")</p>
-                                @if (sessionRole != "Admin")
-                                {
-                                    <ul class="nav-profile-menu">
+                                <ul class="nav-profile-menu">
+                                    @if (sessionRole == "Admin")
+                                    {
+                                        <li><a asp-controller="Admin" asp-action="Dashboard">Bảng điều khiển</a></li>
+                                    }
+                                    else
+                                    {
                                         <li><a asp-controller="Journalist" asp-action="Articles">Thêm bài báo</a></li>
                                         <li><a asp-controller="Journalist" asp-action="Profile">Trang cá nhân</a></li>
-                                    </ul>
-                                }
+                                    }
+                                </ul>
                                 <form asp-controller="Account" asp-action="Logout" method="post">
                                     <button type="submit" class="btn btn-outline-secondary btn-sm nav-profile-logout">Đăng xuất</button>
                                 </form>

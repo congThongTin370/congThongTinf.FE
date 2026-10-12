@@ -129,6 +129,117 @@ public static class UserFacingErrors
         return TryAgain;
     }
 
+    public static string ForCategories(int statusCode, string? code, string? message)
+    {
+        var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;
+        var text = message ?? string.Empty;
+
+        if (status == "401")
+        {
+            return SessionExpired;
+        }
+
+        if (status == "403")
+        {
+            return NoPermission;
+        }
+
+        if (Contains(text, "bài báo", "liên quan"))
+        {
+            return "Không thể xóa danh mục đang có bài báo.";
+        }
+
+        if (Contains(text, "đã tồn tại") || (status == "409" && Contains(text, "tên")))
+        {
+            return "Tên danh mục đã được dùng. Vui lòng chọn tên khác.";
+        }
+
+        if (status == "409")
+        {
+            return "Không thực hiện được vì danh mục đang được dùng hoặc tên bị trùng.";
+        }
+
+        if (Contains(text, "bắt buộc") || (status == "400" && Contains(text, "tên")))
+        {
+            return "Vui lòng nhập tên danh mục.";
+        }
+
+        if (status == "400")
+        {
+            return "Thông tin danh mục chưa đúng. Vui lòng kiểm tra lại.";
+        }
+
+        if (status == "404")
+        {
+            return "Không tìm thấy danh mục này.";
+        }
+
+        return TryAgain;
+    }
+
+    public static string ForUsers(int statusCode, string? code, string? message)
+    {
+        var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;
+        var text = message ?? string.Empty;
+
+        if (status == "401")
+        {
+            return SessionExpired;
+        }
+
+        if (status == "403")
+        {
+            return NoPermission;
+        }
+
+        if (Contains(text, "đang đăng nhập", "chính mình"))
+        {
+            return "Không thể xóa tài khoản đang đăng nhập.";
+        }
+
+        if (Contains(text, "email") && (status == "409" || Contains(text, "đăng ký", "tồn tại")))
+        {
+            return "Email này đã được đăng ký. Vui lòng dùng email khác.";
+        }
+
+        if (Contains(text, "tên đăng nhập", "username") || (status == "409" && Contains(text, "đã được sử dụng")))
+        {
+            return "Tên đăng nhập đã được sử dụng. Vui lòng chọn tên khác.";
+        }
+
+        if (status == "409")
+        {
+            return "Email hoặc tên đăng nhập đã được dùng. Vui lòng chọn thông tin khác.";
+        }
+
+        if (Contains(text, "vai trò không hợp lệ"))
+        {
+            return "Vai trò chưa đúng. Vui lòng chọn lại.";
+        }
+
+        if (Contains(text, "seed", "chưa có vai trò"))
+        {
+            return "Hệ thống chưa sẵn sàng tạo tài khoản. Vui lòng liên hệ kỹ thuật.";
+        }
+
+        if (Contains(text, "bắt buộc") || (status == "400" && Contains(text, "username", "email", "mật khẩu", "họ tên")))
+        {
+            return "Vui lòng nhập đủ tên đăng nhập, email, mật khẩu và họ tên.";
+        }
+
+        if (status == "400")
+        {
+            return "Thông tin tài khoản chưa đúng. Vui lòng kiểm tra lại.";
+        }
+
+        if (status == "404")
+        {
+            return "Không tìm thấy người dùng này.";
+        }
+
+        return TryAgain;
+    }
+
     public static string ForDocuments(int statusCode, string? code, string? message)
     {
         var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;

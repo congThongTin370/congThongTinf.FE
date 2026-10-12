@@ -1,0 +1,63 @@
+@model NewsDto
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Chi tiết tin tức</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="News">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="news-meta-title">
+    <div class="admin-panel-header">
+        <h2 id="news-meta-title">@Model.Title</h2>
+    </div>
+    <div class="admin-panel-body">
+        <dl class="admin-detail">
+            <dt>Chuyên mục</dt>
+            <dd>@(string.IsNullOrWhiteSpace(Model.CategoryName) ? "—" : Model.CategoryName)</dd>
+            <dt>Tác giả</dt>
+            <dd>@(string.IsNullOrWhiteSpace(Model.AuthorName) ? "—" : Model.AuthorName)</dd>
+            <dt>Trạng thái</dt>
+            <dd><span class="@NewsStatuses.BadgeClass(Model.Status)">@NewsStatuses.Label(Model.Status)</span></dd>
+            <dt>Ngày tạo</dt>
+            <dd>@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            <dt>Cập nhật</dt>
+            <dd>@Model.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            <dt>Xuất bản</dt>
+            <dd>@(Model.PublishedAt.HasValue ? Model.PublishedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</dd>
+            <dt>Lượt xem</dt>
+            <dd>@Model.ViewCount</dd>
+        </dl>
+        <div class="admin-form-actions">
+            <a class="btn btn-primary btn-sm" asp-controller="News" asp-action="Details" asp-route-id="@Model.Id">Xem trang công khai</a>
+        </div>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl) || !string.IsNullOrWhiteSpace(Model.Summary) || !string.IsNullOrWhiteSpace(Model.Content))
+{
+    <section class="admin-panel admin-section-gap" aria-labelledby="news-body-title">
+        <div class="admin-panel-header">
+            <h2 id="news-body-title">Nội dung</h2>
+        </div>
+        <div class="admin-panel-body">
+            @if (!string.IsNullOrWhiteSpace(Model.Summary))
+            {
+                <p class="news-detail-summary">@Model.Summary</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+            {
+                <figure class="admin-news-cover">
+                    <img src="@Model.CoverImageUrl" alt="@Model.Title" />
+                </figure>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Content))
+            {
+                <div class="news-detail-body">
+                    @Html.Raw(congThongTinf.FE.Utilities.HtmlSanitizer.RenderMarkdown(Model.Content))
+                </div>
+            }
+        </div>
+    </section>
+}

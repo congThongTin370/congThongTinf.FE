@@ -1,0 +1,195 @@
+@model AdminNewsListViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Quản lý tin tức</h1>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="admin-alert" role="status">@message</div>
+}
+
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert-error" role="alert">@error</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="admin-alert-error" role="alert">@Model.LoadError</div>
+}
+
+<p class="admin-form-status">Quản trị viên xem mọi bài, kể cả bản nháp. Viết, sửa và xóa bài do phóng viên thực hiện trên bài của mình. Hệ thống chưa có chức năng duyệt xuất bản.</p>
+
+@if (string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <section class="admin-stat-grid" aria-label="@(Model.StatusCountsFromCurrentPage ? "Số bài theo trạng thái trên trang hiện tại" : "Số bài theo trạng thái")">
+        <div class="admin-stat-card">
+            <p class="admin-stat-label">Bản nháp</p>
+            <p class="admin-stat-value">@Model.DraftCount</p>
+        </div>
+        <div class="admin-stat-card">
+            <p class="admin-stat-label">Chờ duyệt</p>
+            <p class="admin-stat-value">@Model.PendingCount</p>
+        </div>
+        <div class="admin-stat-card">
+            <p class="admin-stat-label">Đã xuất bản</p>
+            <p class="admin-stat-value">@Model.PublishedCount</p>
+        </div>
+        <div class="admin-stat-card">
+            <p class="admin-stat-label">Lưu trữ</p>
+            <p class="admin-stat-value">@Model.ArchivedCount</p>
+        </div>
+    </section>
+    @if (Model.StatusCountsFromCurrentPage)
+    {
+        <p class="admin-field-hint">Số liệu trạng thái trên trang hiện tại.</p>
+    }
+}
+
+<section class="admin-panel" aria-labelledby="news-filter-title">
+    <div class="admin-panel-header">
+        <h2 id="news-filter-title">Lọc tin</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form method="get" asp-controller="Admin" asp-action="News" class="admin-filter-grid">
+            <div class="admin-form-field">
+                <label for="search">Từ khóa</label>
+                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tiêu đề, tóm tắt hoặc tác giả" />
+            </div>
+            <div class="admin-form-field">
+                <label for="categoryId">Chuyên mục</label>
+                <select id="categoryId" name="categoryId" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        if (Model.CategoryId == category.Id)
+                        {
+                            <option value="@category.Id" selected>@category.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var option in NewsStatuses.Options)
+                    {
+                        if (Model.Status == option.Value)
+                        {
+                            <option value="@option.Value" selected>@option.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label for="fromDate">Từ ngày</label>
+                <input id="fromDate" name="fromDate" class="form-control" type="date" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="admin-form-field">
+                <label for="toDate">Đến ngày</label>
+                <input id="toDate" name="toDate" class="form-control" type="date" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="News">Xóa lọc</a>
+            </div>
+        </form>
+        <p class="admin-field-hint admin-filter-note">Ngày tạo và chuyên mục lọc theo từng trang trên hệ thống. Từ khóa và trạng thái lọc trên toàn bộ kết quả khớp ngày và chuyên mục.</p>
+    </div>
+</section>
+
+<section class="admin-panel admin-section-gap" aria-labelledby="news-list-title">
+    <div class="admin-panel-header">
+        <h2 id="news-list-title">Danh sách tin</h2>
+    </div>
+    <div class="admin-panel-body admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th scope="col">Tiêu đề</th>
+                    <th scope="col">Chuyên mục</th>
+                    <th scope="col">Tác giả</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Ngày tạo</th>
+                    <th scope="col">Lượt xem</th>
+                    <th scope="col" class="admin-table-actions">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="admin-table-empty">Chưa có tin tức phù hợp.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var news in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id">@news.Title</a>
+                                @if (!string.IsNullOrWhiteSpace(news.Summary))
+                                {
+                                    <div class="admin-table-sub">@news.Summary</div>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(news.CategoryName) ? "—" : news.CategoryName)</td>
+                            <td>@(string.IsNullOrWhiteSpace(news.AuthorName) ? "—" : news.AuthorName)</td>
+                            <td><span class="@NewsStatuses.BadgeClass(news.Status)">@NewsStatuses.Label(news.Status)</span></td>
+                            <td>@news.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@news.ViewCount</td>
+                            <td class="admin-table-actions">
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id">Xem</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@if (Model.HasPrevious || Model.HasNext)
+{
+    <nav class="admin-pagination" aria-label="Phân trang tin tức">
+        @if (Model.HasPrevious)
+        {
+            <a class="btn btn-outline-secondary btn-sm"
+               asp-controller="Admin"
+               asp-action="News"
+               asp-route-search="@Model.Search"
+               asp-route-categoryId="@Model.CategoryId"
+               asp-route-status="@Model.Status"
+               asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+               asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")"
+               asp-route-pageIndex="@(Model.PageIndex - 1)">Trang trước</a>
+        }
+        <span class="admin-pagination-status">Trang @Model.PageIndex</span>
+        @if (Model.HasNext)
+        {
+            <a class="btn btn-outline-secondary btn-sm"
+               asp-controller="Admin"
+               asp-action="News"
+               asp-route-search="@Model.Search"
+               asp-route-categoryId="@Model.CategoryId"
+               asp-route-status="@Model.Status"
+               asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+               asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")"
+               asp-route-pageIndex="@(Model.PageIndex + 1)">Trang sau</a>
+        }
+    </nav>
+}
