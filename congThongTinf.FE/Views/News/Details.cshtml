@@ -38,7 +38,7 @@
     }
 
     <div class="news-detail-body">
-        @Html.Raw(congThongTinf.FE.Utilities.HtmlSanitizer.Sanitize(Model.Content))
+        @Html.Raw(congThongTinf.FE.Utilities.HtmlSanitizer.RenderMarkdown(Model.Content))
     </div>
 
     <p class="news-detail-back">

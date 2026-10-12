@@ -118,17 +118,84 @@
         return option && option.value ? option.text : '';
     }
 
+    // Chèn ảnh: upload qua endpoint frontend (token nằm ở server), rồi chèn ![image](url) tại vị trí con trỏ
+    var contentEditor = form.querySelector('[data-content-editor]');
+    var imageButton = form.querySelector('[data-image-insert]');
+    var imageFile = form.querySelector('[data-image-file]');
+    var imageStatus = form.querySelector('[data-image-status]');
+    var uploadUrl = imageButton ? imageButton.getAttribute('data-upload-url') : '';
+    var antiForgery = form.querySelector('input[name="__RequestVerificationToken"]');
+
+    function setImageStatus(text) {
+        if (imageStatus) {
+            imageStatus.textContent = text || '';
+        }
+    }
+
+    function insertAtCursor(text) {
+        var start = contentEditor.selectionStart;
+        var end = contentEditor.selectionEnd;
+        var value = contentEditor.value;
+        var prefix = start > 0 && value.charAt(start - 1) !== '\n' ? '\n' : '';
+        var suffix = end < value.length && value.charAt(end) !== '\n' ? '\n' : '';
+        var insert = prefix + text + suffix;
+        contentEditor.value = value.slice(0, start) + insert + value.slice(end);
+        var caret = start + insert.length;
+        contentEditor.setSelectionRange(caret, caret);
+        contentEditor.focus();
+    }
+
+    if (imageButton && imageFile && contentEditor) {
+        imageButton.addEventListener('click', function () {
+            imageFile.click();
+        });
+
+        imageFile.addEventListener('change', function () {
+            var file = imageFile.files && imageFile.files[0];
+            imageFile.value = '';
+            if (!file) {
+                return;
+            }
+
+            setImageStatus('Đang tải ảnh lên...');
+            imageButton.disabled = true;
+
+            var data = new FormData();
+            data.append('file', file);
+            if (antiForgery) {
+                data.append('__RequestVerificationToken', antiForgery.value);
+            }
+
+            fetch(uploadUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+                .then(function (response) {
+                    return response.json().catch(function () {
+                        return { success: false, message: 'Chưa tải được ảnh. Vui lòng thử lại.' };
+                    });
+                })
+                .then(function (result) {
+                    if (result && result.success && result.url) {
+                        insertAtCursor('![image](' + result.url + ')');
+                        setImageStatus('Đã chèn ảnh vào nội dung.');
+                    } else {
+                        setImageStatus((result && result.message) || 'Chưa tải được ảnh. Vui lòng thử lại.');
+                    }
+                })
+                .catch(function () {
+                    setImageStatus('Chưa tải được ảnh. Vui lòng kiểm tra kết nối và thử lại.');
+                })
+                .finally(function () {
+                    imageButton.disabled = false;
+                });
+        });
+    }
+
     if (previewOpen) {
         previewOpen.addEventListener('click', function () {
             var title = titleInput && titleInput.value.trim() ? titleInput.value.trim() : 'Chưa có tiêu đề';
             var category = selectedText('[name="CategoryId"]');
             var type = selectedText('[data-news-type]');
             var kicker = [category, type].filter(Boolean).join(' · ');
-            var editor = form.querySelector('.ql-editor');
-            var html = editor ? editor.innerHTML : '';
-            if (html === '<p><br></p>') {
-                html = '';
-            }
+            var text = contentEditor ? contentEditor.value.trim() : '';
 
             var kickerEl = form.querySelector('[data-preview-kicker]');
             var titleEl = form.querySelector('[data-preview-title]');
@@ -156,7 +223,19 @@
                 }
             }
             if (body) {
-                body.innerHTML = html || '<p class="composer-preview-empty">Chưa có nội dung.</p>';
+                body.textContent = '';
+                if (text) {
+                    text.split(/\n\s*\n/).forEach(function (block) {
+                        var p = document.createElement('p');
+                        p.textContent = block;
+                        body.appendChild(p);
+                    });
+                } else {
+                    var empty = document.createElement('p');
+                    empty.className = 'composer-preview-empty';
+                    empty.textContent = 'Chưa có nội dung.';
+                    body.appendChild(empty);
+                }
             }
 
             window.AppDialog.open(previewDialog);

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Markdig;
 
 namespace congThongTinf.FE.Utilities;
 
@@ -36,6 +37,26 @@ public static partial class HtmlSanitizer
 
     [GeneratedRegex(@"^(?:color|background-color|font-size)\s*:\s*[#a-zA-Z0-9(),.\s%-]+$", RegexOptions.IgnoreCase)]
     private static partial Regex SafeStyleRegex();
+
+    /// <summary>
+    /// Chuyển nội dung Markdown thành HTML rồi làm sạch.
+    /// Raw HTML trong Markdown bị vô hiệu hóa; mọi output đều đi qua <see cref="Sanitize"/>.
+    /// </summary>
+    public static string RenderMarkdown(string? markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+        {
+            return string.Empty;
+        }
+
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            .DisableHtml()
+            .Build();
+
+        var html = Markdown.ToHtml(markdown, pipeline);
+        return Sanitize(html);
+    }
 
     public static string Sanitize(string? html)
     {

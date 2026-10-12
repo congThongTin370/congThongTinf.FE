@@ -62,11 +62,13 @@
                     </div>
 
                     <div class="admin-form-field composer-editor-field">
-                        <label asp-for="Content" for="rich-editor-content"></label>
-                        <div class="rich-editor" data-rich-editor>
-                            <div class="rich-editor-content" id="rich-editor-content"></div>
-                            <textarea asp-for="Content" hidden></textarea>
+                        <div class="composer-editor-header">
+                            <label asp-for="Content" for="news-content"></label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-image-insert data-upload-url="@Url.Action("UploadImage", "Journalist")">Chèn ảnh</button>
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-image-file />
                         </div>
+                        <textarea asp-for="Content" id="news-content" class="form-control composer-content" rows="20" placeholder="Viết nội dung bài báo. Hỗ trợ Markdown, ví dụ: **in đậm**, ## Tiêu đề." data-content-editor></textarea>
+                        <p class="admin-field-hint" data-image-status role="status" aria-live="polite"></p>
                         <span asp-validation-for="Content" class="field-validation-error"></span>
                     </div>
                 </section>
@@ -185,13 +187,7 @@
     </form>
 </div>
 
-@section Styles {
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
-}
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-    <script src="~/js/rich-editor.js" asp-append-version="true"></script>
     <script src="~/js/news-composer.js" asp-append-version="true"></script>
 }

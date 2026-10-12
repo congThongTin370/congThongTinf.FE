@@ -117,9 +117,54 @@ public class JournalistNewsService : IJournalistNewsService
         }
     }
 
+    public async Task<NewsImageUploadResult> UploadContentImageAsync(string accessToken, IFormFile file)
+    {
+        if (file.Length == 0)
+        {
+            return ImageFailure(400, "400", "File là bắt buộc.");
+        }
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            await using var fileStream = file.OpenReadStream();
+            using var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
+            content.Add(fileContent, "file", file.FileName);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/news/images")
+            {
+                Content = content
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            using var response = await _httpClient.SendAsync(request);
+            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<NewsImageDto>>();
+
+            if (!response.IsSuccessStatusCode || body?.IsSuccess != true || string.IsNullOrWhiteSpace(body.Value?.Data?.Url))
+            {
+                return ImageFailure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+            }
+
+            return new NewsImageUploadResult { Success = true, Url = body.Value.Data.Url };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload news content image");
+            return ImageFailure(0, null, null);
+        }
+    }
+
     private static NewsWriteResult Failure(int statusCode, string? code, string? message) => new()
     {
         Success = false,
         ErrorMessage = UserFacingErrors.ForNews(statusCode, code, message)
+    };
+
+    private static NewsImageUploadResult ImageFailure(int statusCode, string? code, string? message) => new()
+    {
+        Success = false,
+        ErrorMessage = UserFacingErrors.ForNewsImage(statusCode, code, message)
     };
 }

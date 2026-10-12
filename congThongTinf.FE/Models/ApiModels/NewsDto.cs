@@ -17,3 +17,11 @@ public class NewsDto
     public DateTime UpdatedAt { get; set; }
     public int ViewCount { get; set; }
 }
+
+/// <summary>
+/// Kết quả POST /api/news/images: chỉ trả URL, không tạo bản ghi bài báo.
+/// </summary>
+public class NewsImageDto
+{
+    public string Url { get; set; } = string.Empty;
+}

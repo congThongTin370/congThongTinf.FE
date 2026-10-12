@@ -96,6 +96,39 @@ public static class UserFacingErrors
         return TryAgain;
     }
 
+    public static string ForNewsImage(int statusCode, string? code, string? message)
+    {
+        var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;
+        var text = message ?? string.Empty;
+
+        if (status == "401")
+        {
+            return SessionExpired;
+        }
+
+        if (status == "403")
+        {
+            return NoPermission;
+        }
+
+        if (Contains(text, "10 MB", "exceeds"))
+        {
+            return "Ảnh không được lớn hơn 10 MB.";
+        }
+
+        if (Contains(text, "phải là", "jpg", "png", "webp", "gif"))
+        {
+            return "Chỉ nhận ảnh jpg, jpeg, png, webp hoặc gif.";
+        }
+
+        if (Contains(text, "bắt buộc") || status == "400")
+        {
+            return "Vui lòng chọn ảnh hợp lệ.";
+        }
+
+        return TryAgain;
+    }
+
     public static string ForDocuments(int statusCode, string? code, string? message)
     {
         var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;

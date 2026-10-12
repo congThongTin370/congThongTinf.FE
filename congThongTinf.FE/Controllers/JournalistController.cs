@@ -1,5 +1,6 @@
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
+using congThongTinf.FE.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace congThongTinf.FE.Controllers
@@ -173,6 +174,30 @@ namespace congThongTinf.FE.Controllers
 
             TempData["Message"] = "Đã cập nhật bài viết.";
             return RedirectToAction(nameof(Articles));
+        }
+
+        // Upload ảnh chèn vào nội dung bài. Token nằm trong session phía server, không trả về trình duyệt.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadImage(IFormFile? file)
+        {
+            if (!IsJournalist())
+            {
+                return Json(new { success = false, message = UserFacingErrors.NoPermission });
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "Vui lòng chọn ảnh hợp lệ." });
+            }
+
+            var result = await _newsService.UploadContentImageAsync(GetToken(), file);
+            if (!result.Success || string.IsNullOrWhiteSpace(result.Url))
+            {
+                return Json(new { success = false, message = result.ErrorMessage ?? UserFacingErrors.TryAgain });
+            }
+
+            return Json(new { success = true, url = result.Url });
         }
 
         // Bước 1: hỏi xác nhận trước khi xóa. Chưa xóa gì ở bước này.

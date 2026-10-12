@@ -315,27 +315,23 @@
     font-weight: 600;
 }
 
-/* Rich text editor (Quill) cho nội dung bài báo */
-.rich-editor {
-    border: 1px solid var(--color-border);
-    border-radius: 0.375rem;
-    background: #fff;
+/* Ô soạn nội dung bài báo (Markdown) */
+.composer-editor-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.rich-editor .ql-toolbar.ql-snow {
-    border: 0;
-    border-bottom: 1px solid var(--color-border);
-    background: #f7f9fc;
+.composer-editor-header label {
+    margin-right: auto;
 }
 
-.rich-editor .ql-container.ql-snow {
-    border: 0;
-    font-size: 1rem;
-}
-
-.rich-editor .ql-editor {
+.composer-content {
     min-height: 18rem;
-    line-height: 1.7;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
 }
 
 .admin-form-actions {
