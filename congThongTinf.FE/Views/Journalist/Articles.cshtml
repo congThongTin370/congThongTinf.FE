@@ -2,15 +2,6 @@
 @{
     Layout = "_JournalistLayout";
     ViewData["Title"] = "Quản lý bài báo";
-
-    string StatusText(int status) => status switch
-    {
-        0 => "Bản nháp",
-        1 => "Chờ duyệt",
-        2 => "Đã xuất bản",
-        3 => "Lưu trữ",
-        _ => "Không xác định"
-    };
 }
 
 <div class="admin-page-header">
@@ -52,7 +43,7 @@
                         <tr>
                             <td><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></td>
                             <td>@news.CategoryName</td>
-                            <td>@StatusText(news.Status)</td>
+                            <td>@NewsStatuses.Label(news.Status)</td>
                             <td>@news.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="admin-table-actions">
                                 <a class="btn btn-outline-secondary btn-sm" asp-controller="Journalist" asp-action="Edit" asp-route-id="@news.Id">Sửa</a>

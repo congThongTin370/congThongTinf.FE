@@ -366,7 +366,7 @@ namespace congThongTinf.FE.Controllers
                 return View(model);
             }
 
-            // API chỉ phân trang theo ngày tạo và chuyên mục. Từ khóa/trạng thái lọc thêm phía FE.
+            // API chỉ phân trang theo ngày tạo và chuyên mục, không lọc Draft. Từ khóa/trạng thái lọc thêm phía FE.
             var filterOnClient = status.HasValue || !string.IsNullOrWhiteSpace(search);
             List<NewsDto> news;
             try
@@ -391,7 +391,7 @@ namespace congThongTinf.FE.Controllers
                 IEnumerable<NewsDto> filtered = news;
                 if (status.HasValue)
                 {
-                    filtered = filtered.Where(item => item.Status == status.Value);
+                    filtered = filtered.Where(item => NewsStatuses.MatchesFilter(item.Status, status.Value));
                 }
 
                 if (!string.IsNullOrWhiteSpace(search))
@@ -759,10 +759,8 @@ namespace congThongTinf.FE.Controllers
 
         private static void SetStatusCounts(AdminNewsListViewModel model, List<NewsDto> news)
         {
-            model.DraftCount = news.Count(item => item.Status == 0);
-            model.PendingCount = news.Count(item => item.Status == 1);
-            model.PublishedCount = news.Count(item => item.Status == 2);
-            model.ArchivedCount = news.Count(item => item.Status == 3);
+            model.PostedCount = news.Count(item => NewsStatuses.IsPosted(item.Status));
+            model.ArchivedCount = news.Count(item => item.Status == NewsStatuses.Archived);
         }
 
         private bool IsAdmin()

@@ -17,27 +17,53 @@
     <div class="admin-shell">
         <aside class="admin-sidebar" aria-label="Menu phóng viên">
             <a class="admin-brand" asp-controller="Journalist" asp-action="Profile">
-                <span class="admin-brand-kicker">Phóng viên</span>
-                <span class="admin-brand-name">Sư đoàn 370</span>
+                <span class="admin-brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                        <path d="M12 8v8M8.5 10.2L12 12l3.5-1.8" />
+                    </svg>
+                </span>
+                <span class="admin-brand-text">
+                    <span class="admin-brand-kicker">Phóng viên</span>
+                    <span class="admin-brand-name">Sư đoàn 370</span>
+                </span>
             </a>
             <nav>
                 <ul class="admin-menu">
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Profile" ? "is-active" : null)" asp-controller="Journalist" asp-action="Profile">Trang cá nhân</a></li>
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Articles" ? "is-active" : null)" asp-controller="Journalist" asp-action="Articles">Quản lý bài báo</a></li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "Profile" ? "is-active" : null)" asp-controller="Journalist" asp-action="Profile">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c.8-3.2 3.2-5 7-5s6.2 1.8 7 5"/></svg></span>
+                            Trang cá nhân
+                        </a>
+                    </li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "Articles" ? "is-active" : null)" asp-controller="Journalist" asp-action="Articles">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5z"/><path d="M8 9h8M8 13h6"/></svg></span>
+                            Quản lý bài báo
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <div class="admin-sidebar-footer">
-                <a asp-controller="Home" asp-action="Index">Về trang tin tức</a>
+                <a asp-controller="Home" asp-action="Index">
+                    <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 4.5l8 7V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5z"/></svg></span>
+                    Về trang tin tức
+                </a>
             </div>
         </aside>
 
         <div class="admin-content">
             <header class="admin-topbar">
                 <span class="admin-topbar-title">@ViewData["Title"]</span>
-                <span class="admin-topbar-user">@(ViewData["FullName"] as string ?? "Phóng viên")</span>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="admin-logout-form">
-                    <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
-                </form>
+                <div class="admin-topbar-end">
+                    <span class="admin-topbar-user">
+                        <span class="admin-topbar-avatar" aria-hidden="true">PV</span>
+                        @(ViewData["FullName"] as string ?? "Phóng viên")
+                    </span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="admin-logout-form">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
+                    </form>
+                </div>
             </header>
             <main class="admin-main" role="main">
                 @RenderBody()

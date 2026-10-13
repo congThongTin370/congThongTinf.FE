@@ -1,3 +1,4 @@
+using congThongTinf.FE.Models;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
 using congThongTinf.FE.Utilities;
@@ -33,6 +34,9 @@ namespace congThongTinf.FE.Controllers
 
             SetLayoutData("Profile", "Trang cá nhân");
             var user = await _meService.GetCurrentUserDetailsAsync(GetToken());
+            var news = await _newsService.GetMyNewsAsync(GetToken(), GetCurrentUserId());
+            ViewBag.ArticleCount = news.Count;
+            ViewBag.PostedCount = news.Count(item => NewsStatuses.IsPosted(item.Status));
             return View(user);
         }
 
@@ -97,7 +101,7 @@ namespace congThongTinf.FE.Controllers
                 return View("NewsForm", model);
             }
 
-            TempData["Message"] = "Đã tạo bài viết (bản nháp).";
+            TempData["Message"] = "Đã đăng bài viết lên cổng thông tin.";
             return RedirectToAction(nameof(Articles));
         }
 
@@ -131,7 +135,7 @@ namespace congThongTinf.FE.Controllers
                 CoverImageUrl = news.CoverImageUrl,
                 CategoryId = news.CategoryId,
                 CategoryName = news.CategoryName,
-                StatusLabel = StatusLabel(news.Status),
+                StatusLabel = NewsStatuses.Label(news.Status),
                 LastSavedLabel = news.UpdatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
             };
             await PrepareNewsFormAsync(model);
@@ -265,22 +269,13 @@ namespace congThongTinf.FE.Controllers
                 : Guid.Empty;
         }
 
-        private static string StatusLabel(int status) => status switch
-        {
-            0 => "Bản nháp",
-            1 => "Chờ duyệt",
-            2 => "Đã xuất bản",
-            3 => "Lưu trữ",
-            _ => "Không xác định"
-        };
-
         private async Task PrepareNewsFormAsync(NewsFormViewModel model)
         {
             model.Categories = await _categoryService.GetActiveCategoriesAsync();
             model.AuthorName = HttpContext.Session.GetString(AccountController.SessionFullName) ?? "Phóng viên";
             if (string.IsNullOrWhiteSpace(model.StatusLabel))
             {
-                model.StatusLabel = "Bản nháp";
+                model.StatusLabel = NewsStatuses.PostedLabel;
             }
         }
 

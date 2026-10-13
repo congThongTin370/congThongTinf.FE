@@ -39,8 +39,10 @@ namespace congThongTinf.FE.Controllers
 
                 _logger.LogInformation($"Fetched {newsList.Count} news items");
                 
-                // Sắp xếp theo ngày tạo mới nhất trước
-                var sortedNews = newsList.OrderByDescending(n => n.CreatedAt).ToList();
+                // API không lọc Draft; bài phóng viên đăng hiện ngay. Chỉ ẩn bài lưu trữ.
+                var sortedNews = NewsStatuses.VisibleOnPortal(newsList)
+                    .OrderByDescending(n => n.CreatedAt)
+                    .ToList();
 
                 // Ảnh override cho tin mới nhất (nếu được cấu hình trong appsettings)
                 ViewData["LatestNewsCoverOverride"] = _configuration["HomeSettings:LatestNewsCoverImageOverride"];
@@ -83,7 +85,9 @@ namespace congThongTinf.FE.Controllers
             return View(new CategoryPageViewModel
             {
                 Category = category,
-                News = news.OrderByDescending(n => n.CreatedAt).ToList()
+                News = NewsStatuses.VisibleOnPortal(news)
+                    .OrderByDescending(n => n.CreatedAt)
+                    .ToList()
             });
         }
 

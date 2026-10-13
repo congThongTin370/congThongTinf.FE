@@ -16,30 +16,71 @@
     <div class="admin-shell">
         <aside class="admin-sidebar" aria-label="Menu quản trị">
             <a class="admin-brand" asp-controller="Admin" asp-action="Dashboard">
-                <span class="admin-brand-kicker">Quản trị</span>
-                <span class="admin-brand-name">Sư đoàn 370</span>
+                <span class="admin-brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                        <path d="M12 8v8M8.5 10.2L12 12l3.5-1.8" />
+                    </svg>
+                </span>
+                <span class="admin-brand-text">
+                    <span class="admin-brand-kicker">Quản trị</span>
+                    <span class="admin-brand-name">Sư đoàn 370</span>
+                </span>
             </a>
             <nav>
                 <ul class="admin-menu">
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Dashboard" ? "is-active" : null)" asp-controller="Admin" asp-action="Dashboard">Bảng điều khiển</a></li>
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "News" ? "is-active" : null)" asp-controller="Admin" asp-action="News">Quản lý tin tức</a></li>
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Users" ? "is-active" : null)" asp-controller="Admin" asp-action="Users">Quản lý người dùng</a></li>
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Documents" ? "is-active" : null)" asp-controller="Admin" asp-action="Documents">Tài liệu</a></li>
-                    <li><a class="@(ViewData["ActiveMenu"] as string == "Categories" ? "is-active" : null)" asp-controller="Admin" asp-action="Categories">Danh mục</a></li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "Dashboard" ? "is-active" : null)" asp-controller="Admin" asp-action="Dashboard">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>
+                            Bảng điều khiển
+                        </a>
+                    </li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "News" ? "is-active" : null)" asp-controller="Admin" asp-action="News">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5z"/><path d="M8 9h8M8 13h6"/></svg></span>
+                            Quản lý tin tức
+                        </a>
+                    </li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "Users" ? "is-active" : null)" asp-controller="Admin" asp-action="Users">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.8 19c.6-3 2.8-4.6 5.2-4.6S13.6 16 14.2 19"/><circle cx="17" cy="8.5" r="2.4"/><path d="M20.6 18.5c-.4-2.1-1.9-3.3-3.6-3.3"/></svg></span>
+                            Quản lý người dùng
+                        </a>
+                    </li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "Documents" ? "is-active" : null)" asp-controller="Admin" asp-action="Documents">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l5 5V20a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5z"/><path d="M14 3.5V9h5.5"/></svg></span>
+                            Tài liệu
+                        </a>
+                    </li>
+                    <li>
+                        <a class="@(ViewData["ActiveMenu"] as string == "Categories" ? "is-active" : null)" asp-controller="Admin" asp-action="Categories">
+                            <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16M4 12h16M4 16.5h10"/></svg></span>
+                            Danh mục
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <div class="admin-sidebar-footer">
-                <a asp-controller="Home" asp-action="Index">Về trang công khai</a>
+                <a asp-controller="Home" asp-action="Index">
+                    <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 4.5l8 7V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5z"/></svg></span>
+                    Về trang công khai
+                </a>
             </div>
         </aside>
 
         <div class="admin-content">
             <header class="admin-topbar">
                 <span class="admin-topbar-title">@ViewData["Title"]</span>
-                <span class="admin-topbar-user">@(ViewData["FullName"] as string ?? "Quản trị viên")</span>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="admin-logout-form">
-                    <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
-                </form>
+                <div class="admin-topbar-end">
+                    <span class="admin-topbar-user">
+                        <span class="admin-topbar-avatar" aria-hidden="true">QT</span>
+                        @(ViewData["FullName"] as string ?? "Quản trị viên")
+                    </span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="admin-logout-form">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
+                    </form>
+                </div>
             </header>
             <main class="admin-main" role="main">
                 @RenderBody()

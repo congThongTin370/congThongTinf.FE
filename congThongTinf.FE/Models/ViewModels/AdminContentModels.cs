@@ -45,40 +45,42 @@ public class AdminNewsListViewModel
     public int PageSize { get; set; } = 10;
     public bool HasPrevious { get; set; }
     public bool HasNext { get; set; }
-    public int DraftCount { get; set; }
-    public int PendingCount { get; set; }
-    public int PublishedCount { get; set; }
+    public int PostedCount { get; set; }
     public int ArchivedCount { get; set; }
     public bool StatusCountsFromCurrentPage { get; set; }
 }
 
 public static class NewsStatuses
 {
+    public const int Draft = 0;
+    public const int Pending = 1;
+    public const int Published = 2;
+    public const int Archived = 3;
+    public const string PostedLabel = "Đã đăng";
+
+    // API vẫn trả Draft/Pending; phóng viên đăng là lên cổng, không duyệt.
     public static readonly (int Value, string Label)[] Options =
     {
-        (0, "Bản nháp"),
-        (1, "Chờ duyệt"),
-        (2, "Đã xuất bản"),
-        (3, "Lưu trữ")
+        (Published, PostedLabel),
+        (Archived, "Lưu trữ")
     };
 
-    public static string Label(int status)
-    {
-        foreach (var option in Options)
-        {
-            if (option.Value == status)
-            {
-                return option.Label;
-            }
-        }
+    public static bool IsPosted(int status) =>
+        status == Draft || status == Pending || status == Published;
 
-        return "Không xác định";
-    }
+    public static bool MatchesFilter(int status, int filter) =>
+        filter == Archived ? status == Archived : IsPosted(status);
 
-    public static string BadgeClass(int status) => status switch
+    public static string Label(int status) => status switch
     {
-        1 => "admin-badge admin-badge-warning",
-        2 => "admin-badge admin-badge-success",
-        _ => "admin-badge admin-badge-muted"
+        Archived => "Lưu trữ",
+        Draft or Pending or Published => PostedLabel,
+        _ => "Không xác định"
     };
+
+    public static string BadgeClass(int status) =>
+        IsPosted(status) ? "admin-badge admin-badge-success" : "admin-badge admin-badge-muted";
+
+    public static List<NewsDto> VisibleOnPortal(IEnumerable<NewsDto> news) =>
+        news.Where(item => IsPosted(item.Status)).ToList();
 }

@@ -1,3 +1,4 @@
+using congThongTinf.FE.Models;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ namespace congThongTinf.FE.ViewComponents
             try
             {
                 var news = await _newsService.GetAllNewsAsync();
-                var items = news
+                var items = NewsStatuses.VisibleOnPortal(news)
                     .Where(n => !string.IsNullOrWhiteSpace(n.Title))
                     .OrderByDescending(n => n.CreatedAt)
                     .Take(MaxItems)

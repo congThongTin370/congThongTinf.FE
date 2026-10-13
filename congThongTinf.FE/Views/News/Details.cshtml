@@ -23,6 +23,8 @@
             <span aria-hidden="true">·</span>
         }
         <time datetime="@published.ToString("o")">@published.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+        <span aria-hidden="true">·</span>
+        <span>@Model.ViewCount lượt xem</span>
     </p>
 
     @if (!string.IsNullOrEmpty(Model.Summary))

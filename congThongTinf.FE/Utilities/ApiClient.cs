@@ -72,22 +72,24 @@ public class ApiClient
     /// <summary>
     /// Thực hiện POST request
     /// </summary>
-    public async Task<T> PostAsync<T>(string endpoint, object data)
+    public async Task<T> PostAsync<T>(string endpoint, object? data = null)
     {
         try
         {
             _logger.LogInformation($"POST request to: {endpoint}");
-            
-            var json = JsonSerializer.Serialize(data);
-            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            
-            var response = await _httpClient.PostAsync(endpoint, content);
-            response.EnsureSuccessStatusCode();
 
+            HttpContent? content = null;
+            if (data != null)
+            {
+                var json = JsonSerializer.Serialize(data);
+                content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            var response = await _httpClient.PostAsync(endpoint, content);
             var responseContent = await response.Content.ReadAsStringAsync();
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var result = JsonSerializer.Deserialize<T>(responseContent, options);
-            
+
             return result!;
         }
         catch (Exception ex)

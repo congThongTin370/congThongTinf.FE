@@ -21,7 +21,7 @@ public class JournalistNewsService : IJournalistNewsService
     {
         try
         {
-            // Backend chưa lọc theo tác giả: lấy tất cả rồi lọc theo authorId
+            // Backend chưa lọc theo tác giả: lấy tất cả rồi lọc theo authorId. Không lọc Draft.
             using var response = await _httpClient.GetAsync("api/news?pageIndex=0");
             var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<PagedData<NewsDto>>>();
 

@@ -24,8 +24,8 @@
             <dd>@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
             <dt>Cập nhật</dt>
             <dd>@Model.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
-            <dt>Xuất bản</dt>
-            <dd>@(Model.PublishedAt.HasValue ? Model.PublishedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</dd>
+            <dt>Ngày đăng</dt>
+            <dd>@((Model.PublishedAt ?? Model.CreatedAt).ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</dd>
             <dt>Lượt xem</dt>
             <dd>@Model.ViewCount</dd>
         </dl>

@@ -1,3 +1,4 @@
+using congThongTinf.FE.Models;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
 using congThongTinf.FE.Utilities;
@@ -33,7 +34,7 @@ namespace congThongTinf.FE.Controllers
             {
                 _logger.LogInformation("Loading all news...");
                 var news = await _newsService.GetAllNewsAsync();
-                return View(news);
+                return View(NewsStatuses.VisibleOnPortal(news));
             }
             catch (Exception ex)
             {
@@ -64,7 +65,7 @@ namespace congThongTinf.FE.Controllers
                 ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
                 ViewBag.CategoryIds = categoryIds;
 
-                return View("Index", news);
+                return View("Index", NewsStatuses.VisibleOnPortal(news));
             }
             catch (Exception ex)
             {
@@ -84,6 +85,12 @@ namespace congThongTinf.FE.Controllers
             if (news == null)
             {
                 return NotFound();
+            }
+
+            var viewCount = await _newsService.IncrementViewCountAsync(id);
+            if (viewCount.HasValue)
+            {
+                news.ViewCount = viewCount.Value;
             }
 
             ViewData["Title"] = news.Title;

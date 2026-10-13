@@ -26,7 +26,7 @@ public class NewsService : INewsService
     {
         try
         {
-            // categoryIds phải lặp lại dạng ?categoryIds=a&categoryIds=b (theo docs backend)
+            // categoryIds lặp ?categoryIds=a&categoryIds=b. Không gửi status: bài Draft của phóng viên vẫn lên cổng.
             var endpoint = $"{_apiBaseUrl}/api/news{BuildQueryString(query)}";
 
             _logger.LogInformation($"Fetching news from: {endpoint}");
@@ -77,6 +77,31 @@ public class NewsService : INewsService
         {
             _logger.LogError($"Error fetching news by ID: {ex.Message}");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Tăng lượt xem khi người đọc mở trang chi tiết. GET /api/news/{id} không tự cộng.
+    /// </summary>
+    public async Task<int?> IncrementViewCountAsync(Guid id)
+    {
+        try
+        {
+            var endpoint = $"{_apiBaseUrl}/api/news/{id}/view";
+            var response = await _apiClient.PostAsync<ApiResponse<int>>(endpoint);
+
+            if (response?.IsSuccess == true)
+            {
+                return response.Value?.Data;
+            }
+
+            _logger.LogWarning("Could not increment view count for {NewsId}: {Message}", id, response?.Value?.Message);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not increment view count for {NewsId}", id);
+            return null;
         }
     }
 

@@ -17,7 +17,7 @@
         <div class="composer-heading">
             <h1 class="admin-page-title">@pageTitle</h1>
             <div class="composer-status-row">
-                <span class="admin-badge">@(Model.StatusLabel ?? "Bản nháp")</span>
+                <span class="admin-badge">@(Model.StatusLabel ?? NewsStatuses.PostedLabel)</span>
                 <span class="composer-saved">Lưu gần nhất: @(string.IsNullOrWhiteSpace(Model.LastSavedLabel) ? "Chưa lưu" : Model.LastSavedLabel)</span>
             </div>
         </div>

@@ -6,4 +6,5 @@ public interface INewsService
 {
     Task<List<NewsDto>> GetAllNewsAsync(NewsQueryDto? query = null);
     Task<NewsDto> GetNewsByIdAsync(Guid id);
+    Task<int?> IncrementViewCountAsync(Guid id);
 }

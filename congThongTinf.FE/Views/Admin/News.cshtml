@@ -22,22 +22,14 @@
     <div class="admin-alert-error" role="alert">@Model.LoadError</div>
 }
 
-<p class="admin-form-status">Quản trị viên xem mọi bài, kể cả bản nháp. Viết, sửa và xóa bài do phóng viên thực hiện trên bài của mình. Hệ thống chưa có chức năng duyệt xuất bản.</p>
+<p class="admin-form-status">Phóng viên đăng bài là bài hiện ngay trên cổng thông tin, không cần duyệt. Viết, sửa và xóa bài do phóng viên thực hiện trên bài của mình.</p>
 
 @if (string.IsNullOrWhiteSpace(Model.LoadError))
 {
     <section class="admin-stat-grid" aria-label="@(Model.StatusCountsFromCurrentPage ? "Số bài theo trạng thái trên trang hiện tại" : "Số bài theo trạng thái")">
         <div class="admin-stat-card">
-            <p class="admin-stat-label">Bản nháp</p>
-            <p class="admin-stat-value">@Model.DraftCount</p>
-        </div>
-        <div class="admin-stat-card">
-            <p class="admin-stat-label">Chờ duyệt</p>
-            <p class="admin-stat-value">@Model.PendingCount</p>
-        </div>
-        <div class="admin-stat-card">
-            <p class="admin-stat-label">Đã xuất bản</p>
-            <p class="admin-stat-value">@Model.PublishedCount</p>
+            <p class="admin-stat-label">Đã đăng</p>
+            <p class="admin-stat-value">@Model.PostedCount</p>
         </div>
         <div class="admin-stat-card">
             <p class="admin-stat-label">Lưu trữ</p>
