@@ -85,6 +85,14 @@ builder.Services.AddHttpClient<IAdminUserService, AdminUserService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+builder.Services.AddHttpClient<IDashboardService, DashboardService>(client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Register Services
 builder.Services.AddScoped<INewsService, NewsService>();
 

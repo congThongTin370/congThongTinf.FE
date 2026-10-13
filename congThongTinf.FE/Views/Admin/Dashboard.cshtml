@@ -1,42 +1,344 @@
+@model AdminDashboardViewModel
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Bảng điều khiển";
+    var data = Model.Data;
+
+    string FileSizeText(long bytes)
+    {
+        if (bytes >= 1024L * 1024 * 1024)
+        {
+            return $"{bytes / (1024d * 1024 * 1024):0.#} GB";
+        }
+
+        if (bytes >= 1024L * 1024)
+        {
+            return $"{bytes / (1024d * 1024):0.#} MB";
+        }
+
+        if (bytes >= 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return $"{bytes} B";
+    }
+
+    // Biểu đồ cột nhóm: mỗi ngày có 2 cột (tạo / xuất bản). Vẽ SVG thuần, không cần thư viện.
+    string ColumnChartSvg(IList<DashboardNewsByDay> days)
+    {
+        const int width = 720, height = 220, padLeft = 36, padBottom = 28, padTop = 12;
+        var plotH = height - padBottom - padTop;
+        var plotW = width - padLeft - 8;
+        var max = Math.Max(1, days.Count == 0 ? 1 : days.Max(d => Math.Max(d.Created, d.Published)));
+        var slot = days.Count == 0 ? plotW : (double)plotW / days.Count;
+        var barW = Math.Max(2, Math.Min(18, slot * 0.36));
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<svg class=\"chart-svg\" viewBox=\"0 0 {width} {height}\" role=\"img\" aria-label=\"Biểu đồ tin tức theo ngày\">");
+        // trục ngang + 4 mốc lưới
+        for (int i = 0; i <= 4; i++)
+        {
+            var y = padTop + plotH - (plotH * i / 4.0);
+            var val = (int)Math.Round(max * i / 4.0);
+            sb.Append($"<line class=\"chart-axis\" x1=\"{padLeft}\" x2=\"{width - 8}\" y1=\"{y:0.##}\" y2=\"{y:0.##}\"/>");
+            sb.Append($"<text x=\"{padLeft - 6}\" y=\"{y + 4:0.##}\" text-anchor=\"end\">{val}</text>");
+        }
+        for (int i = 0; i < days.Count; i++)
+        {
+            var d = days[i];
+            var cx = padLeft + slot * i + slot / 2;
+            var hC = plotH * d.Created / (double)max;
+            var hP = plotH * d.Published / (double)max;
+            sb.Append($"<rect class=\"chart-bar-created\" x=\"{cx - barW - 1:0.##}\" y=\"{padTop + plotH - hC:0.##}\" width=\"{barW:0.##}\" height=\"{hC:0.##}\"><title>{d.Date:dd/MM}: tạo {d.Created}</title></rect>");
+            sb.Append($"<rect class=\"chart-bar-published\" x=\"{cx + 1:0.##}\" y=\"{padTop + plotH - hP:0.##}\" width=\"{barW:0.##}\" height=\"{hP:0.##}\"><title>{d.Date:dd/MM}: xuất bản {d.Published}</title></rect>");
+            // nhãn ngày: hiện thưa khi quá nhiều cột
+            var step = days.Count > 14 ? (int)Math.Ceiling(days.Count / 10.0) : 1;
+            if (i % step == 0)
+            {
+                sb.Append($"<text x=\"{cx:0.##}\" y=\"{height - 8}\" text-anchor=\"middle\">{d.Date:dd/MM}</text>");
+            }
+        }
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    // Donut: tỉ lệ trạng thái tin
+    string DonutSvg(IList<(string Label, int Value, string Color)> parts)
+    {
+        const double r = 40, c = 2 * Math.PI * r;
+        var total = parts.Sum(p => p.Value);
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<svg viewBox=\"0 0 100 100\" role=\"img\" aria-label=\"Tỉ lệ trạng thái tin\">");
+        sb.Append($"<circle cx=\"50\" cy=\"50\" r=\"{r}\" fill=\"none\" stroke=\"var(--color-surface-blue)\" stroke-width=\"16\"/>");
+        if (total > 0)
+        {
+            double offset = 0;
+            foreach (var p in parts)
+            {
+                if (p.Value == 0) continue;
+                var len = c * p.Value / total;
+                sb.Append($"<circle cx=\"50\" cy=\"50\" r=\"{r}\" fill=\"none\" stroke=\"{p.Color}\" stroke-width=\"16\" stroke-dasharray=\"{len:0.###} {c - len:0.###}\" stroke-dashoffset=\"{-offset:0.###}\" transform=\"rotate(-90 50 50)\"><title>{p.Label}: {p.Value}</title></circle>");
+                offset += len;
+            }
+        }
+        sb.Append($"<text x=\"50\" y=\"54\" text-anchor=\"middle\" style=\"font-size:14px;font-weight:600;fill:var(--color-dark)\">{total}</text>");
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    int MaxOf(IEnumerable<int> values)
+    {
+        var list = values.ToList();
+        return list.Count == 0 ? 1 : Math.Max(1, list.Max());
+    }
 }
 
-<h1 class="admin-page-title">Bảng điều khiển</h1>
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Bảng điều khiển</h1>
+</div>
 
-<section class="admin-stat-grid" aria-label="Thống kê tổng quan">
-    <div class="admin-stat-card">
-        <p class="admin-stat-label">Người dùng</p>
-        <p class="admin-stat-value">--</p>
-        <a class="admin-stat-link" asp-controller="Admin" asp-action="Users">Quản lý người dùng</a>
+<section class="admin-panel dashboard-filter-panel" aria-labelledby="dashboard-filter-title">
+    <div class="admin-panel-header">
+        <h2 id="dashboard-filter-title">Khoảng thời gian hoạt động</h2>
     </div>
-    <div class="admin-stat-card">
-        <p class="admin-stat-label">Tin tức</p>
-        <p class="admin-stat-value">--</p>
-    </div>
-    <div class="admin-stat-card">
-        <p class="admin-stat-label">Tài liệu</p>
-        <p class="admin-stat-value">--</p>
+    <div class="admin-panel-body">
+        <form method="get" asp-controller="Admin" asp-action="Dashboard" class="admin-dashboard-filter">
+            <div class="admin-form-field">
+                <label for="fromDate">Từ ngày</label>
+                <input id="fromDate" name="fromDate" type="date" class="form-control" value="@Model.FromDate.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="admin-form-field">
+                <label for="toDate">Đến ngày</label>
+                <input id="toDate" name="toDate" type="date" class="form-control" value="@Model.ToDate.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="admin-dashboard-filter-actions">
+                <button type="submit" class="btn btn-primary">Lọc dữ liệu</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Dashboard">30 ngày gần nhất</a>
+            </div>
+        </form>
+        <p class="admin-field-hint admin-dashboard-hint">Các chỉ số tổng số là toàn bộ dữ liệu; biểu đồ theo ngày được lọc theo khoảng đã chọn.</p>
     </div>
 </section>
 
-<div class="admin-panel-grid">
-    <section class="admin-panel" aria-labelledby="recent-activity-title">
-        <div class="admin-panel-header">
-            <h2 id="recent-activity-title">Hoạt động gần đây</h2>
-        </div>
-        <div class="admin-panel-body">
-            <p class="admin-empty">Chưa có dữ liệu hoạt động.</p>
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="admin-alert-error dashboard-error" role="alert">@Model.LoadError</div>
+}
+
+@if (data != null)
+{
+    <section aria-label="Tổng quan">
+        <div class="admin-stat-grid">
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Người dùng</p>
+                <p class="admin-stat-value">@data.Users.Total</p>
+                <a class="admin-stat-link" asp-controller="Admin" asp-action="Users">@data.Users.Active đang hoạt động · Quản lý</a>
+            </div>
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Tin tức</p>
+                <p class="admin-stat-value">@data.News.Total</p>
+                <a class="admin-stat-link" asp-controller="Admin" asp-action="News">@data.News.Published đã xuất bản · Quản lý</a>
+            </div>
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Tài liệu</p>
+                <p class="admin-stat-value">@data.Documents.Total</p>
+                <a class="admin-stat-link" asp-controller="Admin" asp-action="Documents">@(FileSizeText(data.Documents.TotalFileSize)) · Quản lý</a>
+            </div>
+            <div class="admin-stat-card">
+                <p class="admin-stat-label">Danh mục</p>
+                <p class="admin-stat-value">@data.Categories.Total</p>
+                <a class="admin-stat-link" asp-controller="Admin" asp-action="Categories">@data.Categories.Active đang hoạt động · Quản lý</a>
+            </div>
         </div>
     </section>
 
-    <section class="admin-panel" aria-labelledby="recent-news-title">
+    <section class="admin-panel admin-section-gap" aria-labelledby="news-by-day-title">
         <div class="admin-panel-header">
-            <h2 id="recent-news-title">Tin mới nhất</h2>
+            <h2 id="news-by-day-title">Hoạt động tin tức theo ngày</h2>
         </div>
-        <div class="admin-panel-body">
-            <p class="admin-empty">Chưa có tin tức để hiển thị.</p>
+        <div class="admin-panel-body chart-card">
+            <div class="chart-legend">
+                <span class="legend-created">Tin được tạo</span>
+                <span class="legend-published">Tin được xuất bản</span>
+            </div>
+            @if (data.NewsByDay.Count == 0)
+            {
+                <p class="admin-empty">Không có dữ liệu trong khoảng ngày này.</p>
+            }
+            else
+            {
+                @Html.Raw(ColumnChartSvg(data.NewsByDay.OrderBy(d => d.Date).ToList()))
+            }
         </div>
     </section>
-</div>
+
+    <div class="admin-panel-grid admin-section-gap">
+        <section class="admin-panel" aria-labelledby="news-status-title">
+            <div class="admin-panel-header">
+                <h2 id="news-status-title">Trạng thái tin tức</h2>
+            </div>
+            <div class="admin-panel-body chart-card">
+                @{
+                    var statusParts = new List<(string Label, int Value, string Color)>
+                    {
+                        ("Bản nháp", data.News.Draft, "var(--color-text-muted)"),
+                        ("Chờ duyệt", data.News.Pending, "var(--color-warning)"),
+                        ("Đã xuất bản", data.News.Published, "var(--color-success)"),
+                        ("Lưu trữ", data.News.Archived, "var(--color-primary-light)")
+                    };
+                }
+                <div class="donut-wrap">
+                    @Html.Raw(DonutSvg(statusParts))
+                    <ul class="donut-legend">
+                        @foreach (var part in statusParts)
+                        {
+                            <li><i style="background:@part.Color"></i>@part.Label: <strong>@part.Value</strong></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-panel" aria-labelledby="news-category-title">
+            <div class="admin-panel-header">
+                <h2 id="news-category-title">Tin theo danh mục</h2>
+            </div>
+            <div class="admin-panel-body chart-card">
+                @if (data.NewsByCategory.Count == 0)
+                {
+                    <p class="admin-empty">Chưa có số liệu theo danh mục.</p>
+                }
+                else
+                {
+                    var maxCat = MaxOf(data.NewsByCategory.Select(c => c.Count));
+                    <ul class="hbar-list">
+                        @foreach (var category in data.NewsByCategory.OrderByDescending(c => c.Count))
+                        {
+                            <li class="hbar-item">
+                                <div class="hbar-label">
+                                    <span>@(category.CategoryName ?? "Chưa phân loại")</span>
+                                    <strong>@category.Count</strong>
+                                </div>
+                                <div class="hbar-track"><div class="hbar-fill" style="width:@(category.Count * 100 / maxCat)%"></div></div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="admin-panel-grid admin-section-gap">
+        <section class="admin-panel" aria-labelledby="document-category-title">
+            <div class="admin-panel-header">
+                <h2 id="document-category-title">Tài liệu theo danh mục</h2>
+            </div>
+            <div class="admin-panel-body chart-card">
+                @if (data.Documents.ByCategory.Count == 0)
+                {
+                    <p class="admin-empty">Chưa có số liệu tài liệu.</p>
+                }
+                else
+                {
+                    var maxDoc = MaxOf(data.Documents.ByCategory.Select(c => c.Count));
+                    <ul class="hbar-list">
+                        @foreach (var category in data.Documents.ByCategory.OrderByDescending(c => c.Count))
+                        {
+                            <li class="hbar-item">
+                                <div class="hbar-label">
+                                    <span>@DocumentCategories.Label(category.Category)</span>
+                                    <strong>@category.Count</strong>
+                                </div>
+                                <div class="hbar-track"><div class="hbar-fill" style="width:@(category.Count * 100 / maxDoc)%"></div></div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+
+        <section class="admin-panel" aria-labelledby="pending-news-title">
+            <div class="admin-panel-header">
+                <h2 id="pending-news-title">Tin chờ duyệt</h2>
+            </div>
+            <div class="admin-panel-body">
+                @if (data.PendingNews.Count == 0)
+                {
+                    <p class="admin-empty">Không có tin đang chờ duyệt.</p>
+                }
+                else
+                {
+                    <ul class="admin-list">
+                        @foreach (var news in data.PendingNews)
+                        {
+                            <li>
+                                <div>
+                                    <a asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id">@news.Title</a>
+                                    <div class="admin-list-meta">@(news.AuthorName ?? "Chưa rõ tác giả") · @(news.CategoryName ?? "Chưa phân loại")</div>
+                                </div>
+                                <span class="admin-list-meta">@news.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="admin-panel-grid admin-section-gap">
+        <section class="admin-panel" aria-labelledby="top-news-title">
+            <div class="admin-panel-header">
+                <h2 id="top-news-title">Tin có lượt xem cao</h2>
+            </div>
+            <div class="admin-panel-body">
+                @if (data.TopViewedNews.Count == 0)
+                {
+                    <p class="admin-empty">Chưa có dữ liệu lượt xem.</p>
+                }
+                else
+                {
+                    var maxView = MaxOf(data.TopViewedNews.Select(n => n.ViewCount));
+                    <ul class="hbar-list">
+                        @foreach (var news in data.TopViewedNews)
+                        {
+                            <li class="hbar-item">
+                                <div class="hbar-label">
+                                    <a asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id">@news.Title</a>
+                                    <strong>@news.ViewCount</strong>
+                                </div>
+                                <div class="hbar-track"><div class="hbar-fill" style="width:@(news.ViewCount * 100 / maxView)%"></div></div>
+                            </li>
+                        }
+                    </ul>
+                    <p class="admin-field-hint">Số lượt xem có thể chưa được cập nhật trong hệ thống.</p>
+                }
+            </div>
+        </section>
+
+        <section class="admin-panel" aria-labelledby="recent-documents-title">
+            <div class="admin-panel-header">
+                <h2 id="recent-documents-title">Tài liệu mới tải lên</h2>
+            </div>
+            <div class="admin-panel-body">
+                @if (data.RecentDocuments.Count == 0)
+                {
+                    <p class="admin-empty">Chưa có tài liệu.</p>
+                }
+                else
+                {
+                    <ul class="admin-list">
+                        @foreach (var document in data.RecentDocuments)
+                        {
+                            <li>
+                                <div>
+                                    <div>@document.Title</div>
+                                    <div class="admin-list-meta">@document.FileName · @DocumentCategories.Label(document.Category)</div>
+                                </div>
+                                <span class="admin-list-meta">@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+}

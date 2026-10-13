@@ -19,20 +19,24 @@ namespace congThongTinf.FE.Controllers
         private readonly ICategoryService _categoryService;
         private readonly INewsService _newsService;
         private readonly IAdminUserService _userService;
+        private readonly IDashboardService _dashboardService;
 
         public AdminController(
             IDocumentService documentService,
             ICategoryService categoryService,
             INewsService newsService,
-            IAdminUserService userService)
+            IAdminUserService userService,
+            IDashboardService dashboardService)
         {
             _documentService = documentService;
             _categoryService = categoryService;
             _newsService = newsService;
             _userService = userService;
+            _dashboardService = dashboardService;
         }
 
-        public IActionResult Dashboard()
+        [HttpGet]
+        public async Task<IActionResult> Dashboard(DateTime? fromDate, DateTime? toDate)
         {
             if (!IsAdmin())
             {
@@ -40,7 +44,34 @@ namespace congThongTinf.FE.Controllers
             }
 
             SetLayoutData("Dashboard", "Bảng điều khiển");
-            return View();
+
+            var today = DateTime.UtcNow.Date;
+            var model = new AdminDashboardViewModel
+            {
+                FromDate = fromDate?.Date ?? today.AddDays(-29),
+                ToDate = toDate?.Date ?? today
+            };
+
+            if (model.FromDate > model.ToDate)
+            {
+                model.LoadError = "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.";
+                return View(model);
+            }
+
+            var result = await _dashboardService.GetDashboardAsync(GetToken(), model.FromDate, model.ToDate);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (!result.Success)
+            {
+                model.LoadError = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+                return View(model);
+            }
+
+            model.Data = result.Data;
+            return View(model);
         }
 
         [HttpGet]
