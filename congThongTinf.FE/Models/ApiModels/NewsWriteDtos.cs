@@ -4,27 +4,15 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 namespace congThongTinf.FE.Models.ApiModels;
 
 /// <summary>
-/// Body gửi lên POST /api/news (tạo bài).
+/// Form gửi lên POST /api/news và PUT /api/news/{id} (multipart). Không gửi coverImageUrl.
 /// </summary>
-public class CreateNewsRequestDto
+public class NewsWriteRequestDto
 {
     public string Title { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
-    public string? CoverImageUrl { get; set; }
     public Guid CategoryId { get; set; }
-}
-
-/// <summary>
-/// Body gửi lên PUT /api/news/{id} (sửa bài). Field null hoặc không gửi thì backend giữ nguyên.
-/// </summary>
-public class UpdateNewsRequestDto
-{
-    public string? Title { get; set; }
-    public string? Summary { get; set; }
-    public string? Content { get; set; }
-    public string? CoverImageUrl { get; set; }
-    public Guid? CategoryId { get; set; }
+    public IFormFile? CoverImage { get; set; }
 }
 
 /// <summary>
@@ -47,17 +35,16 @@ public class NewsFormViewModel
     [Display(Name = "Nội dung")]
     public string Content { get; set; } = string.Empty;
 
-    [Url(ErrorMessage = "Ảnh đại diện không hợp lệ.")]
     [Display(Name = "Ảnh đại diện")]
     public string? CoverImageUrl { get; set; }
+
+    public IFormFile? CoverImage { get; set; }
 
     [Required(ErrorMessage = "Chọn chuyên mục cho bài viết.")]
     [Display(Name = "Chuyên mục")]
     public Guid? CategoryId { get; set; }
 
     public string? StatusLabel { get; set; }
-
-    public string? LastSavedLabel { get; set; }
 
     public string? CategoryName { get; set; }
 

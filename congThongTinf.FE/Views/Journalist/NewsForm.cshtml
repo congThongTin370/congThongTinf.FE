@@ -18,14 +18,12 @@
             <h1 class="admin-page-title">@pageTitle</h1>
             <div class="composer-status-row">
                 <span class="admin-badge">@(Model.StatusLabel ?? NewsStatuses.PostedLabel)</span>
-                <span class="composer-saved">Lưu gần nhất: @(string.IsNullOrWhiteSpace(Model.LastSavedLabel) ? "Chưa lưu" : Model.LastSavedLabel)</span>
             </div>
         </div>
     </header>
 
-    <form asp-controller="Journalist" asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" class="composer-form" id="news-composer-form">
+    <form asp-controller="Journalist" asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="composer-form" id="news-composer-form">
         <input type="hidden" asp-for="StatusLabel" />
-        <input type="hidden" asp-for="LastSavedLabel" />
         <input type="hidden" asp-for="CategoryName" />
 
         <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
@@ -62,8 +60,10 @@
                                 <button type="button" class="btn btn-outline-secondary btn-sm" data-cover-upload>Tải ảnh lên</button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm" data-cover-library>Chọn từ thư viện</button>
                                 <input asp-for="CoverImageUrl" type="hidden" data-cover-url />
-                                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-cover-file />
+                                <input asp-for="CoverImage" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif" hidden data-cover-file />
                             </div>
+                            <span asp-validation-for="CoverImage" class="field-validation-error"></span>
+                            <p class="admin-field-hint">@(isEdit ? "Chọn ảnh mới để thay ảnh bìa. Không chọn thì giữ ảnh hiện tại." : "Ảnh jpg, jpeg, png, webp hoặc gif, tối đa 10 MB.")</p>
                         </div>
                     </div>
 
@@ -177,13 +177,9 @@
         </div>
 
         <div class="composer-actions">
-            @if (isEdit)
-            {
-                <button type="submit" class="btn btn-outline-secondary">Lưu thay đổi</button>
-            }
             <div class="composer-actions-end">
                 <button type="button" class="btn btn-outline-secondary" data-preview-open data-preview-url="@Url.Action("PreviewContent", "Journalist")">Xem trước</button>
-                <button type="submit" class="btn btn-primary" asp-controller="Journalist" asp-action="Create">Đăng bài</button>
+                <button type="submit" class="btn btn-primary">@(isEdit ? "Cập nhật bài" : "Đăng bài")</button>
             </div>
         </div>
 
@@ -214,6 +210,7 @@
                     <article class="composer-preview" data-preview-article>
                         <p class="composer-preview-kicker" data-preview-kicker></p>
                         <h3 class="composer-preview-title" data-preview-title>Chưa có tiêu đề</h3>
+                        <p class="composer-preview-summary" data-preview-summary hidden></p>
                         <figure class="composer-preview-cover" data-preview-figure hidden>
                             <img alt="" data-preview-image />
                         </figure>

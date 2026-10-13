@@ -124,14 +124,22 @@
 
     if (previewOpen) {
         previewOpen.addEventListener('click', function () {
+            var editorHost = form.querySelector('[data-rich-editor]');
+            if (editorHost && typeof editorHost.syncContent === 'function') {
+                editorHost.syncContent();
+            }
+
             var title = titleInput && titleInput.value.trim() ? titleInput.value.trim() : 'Chưa có tiêu đề';
             var category = selectedText('[name="CategoryId"]');
             var type = selectedText('[data-news-type]');
             var kicker = [category, type].filter(Boolean).join(' · ');
+            var summaryInput = form.querySelector('[name="Summary"]');
+            var summary = summaryInput ? summaryInput.value.trim() : '';
             var text = contentEditor ? contentEditor.value.trim() : '';
 
             var kickerEl = form.querySelector('[data-preview-kicker]');
             var titleEl = form.querySelector('[data-preview-title]');
+            var summaryEl = form.querySelector('[data-preview-summary]');
             var figure = form.querySelector('[data-preview-figure]');
             var image = form.querySelector('[data-preview-image]');
             var body = form.querySelector('[data-preview-body]');
@@ -142,6 +150,10 @@
             }
             if (titleEl) {
                 titleEl.textContent = title;
+            }
+            if (summaryEl) {
+                summaryEl.textContent = summary;
+                summaryEl.hidden = !summary;
             }
 
             var src = localPreviewUrl || (coverUrl && coverUrl.value.trim());

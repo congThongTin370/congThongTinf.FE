@@ -57,14 +57,14 @@ public class JournalistNewsService : IJournalistNewsService
         }
     }
 
-    public Task<NewsWriteResult> CreateAsync(string accessToken, CreateNewsRequestDto request)
+    public Task<NewsWriteResult> CreateAsync(string accessToken, NewsWriteRequestDto request)
     {
-        return SendAsync(HttpMethod.Post, "api/news", accessToken, request);
+        return SendMultipartAsync(HttpMethod.Post, "api/news", accessToken, request);
     }
 
-    public Task<NewsWriteResult> UpdateAsync(string accessToken, Guid id, UpdateNewsRequestDto request)
+    public Task<NewsWriteResult> UpdateAsync(string accessToken, Guid id, NewsWriteRequestDto request)
     {
-        return SendAsync(HttpMethod.Put, $"api/news/{id}", accessToken, request);
+        return SendMultipartAsync(HttpMethod.Put, $"api/news/{id}", accessToken, request);
     }
 
     public async Task<NewsWriteResult> DeleteAsync(string accessToken, Guid id)
@@ -90,25 +90,50 @@ public class JournalistNewsService : IJournalistNewsService
         }
     }
 
-    private async Task<NewsWriteResult> SendAsync<TBody>(HttpMethod method, string url, string accessToken, TBody payload)
+    private async Task<NewsWriteResult> SendMultipartAsync(
+        HttpMethod method,
+        string url,
+        string accessToken,
+        NewsWriteRequestDto payload)
     {
         try
         {
-            using var request = new HttpRequestMessage(method, url)
-            {
-                Content = JsonContent.Create(payload)
-            };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(payload.Title.Trim()), "title");
+            content.Add(new StringContent(payload.Content ?? string.Empty), "content");
+            content.Add(new StringContent(payload.Summary?.Trim() ?? string.Empty), "summary");
+            content.Add(new StringContent(payload.CategoryId.ToString()), "categoryId");
 
-            using var response = await _httpClient.SendAsync(request);
-            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<NewsDto>>();
-
-            if (!response.IsSuccessStatusCode || body?.IsSuccess != true || body.Value?.Data == null)
+            Stream? fileStream = null;
+            try
             {
-                return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+                if (payload.CoverImage is { Length: > 0 })
+                {
+                    fileStream = payload.CoverImage.OpenReadStream();
+                    var fileContent = new StreamContent(fileStream);
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                        string.IsNullOrWhiteSpace(payload.CoverImage.ContentType)
+                            ? "application/octet-stream"
+                            : payload.CoverImage.ContentType);
+                    content.Add(fileContent, "coverImage", payload.CoverImage.FileName);
+                }
+
+                using var request = new HttpRequestMessage(method, url) { Content = content };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                using var response = await _httpClient.SendAsync(request);
+                var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<NewsDto>>();
+                if (!response.IsSuccessStatusCode || body?.IsSuccess != true || body.Value?.Data == null)
+                {
+                    return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+                }
+
+                return new NewsWriteResult { Success = true, Data = body.Value.Data };
             }
-
-            return new NewsWriteResult { Success = true, Data = body.Value.Data };
+            finally
+            {
+                fileStream?.Dispose();
+            }
         }
         catch (Exception ex)
         {

@@ -73,6 +73,16 @@ public static class UserFacingErrors
             return "Không tìm thấy bài viết này.";
         }
 
+        if (Contains(text, "10 MB", "exceeds"))
+        {
+            return "Ảnh bìa không được lớn hơn 10 MB.";
+        }
+
+        if (Contains(text, "phải là", "jpg", "png", "webp", "gif") && Contains(text, "ảnh", "file"))
+        {
+            return "Ảnh bìa phải là jpg, jpeg, png, webp hoặc gif.";
+        }
+
         if (Contains(text, "bắt buộc", "tiêu đề", "nội dung"))
         {
             return "Vui lòng nhập đủ tiêu đề, nội dung và chuyên mục.";

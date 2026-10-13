@@ -9,6 +9,11 @@ namespace congThongTinf.FE.Controllers
     public class JournalistController : Controller
     {
         private const string JournalistRole = "Journalist";
+        private const long MaxCoverBytes = 10 * 1024 * 1024;
+        private static readonly HashSet<string> CoverExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg", ".jpeg", ".png", ".webp", ".gif"
+        };
 
         private readonly IJournalistNewsService _newsService;
         private readonly IMeService _meService;
@@ -70,6 +75,7 @@ namespace congThongTinf.FE.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(12 * 1024 * 1024)]
         public async Task<IActionResult> Create(NewsFormViewModel model)
         {
             if (!IsJournalist())
@@ -78,21 +84,14 @@ namespace congThongTinf.FE.Controllers
             }
 
             SetLayoutData("Articles", "Tạo bài viết mới");
+            ValidateCoverImage(model.CoverImage);
             if (!ModelState.IsValid)
             {
                 await PrepareNewsFormAsync(model);
                 return View("NewsForm", model);
             }
 
-            var request = new CreateNewsRequestDto
-            {
-                Title = model.Title,
-                Summary = model.Summary ?? string.Empty,
-                Content = model.Content,
-                CoverImageUrl = string.IsNullOrWhiteSpace(model.CoverImageUrl) ? null : model.CoverImageUrl,
-                CategoryId = model.CategoryId!.Value
-            };
-
+            var request = ToWriteRequest(model);
             var result = await _newsService.CreateAsync(GetToken(), request);
             if (!result.Success)
             {
@@ -135,8 +134,7 @@ namespace congThongTinf.FE.Controllers
                 CoverImageUrl = news.CoverImageUrl,
                 CategoryId = news.CategoryId,
                 CategoryName = news.CategoryName,
-                StatusLabel = NewsStatuses.Label(news.Status),
-                LastSavedLabel = news.UpdatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
+                StatusLabel = NewsStatuses.Label(news.Status)
             };
             await PrepareNewsFormAsync(model);
             return View("NewsForm", model);
@@ -144,6 +142,7 @@ namespace congThongTinf.FE.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(12 * 1024 * 1024)]
         public async Task<IActionResult> Edit(Guid id, NewsFormViewModel model)
         {
             if (!IsJournalist())
@@ -153,21 +152,14 @@ namespace congThongTinf.FE.Controllers
 
             SetLayoutData("Articles", "Sửa bài viết");
             model.Id = id;
+            ValidateCoverImage(model.CoverImage);
             if (!ModelState.IsValid)
             {
                 await PrepareNewsFormAsync(model);
                 return View("NewsForm", model);
             }
 
-            var request = new UpdateNewsRequestDto
-            {
-                Title = model.Title,
-                Summary = model.Summary,
-                Content = model.Content,
-                CoverImageUrl = string.IsNullOrWhiteSpace(model.CoverImageUrl) ? null : model.CoverImageUrl,
-                CategoryId = model.CategoryId
-            };
-
+            var request = ToWriteRequest(model);
             var result = await _newsService.UpdateAsync(GetToken(), id, request);
             if (!result.Success)
             {
@@ -267,6 +259,35 @@ namespace congThongTinf.FE.Controllers
             return Guid.TryParse(HttpContext.Session.GetString(AccountController.SessionUserId), out var id)
                 ? id
                 : Guid.Empty;
+        }
+
+        private static NewsWriteRequestDto ToWriteRequest(NewsFormViewModel model) => new()
+        {
+            Title = model.Title,
+            Summary = model.Summary ?? string.Empty,
+            Content = model.Content,
+            CategoryId = model.CategoryId!.Value,
+            CoverImage = model.CoverImage
+        };
+
+        private void ValidateCoverImage(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return;
+            }
+
+            if (file.Length > MaxCoverBytes)
+            {
+                ModelState.AddModelError(nameof(NewsFormViewModel.CoverImage), "Ảnh bìa không được lớn hơn 10 MB.");
+                return;
+            }
+
+            var extension = Path.GetExtension(file.FileName);
+            if (string.IsNullOrWhiteSpace(extension) || !CoverExtensions.Contains(extension))
+            {
+                ModelState.AddModelError(nameof(NewsFormViewModel.CoverImage), "Ảnh bìa phải là jpg, jpeg, png, webp hoặc gif.");
+            }
         }
 
         private async Task PrepareNewsFormAsync(NewsFormViewModel model)

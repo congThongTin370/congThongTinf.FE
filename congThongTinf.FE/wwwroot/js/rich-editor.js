@@ -180,6 +180,12 @@
         return blocks.join('\n\n');
     }
 
+    function syncHidden() {
+        hidden.value = htmlToMarkdown();
+    }
+
+    host.syncContent = syncHidden;
+
     // ---------- Chèn ảnh tại vị trí con trỏ ----------
     function focusSurface() {
         surface.focus();
@@ -338,8 +344,6 @@
     surface.innerHTML = markdownToHtml(hidden.value);
 
     if (form) {
-        form.addEventListener('submit', function () {
-            hidden.value = htmlToMarkdown();
-        });
+        form.addEventListener('submit', syncHidden);
     }
 })();
