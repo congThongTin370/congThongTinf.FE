@@ -45,7 +45,7 @@ public class AdminUserService : IAdminUserService
                 };
             }
 
-            var body = await ReadEnvelopeAsync<List<UserDto>>(response);
+            var body = await ReadEnvelopeAsync<PagedData<UserDto>>(response);
             if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
             {
                 return new AdminUserListResult
@@ -58,7 +58,7 @@ public class AdminUserService : IAdminUserService
             return new AdminUserListResult
             {
                 Success = true,
-                Items = body.Value?.Data ?? new List<UserDto>()
+                Items = body.Value?.Data?.Items ?? new List<UserDto>()
             };
         }
         catch (Exception ex)

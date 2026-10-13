@@ -31,12 +31,13 @@ public class NewsService : INewsService
 
             _logger.LogInformation($"Fetching news from: {endpoint}");
 
-            var response = await _apiClient.GetAsync<ApiResponse<List<NewsDto>>>(endpoint);
+            var response = await _apiClient.GetAsync<ApiResponse<PagedData<NewsDto>>>(endpoint);
 
             if (response?.IsSuccess == true && response.Value?.Data != null)
             {
-                _logger.LogInformation($"Successfully fetched {response.Value.Data.Count} news items");
-                return response.Value.Data;
+                var items = response.Value.Data.Items;
+                _logger.LogInformation($"Successfully fetched {items.Count} news items");
+                return items;
             }
             else
             {

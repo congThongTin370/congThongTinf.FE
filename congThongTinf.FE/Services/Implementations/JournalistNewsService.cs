@@ -23,14 +23,14 @@ public class JournalistNewsService : IJournalistNewsService
         {
             // Backend chưa lọc theo tác giả: lấy tất cả rồi lọc theo authorId
             using var response = await _httpClient.GetAsync("api/news?pageIndex=0");
-            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<List<NewsDto>>>();
+            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<PagedData<NewsDto>>>();
 
             if (body?.IsSuccess != true || body.Value?.Data == null)
             {
                 return new List<NewsDto>();
             }
 
-            return body.Value.Data
+            return body.Value.Data.Items
                 .Where(n => n.AuthorId == authorId)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToList();

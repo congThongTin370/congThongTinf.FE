@@ -26,19 +26,19 @@ public class DocumentService : IDocumentService
         {
             var url = BuildListUrl(query);
             using var response = await _httpClient.GetAsync(url);
-            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<List<DocumentDto>>>();
+            var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<PagedData<DocumentDto>>>();
 
             if (body?.IsSuccess != true || body.Value?.Data == null)
             {
                 return new List<DocumentDto>();
             }
 
-            foreach (var document in body.Value.Data)
+            foreach (var document in body.Value.Data.Items)
             {
                 SetBrowserDownloadUrl(document);
             }
 
-            return body.Value.Data;
+            return body.Value.Data.Items;
         }
         catch (Exception ex)
         {

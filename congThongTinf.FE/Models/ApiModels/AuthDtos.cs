@@ -49,6 +49,17 @@ public class BackendValue<T>
     public T? Data { get; set; }
 }
 
+public class PagedData<T>
+{
+    public List<T> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int CurrentPage { get; set; }
+    public int TotalPages { get; set; }
+    public int PageSize { get; set; }
+    public bool HasPrevious { get; set; }
+    public bool HasNext { get; set; }
+}
+
 public class BackendError
 {
     public string? Code { get; set; }
