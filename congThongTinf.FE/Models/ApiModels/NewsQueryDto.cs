@@ -11,4 +11,7 @@ public class NewsQueryDto
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
     public List<Guid>? CategoryIds { get; set; }
+
+    /// <summary>Lọc title chứa chuỗi, không phân biệt hoa thường.</summary>
+    public string? Search { get; set; }
 }

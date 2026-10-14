@@ -130,6 +130,9 @@ public class NewsService : INewsService
         if (query.CategoryIds != null)
             parts.AddRange(query.CategoryIds.Select(id => $"categoryIds={id}"));
 
+        if (!string.IsNullOrWhiteSpace(query.Search))
+            parts.Add($"search={Uri.EscapeDataString(query.Search.Trim())}");
+
         return "?" + string.Join("&", parts);
     }
 }

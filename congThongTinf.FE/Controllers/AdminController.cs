@@ -374,18 +374,19 @@ namespace congThongTinf.FE.Controllers
                 return View(model);
             }
 
-            // API chỉ phân trang theo ngày tạo và chuyên mục, không lọc Draft. Từ khóa/trạng thái lọc thêm phía FE.
-            var filterOnClient = status.HasValue || !string.IsNullOrWhiteSpace(search);
+            // API lọc tiêu đề qua search. Trạng thái không có trên query nên vẫn lọc phía FE.
+            var filterStatusOnClient = status.HasValue;
             List<NewsDto> news;
             try
             {
                 news = await _newsService.GetAllNewsAsync(new NewsQueryDto
                 {
-                    PageIndex = filterOnClient ? 0 : pageIndex,
-                    PageSize = filterOnClient ? null : pageSize,
+                    PageIndex = filterStatusOnClient ? 0 : pageIndex,
+                    PageSize = filterStatusOnClient ? null : pageSize,
                     FromDate = fromDate,
                     ToDate = toDate,
-                    CategoryIds = categoryId.HasValue ? new List<Guid> { categoryId.Value } : null
+                    CategoryIds = categoryId.HasValue ? new List<Guid> { categoryId.Value } : null,
+                    Search = string.IsNullOrWhiteSpace(search) ? null : search.Trim()
                 });
             }
             catch (Exception)
@@ -394,24 +395,11 @@ namespace congThongTinf.FE.Controllers
                 return View(model);
             }
 
-            if (filterOnClient)
+            if (filterStatusOnClient)
             {
-                IEnumerable<NewsDto> filtered = news;
-                if (status.HasValue)
-                {
-                    filtered = filtered.Where(item => NewsStatuses.MatchesFilter(item.Status, status.Value));
-                }
-
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    var term = search.Trim();
-                    filtered = filtered.Where(item =>
-                        Contains(item.Title, term) ||
-                        Contains(item.Summary, term) ||
-                        Contains(item.AuthorName, term));
-                }
-
-                var matched = filtered.ToList();
+                var matched = news
+                    .Where(item => NewsStatuses.MatchesFilter(item.Status, status!.Value))
+                    .ToList();
                 SetStatusCounts(model, matched);
                 model.Items = matched.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
                 model.HasNext = pageIndex * pageSize < matched.Count;
@@ -1059,11 +1047,6 @@ namespace congThongTinf.FE.Controllers
         {
             HttpContext.Session.Clear();
             return RedirectToAction("Login", "Account");
-        }
-
-        private static bool Contains(string? text, string term)
-        {
-            return !string.IsNullOrEmpty(text) && text.Contains(term, StringComparison.OrdinalIgnoreCase);
         }
 
         private static void SetStatusCounts(AdminNewsListViewModel model, List<NewsDto> news)

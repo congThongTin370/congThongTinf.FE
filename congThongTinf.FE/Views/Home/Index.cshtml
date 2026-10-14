@@ -1,9 +1,97 @@
 @model List<congThongTinf.FE.Models.ApiModels.NewsDto>
 
 @{
-    ViewData["Title"] = "Tin tức";
+    var newsSearch = ViewData["NewsSearch"] as string;
+    var isSearch = !string.IsNullOrWhiteSpace(newsSearch);
+    ViewData["Title"] = isSearch ? "Tìm kiếm" : "Tin tức";
+    var leaders = new[]
+    {
+        new { Name = "Nguyễn Văn A", Position = "Sư đoàn trưởng" },
+        new { Name = "Nguyễn Văn B", Position = "Chính ủy" },
+        new { Name = "Nguyễn Văn C", Position = "Phó Sư đoàn trưởng" },
+        new { Name = "Nguyễn Văn D", Position = "Phó Chính ủy" },
+        new { Name = "Nguyễn Văn E", Position = "Tham mưu trưởng" },
+        new { Name = "Nguyễn Văn F", Position = "Chủ nhiệm Chính trị" }
+    };
 }
 
+@if (isSearch)
+{
+    <section class="search-results" aria-labelledby="search-results-title">
+        <header class="search-results-header">
+            <h1 id="search-results-title" class="search-results-title">Kết quả tìm kiếm</h1>
+            <form class="search-results-form" method="get" asp-controller="Home" asp-action="Index" role="search">
+                <label class="visually-hidden" for="result-search">Tiêu đề</label>
+                <input id="result-search" name="search" type="search" value="@newsSearch" placeholder="Tìm theo tiêu đề tin" />
+                <button class="btn btn-primary" type="submit">Tìm</button>
+            </form>
+            <p class="search-results-count">
+                @if (Model == null || Model.Count == 0)
+                {
+                    <span>Không có bài nào có tiêu đề chứa “@newsSearch”.</span>
+                }
+                else if (Model.Count == 1)
+                {
+                    <span>1 bài có tiêu đề chứa “@newsSearch”.</span>
+                }
+                else
+                {
+                    <span>@Model.Count bài có tiêu đề chứa “@newsSearch”.</span>
+                }
+            </p>
+        </header>
+
+        @if (Model == null || Model.Count == 0)
+        {
+            <p class="category-empty">Thử từ khóa khác, hoặc xem lại toàn bộ tin tức.</p>
+            <p class="search-results-back"><a asp-controller="Home" asp-action="Index">Về trang tin tức</a></p>
+        }
+        else
+        {
+            <ul class="category-items">
+                @foreach (var news in Model)
+                {
+                    <li class="category-item">
+                        <a class="category-item-media" asp-controller="News" asp-action="Details" asp-route-id="@news.Id">
+                            @if (!string.IsNullOrEmpty(news.CoverImageUrl))
+                            {
+                                <img src="@news.CoverImageUrl" alt="@news.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="category-item-placeholder" aria-hidden="true"></span>
+                            }
+                        </a>
+                        <div class="category-item-body">
+                            <h2 class="category-item-title">
+                                <a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a>
+                            </h2>
+                            @if (!string.IsNullOrEmpty(news.Summary))
+                            {
+                                <p class="category-item-summary">@news.Summary</p>
+                            }
+                            <p class="category-item-meta">
+                                @if (!string.IsNullOrEmpty(news.CategoryName))
+                                {
+                                    <span>@news.CategoryName</span>
+                                    <span aria-hidden="true">·</span>
+                                }
+                                @if (!string.IsNullOrEmpty(news.AuthorName))
+                                {
+                                    <span>@news.AuthorName</span>
+                                    <span aria-hidden="true">·</span>
+                                }
+                                <time datetime="@news.CreatedAt.ToString("o")">@news.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+                            </p>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+else
+{
 <div class="home-layout">
     @if (ViewData["CategoryFilterActive"] is true)
     {
@@ -140,17 +228,6 @@
 @await Component.InvokeAsync("BannerSlot", new { position = 1 })
 
 <!-- Lãnh đạo đơn vị: 6 slot ảnh. Thay ảnh/tên/chức vụ tại đây khi có dữ liệu -->
-@{
-    var leaders = new[]
-    {
-        new { Name = "Nguyễn Văn A", Position = "Sư đoàn trưởng" },
-        new { Name = "Nguyễn Văn B", Position = "Chính ủy" },
-        new { Name = "Nguyễn Văn C", Position = "Phó Sư đoàn trưởng" },
-        new { Name = "Nguyễn Văn D", Position = "Phó Chính ủy" },
-        new { Name = "Nguyễn Văn E", Position = "Tham mưu trưởng" },
-        new { Name = "Nguyễn Văn F", Position = "Chủ nhiệm Chính trị" }
-    };
-}
 <section class="home-leaders" aria-labelledby="leaders-title">
     <h2 id="leaders-title" class="home-leaders-title">
         <span class="home-leaders-star" aria-hidden="true">&#9733;</span>
@@ -169,3 +246,4 @@
         }
     </ul>
 </section>
+}

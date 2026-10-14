@@ -452,10 +452,12 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   | `fromDate` | date/datetime, optional | — | Lọc `CreatedAt >=` đầu ngày |
   | `toDate` | date/datetime, optional | — | Lọc `CreatedAt <` ngày kế tiếp, tức gồm cả ngày `toDate` |
   | `categoryIds` | Guid lặp lại, optional | — | `?categoryIds={guid}&categoryIds={guid}` |
+  | `search` | string, optional | — | Lọc `title` chứa chuỗi, không phân biệt hoa thường |
+  | `sortBy` | number, optional | `0` | `0` = `CreatedAt` giảm dần. `1` = `ViewCount` giảm dần, cùng lượt xem thì `CreatedAt` giảm dần. Giá trị khác: HTTP `400`, `Cách sắp xếp không hợp lệ.` |
 
   `fromDate` lớn hơn `toDate` (so theo ngày): HTTP `400`, message `Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.`
 
-  Danh sách sort `CreatedAt` giảm dần. Trả mọi status, kể cả Draft và Pending.
+  Mặc định sort `CreatedAt` giảm dần. Trả mọi status, kể cả Draft và Pending. Tin nhiều view: `GET /api/news?sortBy=1`.
 
   `value.data` là object phân trang: `items` (mảng `NewsDto` của trang), `totalCount` (tổng số bản ghi sau filter), `currentPage`, `totalPages`, `pageSize`, `hasPrevious`, `hasNext`.
 

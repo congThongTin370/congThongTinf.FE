@@ -50,7 +50,7 @@
         <form method="get" asp-controller="Admin" asp-action="News" class="admin-filter-grid">
             <div class="admin-form-field">
                 <label for="search">Từ khóa</label>
-                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tiêu đề, tóm tắt hoặc tác giả" />
+                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tìm theo tiêu đề" />
             </div>
             <div class="admin-form-field">
                 <label for="categoryId">Chuyên mục</label>
@@ -99,7 +99,7 @@
                 <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="News">Xóa lọc</a>
             </div>
         </form>
-        <p class="admin-field-hint admin-filter-note">Ngày tạo và chuyên mục lọc theo từng trang trên hệ thống. Từ khóa và trạng thái lọc trên toàn bộ kết quả khớp ngày và chuyên mục.</p>
+        <p class="admin-field-hint admin-filter-note">Từ khóa tìm theo tiêu đề, không phân biệt hoa thường. Trạng thái lọc thêm trên kết quả đã khớp ngày, chuyên mục và tiêu đề.</p>
     </div>
 </section>
 

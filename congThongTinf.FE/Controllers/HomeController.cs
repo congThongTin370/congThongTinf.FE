@@ -28,14 +28,23 @@ namespace congThongTinf.FE.Controllers
             _documentService = documentService;
         }
 
-        public async Task<IActionResult> Index(string? categoryIds)
+        public async Task<IActionResult> Index(string? categoryIds, string? search)
         {
             try
             {
                 var categoryFilter = ParseCategoryIds(categoryIds);
+                var term = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+                ViewData["NewsSearch"] = term;
                 _logger.LogInformation("Loading news for home page");
                 var newsList = await _newsService.GetAllNewsAsync(
-                    categoryFilter == null ? null : new NewsQueryDto { CategoryIds = categoryFilter });
+                    categoryFilter == null && term == null
+                        ? null
+                        : new NewsQueryDto
+                        {
+                            PageIndex = 0,
+                            CategoryIds = categoryFilter,
+                            Search = term
+                        });
 
                 _logger.LogInformation($"Fetched {newsList.Count} news items");
                 
