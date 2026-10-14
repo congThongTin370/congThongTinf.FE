@@ -298,6 +298,39 @@ public static class UserFacingErrors
         return TryAgain;
     }
 
+    public static string ForLeaders(int statusCode, string? code, string? message)
+    {
+        var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;
+        var text = message ?? string.Empty;
+
+        if (status == "401")
+        {
+            return SessionExpired;
+        }
+
+        if (status == "403")
+        {
+            return NoPermission;
+        }
+
+        if (status == "404")
+        {
+            return "Không tìm thấy thủ trưởng này.";
+        }
+
+        if (status == "400" && !string.IsNullOrWhiteSpace(text) && !Contains(text, "exception", "stack"))
+        {
+            return text;
+        }
+
+        if (status == "400")
+        {
+            return "Thông tin thủ trưởng chưa đúng. Vui lòng kiểm tra lại.";
+        }
+
+        return TryAgain;
+    }
+
     public static string ForBanners(int statusCode, string? code, string? message)
     {
         var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;

@@ -1,0 +1,84 @@
+@model LeaderListViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Thủ trưởng sư đoàn</h1>
+    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateLeader">Thêm thủ trưởng</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="admin-alert" role="status">@message</div>
+}
+
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert-error" role="alert">@error</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="admin-alert-error" role="alert">@Model.LoadError</div>
+}
+
+<p class="admin-form-status">Danh sách hiển thị trên dải lãnh đạo trang chủ, sắp theo thứ tự rồi đến họ tên. Ảnh là đường dẫn URL. Để trống ảnh thì trang chủ hiện chữ cái đầu tên.</p>
+
+<section class="admin-panel" aria-labelledby="leader-list-title">
+    <div class="admin-panel-header">
+        <h2 id="leader-list-title">Danh sách thủ trưởng</h2>
+    </div>
+    <div class="admin-panel-body admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th scope="col">Thủ trưởng</th>
+                    <th scope="col">Chức vụ</th>
+                    <th scope="col">Thứ tự</th>
+                    <th scope="col">Cập nhật</th>
+                    <th scope="col" class="admin-table-actions">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="admin-table-empty">Chưa có thủ trưởng.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var leader in Model.Items)
+                    {
+                        var initial = string.IsNullOrWhiteSpace(leader.FullName) ? "?" : leader.FullName.Trim()[0].ToString();
+                        <tr>
+                            <td>
+                                <div class="admin-leader-cell">
+                                    @if (!string.IsNullOrWhiteSpace(leader.ImageUrl))
+                                    {
+                                        <img class="admin-leader-photo" src="@leader.ImageUrl" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-leader-photo admin-leader-photo-empty" aria-hidden="true">@initial</span>
+                                    }
+                                    <div>
+                                        <strong>@leader.Rank @leader.FullName</strong>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@leader.Position</td>
+                            <td>@leader.DisplayOrder</td>
+                            <td>@leader.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="admin-table-actions">
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditLeader" asp-route-id="@leader.Id">Sửa</a>
+                                <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteLeader" asp-route-id="@leader.Id">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

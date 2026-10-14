@@ -1,0 +1,31 @@
+@model List<LeaderDto>
+
+<section class="home-leaders" aria-labelledby="leaders-title">
+    <h2 id="leaders-title" class="home-leaders-title">
+        <span class="home-leaders-star" aria-hidden="true">&#9733;</span>
+        Lãnh đạo đơn vị
+    </h2>
+    <ul class="home-leaders-grid">
+        @foreach (var leader in Model)
+        {
+            var initial = string.IsNullOrWhiteSpace(leader.FullName) ? "?" : leader.FullName.Trim()[0].ToString();
+            <li class="home-leader-card">
+                <div class="home-leader-photo">
+                    @if (!string.IsNullOrWhiteSpace(leader.ImageUrl))
+                    {
+                        <img src="@leader.ImageUrl" alt="@leader.FullName" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="home-leader-placeholder" aria-hidden="true">@initial</span>
+                    }
+                </div>
+                <div class="home-leader-body">
+                    <p class="home-leader-rank">@leader.Rank</p>
+                    <p class="home-leader-name">@leader.FullName</p>
+                    <p class="home-leader-position">@leader.Position</p>
+                </div>
+            </li>
+        }
+    </ul>
+</section>

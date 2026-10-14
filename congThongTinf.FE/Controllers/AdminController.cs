@@ -26,6 +26,7 @@ namespace congThongTinf.FE.Controllers
         private readonly IAdminUserService _userService;
         private readonly IDashboardService _dashboardService;
         private readonly IBannerService _bannerService;
+        private readonly ILeaderService _leaderService;
 
         public AdminController(
             IDocumentService documentService,
@@ -33,7 +34,8 @@ namespace congThongTinf.FE.Controllers
             INewsService newsService,
             IAdminUserService userService,
             IDashboardService dashboardService,
-            IBannerService bannerService)
+            IBannerService bannerService,
+            ILeaderService leaderService)
         {
             _documentService = documentService;
             _categoryService = categoryService;
@@ -41,6 +43,7 @@ namespace congThongTinf.FE.Controllers
             _userService = userService;
             _dashboardService = dashboardService;
             _bannerService = bannerService;
+            _leaderService = leaderService;
         }
 
         [HttpGet]
@@ -926,6 +929,185 @@ namespace congThongTinf.FE.Controllers
             }
 
             return RedirectToAction(nameof(Banners));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Leaders()
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Leaders", "Thủ trưởng sư đoàn");
+            var result = await _leaderService.GetLeadersAsync();
+            return View(new LeaderListViewModel
+            {
+                Items = result.Items,
+                LoadError = result.Success ? null : result.ErrorMessage ?? UserFacingErrors.TryAgain
+            });
+        }
+
+        [HttpGet]
+        public IActionResult CreateLeader()
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Leaders", "Thêm thủ trưởng");
+            return View("LeaderForm", new LeaderFormViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateLeader(LeaderFormViewModel model)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Leaders", "Thêm thủ trưởng");
+            NormalizeLeader(model);
+            if (!ModelState.IsValid)
+            {
+                return View("LeaderForm", model);
+            }
+
+            var result = await _leaderService.CreateAsync(GetToken(), model);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? UserFacingErrors.TryAgain);
+                return View("LeaderForm", model);
+            }
+
+            TempData["Message"] = "Đã thêm thủ trưởng.";
+            return RedirectToAction(nameof(Leaders));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditLeader(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Leaders", "Sửa thủ trưởng");
+            var result = await _leaderService.GetByIdAsync(id);
+            if (!result.Success || result.Data == null)
+            {
+                TempData["Error"] = result.ErrorMessage ?? "Không tìm thấy thủ trưởng này.";
+                return RedirectToAction(nameof(Leaders));
+            }
+
+            var leader = result.Data;
+            return View("LeaderForm", new LeaderFormViewModel
+            {
+                Id = leader.Id,
+                FullName = leader.FullName,
+                Position = leader.Position,
+                Rank = leader.Rank,
+                ImageUrl = leader.ImageUrl,
+                DisplayOrder = leader.DisplayOrder
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditLeader(Guid id, LeaderFormViewModel model)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Leaders", "Sửa thủ trưởng");
+            model.Id = id;
+            NormalizeLeader(model);
+            if (!ModelState.IsValid)
+            {
+                return View("LeaderForm", model);
+            }
+
+            var result = await _leaderService.UpdateAsync(GetToken(), id, model);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? UserFacingErrors.TryAgain);
+                return View("LeaderForm", model);
+            }
+
+            TempData["Message"] = "Đã cập nhật thủ trưởng.";
+            return RedirectToAction(nameof(Leaders));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteLeader(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Leaders", "Xác nhận xóa thủ trưởng");
+            var result = await _leaderService.GetByIdAsync(id);
+            if (!result.Success || result.Data == null)
+            {
+                TempData["Error"] = result.ErrorMessage ?? "Không tìm thấy thủ trưởng này.";
+                return RedirectToAction(nameof(Leaders));
+            }
+
+            return View(result.Data);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("DeleteLeader")]
+        public async Task<IActionResult> DeleteLeaderConfirmed(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var result = await _leaderService.DeleteAsync(GetToken(), id);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (result.Success)
+            {
+                TempData["Message"] = "Đã xóa thủ trưởng.";
+            }
+            else
+            {
+                TempData["Error"] = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+            }
+
+            return RedirectToAction(nameof(Leaders));
+        }
+
+        private void NormalizeLeader(LeaderFormViewModel model)
+        {
+            model.FullName = model.FullName?.Trim() ?? string.Empty;
+            model.Position = model.Position?.Trim() ?? string.Empty;
+            model.Rank = model.Rank?.Trim() ?? string.Empty;
+            model.ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl) ? null : model.ImageUrl.Trim();
+            ModelState.Clear();
+            TryValidateModel(model);
         }
 
         private void ValidateUpload(DocumentUploadViewModel model)

@@ -1,0 +1,71 @@
+@model LeaderFormViewModel
+@{
+    Layout = "_AdminLayout";
+    var heading = Model.IsEdit ? "Sửa thủ trưởng" : "Thêm thủ trưởng";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@heading</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="Leaders">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="leader-form-title">
+    <div class="admin-panel-header">
+        <h2 id="leader-form-title">Thông tin thủ trưởng</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditLeader" : "CreateLeader")" asp-route-id="@Model.Id" method="post" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="admin-form-field">
+                <label asp-for="FullName"></label>
+                <input asp-for="FullName" class="form-control" maxlength="256" />
+                <span asp-validation-for="FullName" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Rank"></label>
+                <input asp-for="Rank" class="form-control" maxlength="100" />
+                <span class="admin-field-hint">Ví dụ: Đại tá.</span>
+                <span asp-validation-for="Rank" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Position"></label>
+                <input asp-for="Position" class="form-control" maxlength="200" />
+                <span class="admin-field-hint">Ví dụ: Sư đoàn trưởng, Chính ủy.</span>
+                <span asp-validation-for="Position" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="ImageUrl"></label>
+                <input asp-for="ImageUrl" class="form-control" maxlength="1000" />
+                <span class="admin-field-hint">Dán URL ảnh. Để trống nếu chưa có ảnh. Khi sửa, xóa URL sẽ gỡ ảnh đang hiện.</span>
+                <span asp-validation-for="ImageUrl" class="field-validation-error"></span>
+            </div>
+
+            @if (Model.IsEdit && !string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <div class="admin-form-field">
+                    <img class="admin-leader-preview" src="@Model.ImageUrl" alt="Ảnh hiện tại" />
+                </div>
+            }
+
+            <div class="admin-form-field">
+                <label asp-for="DisplayOrder"></label>
+                <input asp-for="DisplayOrder" class="form-control" type="number" />
+                <span class="admin-field-hint">Số nhỏ hơn được xếp trước trên trang chủ.</span>
+                <span asp-validation-for="DisplayOrder" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">@(Model.IsEdit ? "Lưu thay đổi" : "Thêm thủ trưởng")</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Leaders">Hủy</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
