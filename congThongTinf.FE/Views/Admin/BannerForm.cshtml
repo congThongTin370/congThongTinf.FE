@@ -1,0 +1,73 @@
+@model BannerFormViewModel
+@{
+    Layout = "_AdminLayout";
+    var heading = Model.IsEdit ? "Sửa banner" : "Tải banner";
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@heading</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="Banners">Quay lại danh sách</a>
+</div>
+
+<section class="admin-panel" aria-labelledby="banner-form-title">
+    <div class="admin-panel-header">
+        <h2 id="banner-form-title">Thông tin banner</h2>
+    </div>
+    <div class="admin-panel-body">
+        @if (Model.IsEdit)
+        {
+            <p class="admin-form-status">Để trống tệp nếu giữ ảnh hiện tại. Tiêu đề không được để trống. Ảnh mới thay ảnh của banner này, tối đa 10 MB. Banner đang hiện trên trang chủ không đổi cho đến khi chọn lại ở danh sách.</p>
+        }
+        else
+        {
+            <p class="admin-form-status">Tải lên thêm banner vào kho, không thay banner đang hiện trên trang chủ. Ảnh jpg, jpeg, png, webp hoặc gif, tối đa 10 MB. Để trống tiêu đề sẽ lấy tên tệp.</p>
+        }
+
+        <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditBanner" : "CreateBanner")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+            <input type="hidden" asp-for="CurrentImageUrl" />
+            <input type="hidden" asp-for="CurrentFileName" />
+
+            @if (Model.IsEdit && !string.IsNullOrWhiteSpace(Model.CurrentImageUrl))
+            {
+                <div class="admin-form-field">
+                    <span class="admin-field-label">Ảnh hiện tại</span>
+                    <img class="admin-banner-preview" src="@Model.CurrentImageUrl" alt="@(string.IsNullOrWhiteSpace(Model.Title) ? "Banner hiện tại" : Model.Title)" />
+                    @if (!string.IsNullOrWhiteSpace(Model.CurrentFileName))
+                    {
+                        <span class="admin-field-hint">@Model.CurrentFileName</span>
+                    }
+                </div>
+            }
+
+            <div class="admin-form-field">
+                <label asp-for="File"></label>
+                <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif" />
+                <span class="admin-field-hint">Định dạng: jpg, jpeg, png, webp, gif. Tối đa 10 MB.</span>
+                <span asp-validation-for="File" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="Title"></label>
+                <input asp-for="Title" class="form-control" placeholder="@(Model.IsEdit ? "" : "Để trống sẽ lấy tên tệp")" />
+                <span asp-validation-for="Title" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="DisplayOrder"></label>
+                <input asp-for="DisplayOrder" class="form-control" type="number" />
+                <span class="admin-field-hint">Số nhỏ hơn được xếp trước.</span>
+                <span asp-validation-for="DisplayOrder" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">@(Model.IsEdit ? "Lưu thay đổi" : "Tải lên")</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Banners">Hủy</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

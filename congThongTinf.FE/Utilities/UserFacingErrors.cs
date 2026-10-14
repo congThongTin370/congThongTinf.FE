@@ -298,6 +298,59 @@ public static class UserFacingErrors
         return TryAgain;
     }
 
+    public static string ForBanners(int statusCode, string? code, string? message)
+    {
+        var status = string.IsNullOrWhiteSpace(code) ? statusCode.ToString() : code;
+        var text = message ?? string.Empty;
+
+        if (status == "401")
+        {
+            return SessionExpired;
+        }
+
+        if (status == "403")
+        {
+            return NoPermission;
+        }
+
+        if (Contains(text, "10 MB", "10MB", "exceeds"))
+        {
+            return "Ảnh banner không được lớn hơn 10 MB.";
+        }
+
+        if (Contains(text, "jpg", "jpeg", "png", "webp", "gif", "phải là ảnh"))
+        {
+            return "Banner phải là ảnh jpg, jpeg, png, webp hoặc gif.";
+        }
+
+        if (Contains(text, "tiêu đề"))
+        {
+            return "Tiêu đề banner là bắt buộc.";
+        }
+
+        if (Contains(text, "bắt buộc", "file"))
+        {
+            return "Vui lòng chọn ảnh banner.";
+        }
+
+        if (status == "400")
+        {
+            return "Thông tin banner chưa đúng. Vui lòng kiểm tra lại.";
+        }
+
+        if (status == "404" && Contains(text, "banner"))
+        {
+            return "Không tìm thấy banner này.";
+        }
+
+        if (status == "404")
+        {
+            return "Không xác định được tài khoản. Vui lòng đăng nhập lại.";
+        }
+
+        return TryAgain;
+    }
+
     private static bool Contains(string text, params string[] parts)
     {
         foreach (var part in parts)

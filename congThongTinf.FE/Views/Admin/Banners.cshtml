@@ -1,0 +1,159 @@
+@model BannerListViewModel
+@{
+    Layout = "_AdminLayout";
+
+    string FileSizeText(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+        {
+            return $"{bytes / (1024d * 1024d):0.#} MB";
+        }
+
+        if (bytes >= 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return $"{bytes} B";
+    }
+}
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Quản lý banner</h1>
+    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateBanner">Tải banner</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="admin-alert" role="status">@message</div>
+}
+
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert-error" role="alert">@error</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="admin-alert-error" role="alert">@Model.LoadError</div>
+}
+
+<p class="admin-form-status">Danh sách gồm mọi banner đã tải lên kho. Tải lên chỉ thêm ảnh mới. Chọn một banner để hiện trên trang chủ; các banner khác sẽ được ẩn.</p>
+
+<section class="admin-panel" aria-labelledby="banner-filter-title">
+    <div class="admin-panel-header">
+        <h2 id="banner-filter-title">Tìm kiếm</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form method="get" asp-controller="Admin" asp-action="Banners" class="admin-filter-grid">
+            <div class="admin-form-field">
+                <label for="search">Tiêu đề</label>
+                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tìm theo tiêu đề" />
+            </div>
+            <div class="admin-form-field">
+                <label for="isActive">Trạng thái</label>
+                <select id="isActive" name="isActive" class="form-select">
+                    <option value="">Tất cả</option>
+                    @if (Model.IsActive == true)
+                    {
+                        <option value="true" selected>Trang chủ</option>
+                    }
+                    else
+                    {
+                        <option value="true">Trang chủ</option>
+                    }
+                    @if (Model.IsActive == false)
+                    {
+                        <option value="false" selected>Trong kho</option>
+                    }
+                    else
+                    {
+                        <option value="false">Trong kho</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Banners">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="admin-panel admin-section-gap" aria-labelledby="banner-list-title">
+    <div class="admin-panel-header">
+        <h2 id="banner-list-title">Danh sách banner</h2>
+    </div>
+    <div class="admin-panel-body admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th scope="col">Ảnh</th>
+                    <th scope="col">Tiêu đề</th>
+                    <th scope="col">Thứ tự</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Dung lượng</th>
+                    <th scope="col">Ngày tải</th>
+                    <th scope="col" class="admin-table-actions">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="admin-table-empty">Chưa có banner phù hợp.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var banner in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(banner.ImageUrl))
+                                {
+                                    <img class="admin-banner-thumb" src="@banner.ImageUrl" alt="" />
+                                }
+                                else
+                                {
+                                    <span class="admin-table-sub">Không có ảnh</span>
+                                }
+                            </td>
+                            <td>
+                                <strong>@(string.IsNullOrWhiteSpace(banner.Title) ? banner.FileName : banner.Title)</strong>
+                                @if (!string.IsNullOrWhiteSpace(banner.FileName))
+                                {
+                                    <div class="admin-table-sub">@banner.FileName</div>
+                                }
+                            </td>
+                            <td>@banner.DisplayOrder</td>
+                            <td>
+                                @if (banner.IsActive)
+                                {
+                                    <span class="admin-badge admin-badge-success">Trang chủ</span>
+                                }
+                                else
+                                {
+                                    <span class="admin-badge admin-badge-muted">Trong kho</span>
+                                }
+                            </td>
+                            <td>@FileSizeText(banner.FileSize)</td>
+                            <td>@banner.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="admin-table-actions">
+                                @if (!banner.IsActive)
+                                {
+                                    <form class="admin-inline-form" asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post">
+                                        <button type="submit" class="btn btn-primary btn-sm">Hiện trên trang chủ</button>
+                                    </form>
+                                }
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditBanner" asp-route-id="@banner.Id">Sửa</a>
+                                <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteBanner" asp-route-id="@banner.Id">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+

@@ -318,6 +318,17 @@ a:hover {
     object-fit: cover;
 }
 
+.home-banner-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+
+.home-banner-track img {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+}
+
 .home-banner-placeholder {
     display: flex;
     align-items: center;

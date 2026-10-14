@@ -15,24 +15,32 @@ namespace congThongTinf.FE.Controllers
             ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt"
         };
 
+        private static readonly HashSet<string> AllowedBannerExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg", ".jpeg", ".png", ".webp", ".gif"
+        };
+
         private readonly IDocumentService _documentService;
         private readonly ICategoryService _categoryService;
         private readonly INewsService _newsService;
         private readonly IAdminUserService _userService;
         private readonly IDashboardService _dashboardService;
+        private readonly IBannerService _bannerService;
 
         public AdminController(
             IDocumentService documentService,
             ICategoryService categoryService,
             INewsService newsService,
             IAdminUserService userService,
-            IDashboardService dashboardService)
+            IDashboardService dashboardService,
+            IBannerService bannerService)
         {
             _documentService = documentService;
             _categoryService = categoryService;
             _newsService = newsService;
             _userService = userService;
             _dashboardService = dashboardService;
+            _bannerService = bannerService;
         }
 
         [HttpGet]
@@ -685,6 +693,247 @@ namespace congThongTinf.FE.Controllers
             return RedirectToAction(nameof(Users));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Banners(string? search, bool? isActive)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Banners", "Quản lý banner");
+
+            var model = new BannerListViewModel
+            {
+                Search = search,
+                IsActive = isActive,
+                PageIndex = 0,
+                PageSize = 10
+            };
+
+            var result = await _bannerService.GetBannersAsync(GetToken(), new BannerQuery
+            {
+                PageIndex = 0,
+                PageSize = 10,
+                Search = search,
+                IsActive = isActive
+            });
+
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (!result.Success)
+            {
+                model.LoadError = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+                return View(model);
+            }
+
+            model.Items = result.Items;
+            model.TotalCount = result.TotalCount;
+            model.HasPrevious = result.HasPrevious;
+            model.HasNext = result.HasNext;
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetBannerActive(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var result = await _bannerService.SetActiveAsync(GetToken(), id);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (result.Success)
+            {
+                TempData["Message"] = "Đã chọn banner này cho trang chủ.";
+            }
+            else
+            {
+                TempData["Error"] = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+            }
+
+            return RedirectToAction(nameof(Banners));
+        }
+
+        [HttpGet]
+        public IActionResult CreateBanner()
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Banners", "Tải banner");
+            return View("BannerForm", new BannerFormViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(11 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
+        public async Task<IActionResult> CreateBanner(BannerFormViewModel model)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Banners", "Tải banner");
+            ValidateBanner(model, requireFile: true);
+            if (!ModelState.IsValid)
+            {
+                return View("BannerForm", model);
+            }
+
+            var result = await _bannerService.CreateAsync(GetToken(), model);
+            var failed = HandleBannerWrite(result);
+            if (failed != null)
+            {
+                return failed;
+            }
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? UserFacingErrors.TryAgain);
+                return View("BannerForm", model);
+            }
+
+            TempData["Message"] = "Đã tải banner lên cổng thông tin.";
+            return RedirectToAction(nameof(Banners));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditBanner(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Banners", "Sửa banner");
+            var result = await _bannerService.GetByIdAsync(GetToken(), id);
+            var failed = HandleBannerWrite(result, redirectToList: true);
+            if (failed != null)
+            {
+                return failed;
+            }
+
+            if (!result.Success || result.Data == null)
+            {
+                TempData["Error"] = result.ErrorMessage ?? "Không tìm thấy banner này.";
+                return RedirectToAction(nameof(Banners));
+            }
+
+            var banner = result.Data;
+            return View("BannerForm", new BannerFormViewModel
+            {
+                Id = banner.Id,
+                Title = banner.Title,
+                DisplayOrder = banner.DisplayOrder,
+                IsActive = banner.IsActive,
+                CurrentImageUrl = banner.ImageUrl,
+                CurrentFileName = banner.FileName
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(11 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
+        public async Task<IActionResult> EditBanner(Guid id, BannerFormViewModel model)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Banners", "Sửa banner");
+            model.Id = id;
+            ValidateBanner(model, requireFile: false);
+            if (!ModelState.IsValid)
+            {
+                return View("BannerForm", model);
+            }
+
+            var result = await _bannerService.UpdateAsync(GetToken(), id, model);
+            var failed = HandleBannerWrite(result);
+            if (failed != null)
+            {
+                return failed;
+            }
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? UserFacingErrors.TryAgain);
+                return View("BannerForm", model);
+            }
+
+            TempData["Message"] = "Đã cập nhật banner.";
+            return RedirectToAction(nameof(Banners));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteBanner(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            SetLayoutData("Banners", "Xác nhận xóa banner");
+            var result = await _bannerService.GetByIdAsync(GetToken(), id);
+            var failed = HandleBannerWrite(result, redirectToList: true);
+            if (failed != null)
+            {
+                return failed;
+            }
+
+            if (!result.Success || result.Data == null)
+            {
+                TempData["Error"] = result.ErrorMessage ?? "Không tìm thấy banner này.";
+                return RedirectToAction(nameof(Banners));
+            }
+
+            return View(result.Data);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("DeleteBanner")]
+        public async Task<IActionResult> DeleteBannerConfirmed(Guid id)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var result = await _bannerService.DeleteAsync(GetToken(), id);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (result.Success)
+            {
+                TempData["Message"] = "Đã xóa banner.";
+            }
+            else
+            {
+                TempData["Error"] = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+            }
+
+            return RedirectToAction(nameof(Banners));
+        }
+
         private void ValidateUpload(DocumentUploadViewModel model)
         {
             if (model.File == null || model.File.Length == 0)
@@ -708,6 +957,50 @@ namespace congThongTinf.FE.Controllers
             {
                 ModelState.AddModelError(nameof(model.Category), "Danh mục tài liệu chưa đúng. Vui lòng chọn lại.");
             }
+        }
+
+        private void ValidateBanner(BannerFormViewModel model, bool requireFile)
+        {
+            var hasFile = model.File != null && model.File.Length > 0;
+            if (requireFile && !hasFile)
+            {
+                ModelState.AddModelError(nameof(model.File), "Chọn ảnh banner.");
+            }
+
+            if (hasFile && model.File != null)
+            {
+                if (model.File.Length > MaxUploadBytes)
+                {
+                    ModelState.AddModelError(nameof(model.File), "Ảnh banner không được lớn hơn 10 MB.");
+                }
+
+                var extension = Path.GetExtension(model.File.FileName);
+                if (!AllowedBannerExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(nameof(model.File), "Banner phải là ảnh jpg, jpeg, png, webp hoặc gif.");
+                }
+            }
+
+            if (!requireFile && string.IsNullOrWhiteSpace(model.Title))
+            {
+                ModelState.AddModelError(nameof(model.Title), "Tiêu đề banner là bắt buộc.");
+            }
+        }
+
+        private IActionResult? HandleBannerWrite(BannerWriteResult result, bool redirectToList = false)
+        {
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (redirectToList && !result.Success)
+            {
+                TempData["Error"] = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+                return RedirectToAction(nameof(Banners));
+            }
+
+            return null;
         }
 
         private void ValidateUserForm(UserFormViewModel model, bool requirePassword)
