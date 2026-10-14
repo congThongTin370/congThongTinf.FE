@@ -8,18 +8,7 @@
     var headerActive = ActiveOf(BannerPositions.Header);
     var midActive = ActiveOf(BannerPositions.HomeMid);
     var selected = Model.Position;
-    var pool = selected.HasValue
-        ? Model.Items.Where(item => item.Position == selected.Value).ToList()
-        : new List<BannerDto>();
-
-    if (selected.HasValue && !string.IsNullOrWhiteSpace(Model.Search))
-    {
-        var term = Model.Search.Trim();
-        pool = pool.Where(item =>
-                (item.Title ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase)
-                || (item.FileName ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
+    var zones = new[] { BannerPositions.Header, BannerPositions.HomeMid };
 }
 
 <div class="admin-page-header">
@@ -46,12 +35,10 @@
 <section class="banner-map" aria-labelledby="banner-map-title">
     <h2 id="banner-map-title" class="banner-map-title">Trang cổng thông tin</h2>
     <div class="banner-map-sheet">
-        <a class="banner-zone banner-zone-header @(selected == BannerPositions.Header ? "is-selected" : null)"
-           asp-controller="Admin"
-           asp-action="Banners"
-           asp-route-position="@(selected == BannerPositions.Header ? null : BannerPositions.Header)"
-           asp-route-search="@Model.Search"
-           aria-current="@(selected == BannerPositions.Header ? "true" : null)">
+        <button type="button"
+                class="banner-zone banner-zone-header @(selected == BannerPositions.Header ? "is-selected" : null)"
+                data-banner-zone="@BannerPositions.Header"
+                aria-pressed="@(selected == BannerPositions.Header ? "true" : "false")">
             <span class="banner-zone-tag">Header</span>
             @if (headerActive != null)
             {
@@ -62,7 +49,7 @@
             {
                 <span class="banner-zone-empty">Trống · bấm để gắn</span>
             }
-        </a>
+        </button>
 
         <div class="banner-map-nav" aria-hidden="true">
             <span></span><span></span><span></span><span></span>
@@ -78,12 +65,10 @@
             </div>
         </div>
 
-        <a class="banner-zone banner-zone-mid @(selected == BannerPositions.HomeMid ? "is-selected" : null)"
-           asp-controller="Admin"
-           asp-action="Banners"
-           asp-route-position="@(selected == BannerPositions.HomeMid ? null : BannerPositions.HomeMid)"
-           asp-route-search="@Model.Search"
-           aria-current="@(selected == BannerPositions.HomeMid ? "true" : null)">
+        <button type="button"
+                class="banner-zone banner-zone-mid @(selected == BannerPositions.HomeMid ? "is-selected" : null)"
+                data-banner-zone="@BannerPositions.HomeMid"
+                aria-pressed="@(selected == BannerPositions.HomeMid ? "true" : "false")">
             <span class="banner-zone-tag">Dải giữa</span>
             @if (midActive != null)
             {
@@ -94,7 +79,7 @@
             {
                 <span class="banner-zone-empty">Trống · bấm để gắn</span>
             }
-        </a>
+        </button>
 
         <div class="banner-map-leaders" aria-hidden="true">
             <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -107,21 +92,23 @@
     </ul>
 </section>
 
-@if (selected.HasValue)
+<p class="banner-map-hint" data-banner-hint @(selected.HasValue ? "hidden" : null)>Chọn ô Header hoặc Dải giữa trên sơ đồ.</p>
+
+@foreach (var position in zones)
 {
-    var zoneName = BannerPositions.Label(selected.Value);
-    <section class="admin-panel admin-section-gap" aria-labelledby="banner-pool-title">
+    var zoneName = BannerPositions.Label(position);
+    var pool = Model.Items.Where(item => item.Position == position).ToList();
+    var isOpen = selected == position;
+    <section class="admin-panel admin-section-gap" data-banner-pool="@position" aria-labelledby="banner-pool-@position" @(isOpen ? null : "hidden")>
         <div class="admin-panel-header banner-pool-header">
-            <h2 id="banner-pool-title">Ảnh cho @zoneName</h2>
-            <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateBanner" asp-route-position="@selected">Tải ảnh vào ô này</a>
+            <h2 id="banner-pool-@position">Ảnh cho @zoneName</h2>
+            <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateBanner" asp-route-position="@position">Tải ảnh vào ô này</a>
         </div>
         <div class="admin-panel-body">
-            <form method="get" asp-controller="Admin" asp-action="Banners" class="banner-pool-search">
-                <input type="hidden" name="position" value="@selected" />
-                <label class="visually-hidden" for="search">Tìm ảnh</label>
-                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tìm theo tiêu đề" />
-                <button type="submit" class="btn btn-outline-secondary">Tìm</button>
-            </form>
+            <div class="banner-pool-search">
+                <label class="visually-hidden" for="search-@position">Tìm ảnh</label>
+                <input id="search-@position" class="form-control" data-banner-search="@position" placeholder="Tìm theo tiêu đề" />
+            </div>
 
             @if (pool.Count == 0)
             {
@@ -132,7 +119,8 @@
                 <ul class="banner-seat-grid">
                     @foreach (var banner in pool)
                     {
-                        <li class="banner-seat @(banner.IsActive ? "is-live" : null)">
+                        var title = string.IsNullOrWhiteSpace(banner.Title) ? banner.FileName : banner.Title;
+                        <li class="banner-seat @(banner.IsActive ? "is-live" : null)" data-title="@title">
                             @if (!string.IsNullOrWhiteSpace(banner.ImageUrl))
                             {
                                 <img src="@banner.ImageUrl" alt="" />
@@ -142,7 +130,7 @@
                                 <div class="banner-seat-missing">Không có ảnh</div>
                             }
                             <div class="banner-seat-body">
-                                <strong>@(string.IsNullOrWhiteSpace(banner.Title) ? banner.FileName : banner.Title)</strong>
+                                <strong>@title</strong>
                                 @if (banner.IsActive)
                                 {
                                     <span class="admin-badge admin-badge-success">Đang gắn</span>
@@ -165,7 +153,7 @@
         </div>
     </section>
 }
-else
-{
-    <p class="banner-map-hint">Chọn ô Header hoặc Dải giữa trên sơ đồ.</p>
+
+@section Scripts {
+    <script src="~/js/banner-map.js" asp-append-version="true"></script>
 }

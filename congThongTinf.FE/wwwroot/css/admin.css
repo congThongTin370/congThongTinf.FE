@@ -1340,7 +1340,12 @@
     box-shadow: var(--admin-shadow);
 }
 
-.banner-zone {
+button.banner-zone {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1351,14 +1356,52 @@
     overflow: hidden;
     border: 2px dashed currentColor;
     border-radius: 10px;
-    color: inherit;
     text-align: center;
-    text-decoration: none;
 }
 
-.banner-zone:hover,
-.banner-zone.is-selected {
-    text-decoration: none;
+button.banner-zone-header {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+button.banner-zone-mid {
+    min-height: 5.4rem;
+    color: #047857;
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+}
+
+button.banner-zone-header.is-selected {
+    color: #fff;
+    background: #1d4ed8;
+    border-style: solid;
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.35);
+}
+
+button.banner-zone-mid.is-selected {
+    color: #fff;
+    background: #047857;
+    border-style: solid;
+    border-color: #065f46;
+    box-shadow: 0 0 0 4px rgba(4, 120, 87, 0.35);
+}
+
+button.banner-zone.is-selected .banner-zone-tag {
+    background: #fff;
+}
+
+button.banner-zone-header.is-selected .banner-zone-tag {
+    color: #1d4ed8;
+}
+
+button.banner-zone-mid.is-selected .banner-zone-tag {
+    color: #047857;
+}
+
+button.banner-zone.is-selected .banner-zone-empty {
+    color: #fff;
 }
 
 .banner-zone img {
@@ -1401,24 +1444,8 @@
     color: var(--color-text);
 }
 
-.banner-zone-header {
-    color: #1d4ed8;
-    background: #eff6ff;
-}
-
-.banner-zone-mid {
-    min-height: 5.4rem;
-    color: #047857;
-    background: #ecfdf5;
-}
-
 .banner-zone-mid img {
     height: 5.4rem;
-}
-
-.banner-zone.is-selected {
-    border-style: solid;
-    box-shadow: 0 0 0 3px currentColor;
 }
 
 .banner-map-nav,
