@@ -137,30 +137,7 @@
     </aside>
 </div>
 
-@{
-    var homeBanners = ViewData["HomeBanners"] as List<BannerDto> ?? new List<BannerDto>();
-}
-<section class="home-banner" aria-label="Thông điệp đơn vị">
-    @if (homeBanners.Count == 0)
-    {
-        <div class="home-banner-placeholder" role="img" aria-label="Banner đơn vị (chưa có ảnh)">
-            <span>Quyết tâm thực hiện thắng lợi Nghị quyết Đại hội XIV</span>
-        </div>
-    }
-    else if (homeBanners.Count == 1)
-    {
-        <img src="@homeBanners[0].ImageUrl" alt="@homeBanners[0].Title" />
-    }
-    else
-    {
-        <div class="home-banner-track">
-            @foreach (var banner in homeBanners)
-            {
-                <img src="@banner.ImageUrl" alt="@banner.Title" />
-            }
-        </div>
-    }
-</section>
+@await Component.InvokeAsync("BannerSlot", new { position = 1 })
 
 <!-- Lãnh đạo đơn vị: 6 slot ảnh. Thay ảnh/tên/chức vụ tại đây khi có dữ liệu -->
 @{

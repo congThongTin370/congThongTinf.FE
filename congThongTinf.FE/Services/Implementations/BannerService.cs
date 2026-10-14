@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -48,7 +47,7 @@ public class BannerService : IBannerService
                 return new BannerListResult
                 {
                     Success = false,
-                    ErrorMessage = UserFacingErrors.ForBanners((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message)
+                    ErrorMessage = BannerError(response.StatusCode, body?.Error?.Code, body?.Error?.Message)
                 };
             }
 
@@ -91,12 +90,12 @@ public class BannerService : IBannerService
 
     public Task<BannerWriteResult> CreateAsync(string accessToken, BannerFormViewModel model)
     {
-        return SendFormAsync(HttpMethod.Post, "api/admin/banners", accessToken, model, includeFile: true, isActive: false);
+        return SendFormAsync(HttpMethod.Post, "api/admin/banners", accessToken, model, includeFile: true);
     }
 
     public Task<BannerWriteResult> UpdateAsync(string accessToken, Guid id, BannerFormViewModel model)
     {
-        return SendFormAsync(HttpMethod.Put, $"api/admin/banners/{id}", accessToken, model, includeFile: model.File is { Length: > 0 }, isActive: null);
+        return SendFormAsync(HttpMethod.Put, $"api/admin/banners/{id}", accessToken, model, includeFile: model.File is { Length: > 0 });
     }
 
     public async Task<BannerWriteResult> SetActiveAsync(string accessToken, Guid id)
@@ -131,7 +130,7 @@ public class BannerService : IBannerService
             var body = await ReadEnvelopeAsync<bool>(response);
             if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
             {
-                return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+                return Failure(response.StatusCode, body?.Error?.Code, body?.Error?.Message);
             }
 
             return new BannerWriteResult { Success = true };
@@ -148,8 +147,7 @@ public class BannerService : IBannerService
         string url,
         string accessToken,
         BannerFormViewModel model,
-        bool includeFile,
-        bool? isActive)
+        bool includeFile)
     {
         Stream? fileStream = null;
         try
@@ -172,11 +170,9 @@ public class BannerService : IBannerService
                 content.Add(new StringContent(model.Title.Trim()), "title");
             }
 
-            content.Add(new StringContent(model.DisplayOrder.ToString(CultureInfo.InvariantCulture)), "displayOrder");
-            if (isActive.HasValue)
-            {
-                content.Add(new StringContent(isActive.Value ? "true" : "false"), "isActive");
-            }
+            content.Add(new StringContent(model.LinkUrl?.Trim() ?? string.Empty), "linkUrl");
+            content.Add(new StringContent(model.Position.ToString(System.Globalization.CultureInfo.InvariantCulture)), "position");
+            content.Add(new StringContent(model.IsActive ? "true" : "false"), "isActive");
 
             using var request = new HttpRequestMessage(method, url) { Content = content };
             ApplyBearer(request, accessToken);
@@ -207,7 +203,7 @@ public class BannerService : IBannerService
         var body = await ReadEnvelopeAsync<BannerDto>(response);
         if (!response.IsSuccessStatusCode || body?.IsSuccess != true || body.Value?.Data == null)
         {
-            return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+            return Failure(response.StatusCode, body?.Error?.Code, body?.Error?.Message);
         }
 
         return new BannerWriteResult { Success = true, Data = body.Value.Data };
@@ -237,6 +233,11 @@ public class BannerService : IBannerService
             parts.Add($"search={Uri.EscapeDataString(query.Search.Trim())}");
         }
 
+        if (query.Position.HasValue)
+        {
+            parts.Add($"position={query.Position.Value}");
+        }
+
         if (query.IsActive.HasValue)
         {
             parts.Add($"isActive={(query.IsActive.Value ? "true" : "false")}");
@@ -263,9 +264,15 @@ public class BannerService : IBannerService
         ErrorMessage = UserFacingErrors.SessionExpired
     };
 
-    private static BannerWriteResult Failure(int statusCode, string? code, string? message) => new()
+    private static string BannerError(HttpStatusCode statusCode, string? code, string? message) =>
+        UserFacingErrors.ForBanners((int)statusCode, code, message);
+
+    private static BannerWriteResult Failure(HttpStatusCode statusCode, string? code, string? message) => new()
     {
         Success = false,
-        ErrorMessage = UserFacingErrors.ForBanners(statusCode, code, message)
+        ErrorMessage = BannerError(statusCode, code, message)
     };
+
+    private static BannerWriteResult Failure(int statusCode, string? code, string? message) =>
+        Failure((HttpStatusCode)statusCode, code, message);
 }

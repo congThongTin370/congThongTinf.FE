@@ -694,7 +694,7 @@ namespace congThongTinf.FE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Banners(string? search, bool? isActive)
+        public async Task<IActionResult> Banners(string? search, int? position, bool? isActive)
         {
             if (!IsAdmin())
             {
@@ -702,10 +702,12 @@ namespace congThongTinf.FE.Controllers
             }
 
             SetLayoutData("Banners", "Quản lý banner");
+            var slot = position.HasValue && BannerPositions.IsValid(position.Value) ? position : null;
 
             var model = new BannerListViewModel
             {
                 Search = search,
+                Position = slot,
                 IsActive = isActive,
                 PageIndex = 0,
                 PageSize = 10
@@ -716,6 +718,7 @@ namespace congThongTinf.FE.Controllers
                 PageIndex = 0,
                 PageSize = 10,
                 Search = search,
+                Position = slot,
                 IsActive = isActive
             });
 
@@ -747,22 +750,6 @@ namespace congThongTinf.FE.Controllers
             }
 
             var result = await _bannerService.SetActiveAsync(GetToken(), id);
-            var fromSwitch = string.Equals(Request.Headers["X-Requested-With"], "fetch", StringComparison.OrdinalIgnoreCase);
-            if (fromSwitch)
-            {
-                if (result.SessionExpired)
-                {
-                    return Unauthorized(new { message = UserFacingErrors.SessionExpired });
-                }
-
-                if (!result.Success)
-                {
-                    return BadRequest(new { message = result.ErrorMessage ?? UserFacingErrors.TryAgain });
-                }
-
-                return Ok(new { ok = true });
-            }
-
             if (result.SessionExpired)
             {
                 return ExpireSession();
@@ -770,7 +757,7 @@ namespace congThongTinf.FE.Controllers
 
             if (result.Success)
             {
-                TempData["Message"] = "Đã chọn banner này cho trang chủ.";
+                TempData["Message"] = "Đã đặt banner hiển thị cho vị trí này.";
             }
             else
             {
@@ -854,7 +841,8 @@ namespace congThongTinf.FE.Controllers
             {
                 Id = banner.Id,
                 Title = banner.Title,
-                DisplayOrder = banner.DisplayOrder,
+                LinkUrl = banner.LinkUrl,
+                Position = banner.Position,
                 IsActive = banner.IsActive,
                 CurrentImageUrl = banner.ImageUrl,
                 CurrentFileName = banner.FileName
@@ -1000,6 +988,16 @@ namespace congThongTinf.FE.Controllers
             if (!requireFile && string.IsNullOrWhiteSpace(model.Title))
             {
                 ModelState.AddModelError(nameof(model.Title), "Tiêu đề banner là bắt buộc.");
+            }
+
+            if (!BannerPositions.IsValid(model.Position))
+            {
+                ModelState.AddModelError(nameof(model.Position), "Vị trí banner không hợp lệ.");
+            }
+
+            if (model.LinkUrl != null && model.LinkUrl.Trim().Length > 1000)
+            {
+                ModelState.AddModelError(nameof(model.LinkUrl), "Link banner không được vượt quá 1000 ký tự.");
             }
         }
 

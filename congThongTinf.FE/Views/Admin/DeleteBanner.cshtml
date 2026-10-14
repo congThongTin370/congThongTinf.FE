@@ -14,6 +14,7 @@
             <img class="admin-banner-preview" src="@Model.ImageUrl" alt="" />
         }
         <p class="admin-confirm-title"><strong>@(string.IsNullOrWhiteSpace(Model.Title) ? Model.FileName : Model.Title)</strong></p>
+        <p class="admin-form-status">@BannerPositions.Label(Model.Position)@(Model.IsActive ? " · Đang hiện" : "")</p>
         @if (!string.IsNullOrWhiteSpace(Model.FileName))
         {
             <p class="admin-form-status">@Model.FileName</p>

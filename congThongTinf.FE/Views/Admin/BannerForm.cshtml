@@ -16,11 +16,11 @@
     <div class="admin-panel-body">
         @if (Model.IsEdit)
         {
-            <p class="admin-form-status">Để trống tệp nếu giữ ảnh hiện tại. Tiêu đề không được để trống. Ảnh mới thay ảnh của banner này, tối đa 10 MB. Banner đang hiện trên trang chủ không đổi cho đến khi chọn lại ở danh sách.</p>
+            <p class="admin-form-status">Để trống tệp nếu giữ ảnh hiện tại. Tiêu đề không được để trống. Ảnh mới thay ảnh của banner này, tối đa 10 MB. Bật “Đang hiện” thì banner này thay banner đang hiện của cùng vị trí.</p>
         }
         else
         {
-            <p class="admin-form-status">Tải lên thêm banner vào kho, không thay banner đang hiện trên trang chủ. Ảnh jpg, jpeg, png, webp hoặc gif, tối đa 10 MB. Để trống tiêu đề sẽ lấy tên tệp.</p>
+            <p class="admin-form-status">Ảnh jpg, jpeg, png, webp hoặc gif, tối đa 10 MB. Để trống tiêu đề sẽ lấy tên tệp. Bỏ chọn “Đang hiện” nếu chỉ thêm vào kho. Bật thì banner này thay banner đang hiện của cùng vị trí.</p>
         }
 
         <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditBanner" : "CreateBanner")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="admin-form">
@@ -54,10 +54,30 @@
             </div>
 
             <div class="admin-form-field">
-                <label asp-for="DisplayOrder"></label>
-                <input asp-for="DisplayOrder" class="form-control" type="number" />
-                <span class="admin-field-hint">Số nhỏ hơn được xếp trước.</span>
-                <span asp-validation-for="DisplayOrder" class="field-validation-error"></span>
+                <label asp-for="Position"></label>
+                <select asp-for="Position" class="form-select">
+                    @foreach (var option in BannerPositions.Options)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <span class="admin-field-hint">Header hiện trên mọi trang. Dải giữa trang chủ nằm dưới tin nổi bật.</span>
+                <span asp-validation-for="Position" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label asp-for="LinkUrl"></label>
+                <input asp-for="LinkUrl" class="form-control" maxlength="1000" placeholder="https://" />
+                <span class="admin-field-hint">Để trống nếu banner không dẫn đi đâu. Tối đa 1000 ký tự.</span>
+                <span asp-validation-for="LinkUrl" class="field-validation-error"></span>
+            </div>
+
+            <div class="admin-form-field">
+                <label class="admin-check">
+                    <input asp-for="IsActive" />
+                    <span>Đang hiện ở vị trí này</span>
+                </label>
+                <span class="admin-field-hint">Bật thì các banner khác cùng vị trí bị tắt. Vị trí còn lại không đổi.</span>
             </div>
 
             <div class="admin-form-actions">
@@ -65,6 +85,17 @@
                 <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Banners">Hủy</a>
             </div>
         </form>
+
+        @if (Model.IsEdit && Model.Id.HasValue && !Model.IsActive)
+        {
+            <form class="admin-form-actions" asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@Model.Id" method="post">
+                <button type="submit" class="btn btn-outline-secondary">Dùng cho vị trí này</button>
+            </form>
+        }
+        else if (Model.IsEdit && Model.IsActive)
+        {
+            <p class="admin-form-status"><span class="admin-badge admin-badge-success">Đang hiện</span></p>
+        }
     </div>
 </section>
 

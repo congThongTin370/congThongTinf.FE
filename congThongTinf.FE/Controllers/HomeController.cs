@@ -13,22 +13,19 @@ namespace congThongTinf.FE.Controllers
         private readonly IConfiguration _configuration;
         private readonly ICategoryService _categoryService;
         private readonly IDocumentService _documentService;
-        private readonly IBannerService _bannerService;
 
         public HomeController(
             INewsService newsService,
             ILogger<HomeController> logger,
             IConfiguration configuration,
             ICategoryService categoryService,
-            IDocumentService documentService,
-            IBannerService bannerService)
+            IDocumentService documentService)
         {
             _newsService = newsService;
             _logger = logger;
             _configuration = configuration;
             _categoryService = categoryService;
             _documentService = documentService;
-            _bannerService = bannerService;
         }
 
         public async Task<IActionResult> Index(string? categoryIds)
@@ -49,7 +46,6 @@ namespace congThongTinf.FE.Controllers
 
                 // Ảnh override cho tin mới nhất (nếu được cấu hình trong appsettings)
                 ViewData["LatestNewsCoverOverride"] = _configuration["HomeSettings:LatestNewsCoverImageOverride"];
-                ViewData["HomeBanners"] = await LoadHomeBannersAsync();
 
                 // Đang lọc theo chuyên mục: hiển thị tên chuyên mục ở tiêu đề trang
                 if (categoryFilter != null && sortedNews.Count > 0)
@@ -67,36 +63,8 @@ namespace congThongTinf.FE.Controllers
                 _logger.LogError(ex, "Error loading news: {Message}", ex.Message);
                 _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
                 // Trả về view với danh sách trống nếu có lỗi
-                ViewData["HomeBanners"] = new List<BannerDto>();
                 return View(new List<NewsDto>());
             }
-        }
-
-        private async Task<List<BannerDto>> LoadHomeBannersAsync()
-        {
-            var listed = await _bannerService.GetBannersAsync(string.Empty, new BannerQuery
-            {
-                PageIndex = 0,
-                PageSize = 10,
-                IsActive = true
-            });
-
-            if (!listed.Success || listed.Items.Count == 0)
-            {
-                return new List<BannerDto>();
-            }
-
-            var banners = new List<BannerDto>();
-            foreach (var item in listed.Items)
-            {
-                var detail = await _bannerService.GetByIdAsync(string.Empty, item.Id);
-                if (detail.Success && detail.Data != null && !string.IsNullOrWhiteSpace(detail.Data.ImageUrl))
-                {
-                    banners.Add(detail.Data);
-                }
-            }
-
-            return banners;
         }
 
         /// <summary>

@@ -22,13 +22,7 @@
 </head>
 <body>
     <header class="site-header">
-        <div class="site-banner">
-            <div class="site-container">
-                <a class="site-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img class="site-banner-logo" src="https://pub-f9c31e10d1244c9cb46f01196c447ad2.r2.dev/banner/lgLogo.jpg" alt="Cổng thông tin điện tử Sư đoàn Không quân 370" />
-                </a>
-            </div>
-        </div>
+        @await Component.InvokeAsync("BannerSlot", new { position = 0 })
 
         <nav class="site-nav" aria-label="Điều hướng chính">
             <div class="site-container site-nav-bar">

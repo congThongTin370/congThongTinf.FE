@@ -318,19 +318,9 @@ public static class UserFacingErrors
             return "Ảnh banner không được lớn hơn 10 MB.";
         }
 
-        if (Contains(text, "jpg", "jpeg", "png", "webp", "gif", "phải là ảnh"))
+        if (!string.IsNullOrWhiteSpace(text))
         {
-            return "Banner phải là ảnh jpg, jpeg, png, webp hoặc gif.";
-        }
-
-        if (Contains(text, "tiêu đề"))
-        {
-            return "Tiêu đề banner là bắt buộc.";
-        }
-
-        if (Contains(text, "bắt buộc", "file"))
-        {
-            return "Vui lòng chọn ảnh banner.";
+            return text.Trim();
         }
 
         if (status == "400")

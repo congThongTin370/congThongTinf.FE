@@ -16,6 +16,10 @@
 
         return $"{bytes} B";
     }
+
+    var groups = Model.Position.HasValue
+        ? new[] { Model.Position.Value }
+        : new[] { BannerPositions.Header, BannerPositions.HomeMid };
 }
 
 <div class="admin-page-header">
@@ -38,7 +42,7 @@
     <div class="admin-alert-error" role="alert">@Model.LoadError</div>
 }
 
-<p class="admin-form-status">Bật công tắc để đưa banner lên trang chủ. Chỉ một banner được bật.</p>
+<p class="admin-form-status">Mỗi vị trí chỉ một banner đang hiện. Header ở đầu mọi trang. Dải giữa trang chủ nằm dưới tin nổi bật. Hai vị trí hiện độc lập.</p>
 
 <section class="admin-panel" aria-labelledby="banner-filter-title">
     <div class="admin-panel-header">
@@ -51,16 +55,33 @@
                 <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tìm theo tiêu đề" />
             </div>
             <div class="admin-form-field">
+                <label for="position">Vị trí</label>
+                <select id="position" name="position" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var option in BannerPositions.Options)
+                    {
+                        if (Model.Position == option.Value)
+                        {
+                            <option value="@option.Value" selected>@option.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
                 <label for="isActive">Trạng thái</label>
                 <select id="isActive" name="isActive" class="form-select">
                     <option value="">Tất cả</option>
                     @if (Model.IsActive == true)
                     {
-                        <option value="true" selected>Trang chủ</option>
+                        <option value="true" selected>Đang hiện</option>
                     }
                     else
                     {
-                        <option value="true">Trang chủ</option>
+                        <option value="true">Đang hiện</option>
                     }
                     @if (Model.IsActive == false)
                     {
@@ -80,79 +101,78 @@
     </div>
 </section>
 
-<section class="admin-panel admin-section-gap" aria-labelledby="banner-list-title">
-    <div class="admin-panel-header">
-        <h2 id="banner-list-title">Danh sách banner</h2>
-    </div>
-    <div class="admin-panel-body admin-table-wrap">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th scope="col">Ảnh</th>
-                    <th scope="col">Tiêu đề</th>
-                    <th scope="col">Thứ tự</th>
-                    <th scope="col">Trang chủ</th>
-                    <th scope="col">Dung lượng</th>
-                    <th scope="col">Ngày tải</th>
-                    <th scope="col" class="admin-table-actions">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Items.Count == 0)
-                {
+@foreach (var position in groups)
+{
+    var items = Model.Items.Where(item => item.Position == position).ToList();
+    var headingId = $"banner-list-{position}";
+    <section class="admin-panel admin-section-gap" aria-labelledby="@headingId">
+        <div class="admin-panel-header">
+            <h2 id="@headingId">@BannerPositions.Label(position)</h2>
+        </div>
+        <div class="admin-panel-body admin-table-wrap">
+            <table class="admin-table">
+                <thead>
                     <tr>
-                        <td colspan="7" class="admin-table-empty">Chưa có banner phù hợp.</td>
+                        <th scope="col">Ảnh</th>
+                        <th scope="col">Tiêu đề</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col">Dung lượng</th>
+                        <th scope="col">Ngày tải</th>
+                        <th scope="col" class="admin-table-actions">Thao tác</th>
                     </tr>
-                }
-                else
-                {
-                    @foreach (var banner in Model.Items)
+                </thead>
+                <tbody>
+                    @if (items.Count == 0)
                     {
                         <tr>
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(banner.ImageUrl))
-                                {
-                                    <img class="admin-banner-thumb" src="@banner.ImageUrl" alt="" />
-                                }
-                                else
-                                {
-                                    <span class="admin-table-sub">Không có ảnh</span>
-                                }
-                            </td>
-                            <td>
-                                <strong>@(string.IsNullOrWhiteSpace(banner.Title) ? banner.FileName : banner.Title)</strong>
-                                @if (!string.IsNullOrWhiteSpace(banner.FileName))
-                                {
-                                    <div class="admin-table-sub">@banner.FileName</div>
-                                }
-                            </td>
-                            <td>@banner.DisplayOrder</td>
-                            <td>
-                                <form asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post" data-login-url="@Url.Action("Login", "Account")">
-                                    <label class="ios-switch">
-                                        <input type="checkbox"
-                                               role="switch"
-                                               aria-label="Hiện banner này trên trang chủ"
-                                               @(banner.IsActive ? "checked" : null) />
-                                        <span class="ios-switch-ui" aria-hidden="true"></span>
-                                    </label>
-                                </form>
-                            </td>
-                            <td>@FileSizeText(banner.FileSize)</td>
-                            <td>@banner.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            <td class="admin-table-actions">
-                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditBanner" asp-route-id="@banner.Id">Sửa</a>
-                                <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteBanner" asp-route-id="@banner.Id">Xóa</a>
-                            </td>
+                            <td colspan="6" class="admin-table-empty">Chưa có banner ở vị trí này.</td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
-    </div>
-</section>
-
-@section Scripts {
-    <script src="~/js/banner-switches.js" asp-append-version="true"></script>
+                    else
+                    {
+                        @foreach (var banner in items)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(banner.ImageUrl))
+                                    {
+                                        <img class="admin-banner-thumb" src="@banner.ImageUrl" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-table-sub">Không có ảnh</span>
+                                    }
+                                </td>
+                                <td>
+                                    <strong>@(string.IsNullOrWhiteSpace(banner.Title) ? banner.FileName : banner.Title)</strong>
+                                    @if (!string.IsNullOrWhiteSpace(banner.LinkUrl))
+                                    {
+                                        <div class="admin-table-sub">@banner.LinkUrl</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (banner.IsActive)
+                                    {
+                                        <span class="admin-badge admin-badge-success">Đang hiện</span>
+                                    }
+                                    else
+                                    {
+                                        <form class="admin-inline-form" asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm">Dùng cho vị trí này</button>
+                                        </form>
+                                    }
+                                </td>
+                                <td>@FileSizeText(banner.FileSize)</td>
+                                <td>@banner.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="admin-table-actions">
+                                    <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditBanner" asp-route-id="@banner.Id">Sửa</a>
+                                    <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteBanner" asp-route-id="@banner.Id">Xóa</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
 }
-

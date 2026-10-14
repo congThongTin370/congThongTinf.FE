@@ -1,0 +1,20 @@
+@model BannerSlotViewModel
+@{
+    var banner = Model.Banner;
+    var isHeader = Model.Position == BannerPositions.Header;
+    var css = isHeader ? "slot-banner slot-banner-header" : "slot-banner slot-banner-home";
+    var label = isHeader ? "Banner đầu trang" : "Banner giữa trang";
+    var alt = string.IsNullOrWhiteSpace(banner.Title) ? label : banner.Title;
+}
+<div class="@css">
+    @if (!string.IsNullOrWhiteSpace(banner.LinkUrl))
+    {
+        <a href="@banner.LinkUrl">
+            <img src="@banner.ImageUrl" alt="@alt" />
+        </a>
+    }
+    else
+    {
+        <img src="@banner.ImageUrl" alt="@alt" />
+    }
+</div>
