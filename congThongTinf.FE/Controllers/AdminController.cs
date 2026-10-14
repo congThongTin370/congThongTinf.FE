@@ -694,7 +694,7 @@ namespace congThongTinf.FE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Banners(string? search, int? position, bool? isActive)
+        public async Task<IActionResult> Banners(string? search, int? position)
         {
             if (!IsAdmin())
             {
@@ -708,7 +708,6 @@ namespace congThongTinf.FE.Controllers
             {
                 Search = search,
                 Position = slot,
-                IsActive = isActive,
                 PageIndex = 0,
                 PageSize = 10
             };
@@ -716,10 +715,7 @@ namespace congThongTinf.FE.Controllers
             var result = await _bannerService.GetBannersAsync(GetToken(), new BannerQuery
             {
                 PageIndex = 0,
-                PageSize = 10,
-                Search = search,
-                Position = slot,
-                IsActive = isActive
+                PageSize = 10
             });
 
             if (result.SessionExpired)
@@ -764,11 +760,11 @@ namespace congThongTinf.FE.Controllers
                 TempData["Error"] = result.ErrorMessage ?? UserFacingErrors.TryAgain;
             }
 
-            return RedirectToAction(nameof(Banners));
+            return RedirectToAction(nameof(Banners), new { position = result.Data?.Position });
         }
 
         [HttpGet]
-        public IActionResult CreateBanner()
+        public IActionResult CreateBanner(int? position)
         {
             if (!IsAdmin())
             {
@@ -776,7 +772,13 @@ namespace congThongTinf.FE.Controllers
             }
 
             SetLayoutData("Banners", "Tải banner");
-            return View("BannerForm", new BannerFormViewModel());
+            var model = new BannerFormViewModel();
+            if (position.HasValue && BannerPositions.IsValid(position.Value))
+            {
+                model.Position = position.Value;
+            }
+
+            return View("BannerForm", model);
         }
 
         [HttpPost]
@@ -811,7 +813,7 @@ namespace congThongTinf.FE.Controllers
             }
 
             TempData["Message"] = "Đã tải banner lên cổng thông tin.";
-            return RedirectToAction(nameof(Banners));
+            return RedirectToAction(nameof(Banners), new { position = model.Position });
         }
 
         [HttpGet]
@@ -882,7 +884,7 @@ namespace congThongTinf.FE.Controllers
             }
 
             TempData["Message"] = "Đã cập nhật banner.";
-            return RedirectToAction(nameof(Banners));
+            return RedirectToAction(nameof(Banners), new { position = model.Position });
         }
 
         [HttpGet]
