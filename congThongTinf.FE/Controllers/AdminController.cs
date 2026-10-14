@@ -747,6 +747,22 @@ namespace congThongTinf.FE.Controllers
             }
 
             var result = await _bannerService.SetActiveAsync(GetToken(), id);
+            var fromSwitch = string.Equals(Request.Headers["X-Requested-With"], "fetch", StringComparison.OrdinalIgnoreCase);
+            if (fromSwitch)
+            {
+                if (result.SessionExpired)
+                {
+                    return Unauthorized(new { message = UserFacingErrors.SessionExpired });
+                }
+
+                if (!result.Success)
+                {
+                    return BadRequest(new { message = result.ErrorMessage ?? UserFacingErrors.TryAgain });
+                }
+
+                return Ok(new { ok = true });
+            }
+
             if (result.SessionExpired)
             {
                 return ExpireSession();

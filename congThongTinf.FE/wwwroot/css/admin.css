@@ -582,6 +582,70 @@
     border-radius: var(--radius);
 }
 
+.ios-switch {
+    position: relative;
+    display: inline-block;
+    width: 3.15rem;
+    height: 1.9rem;
+    margin: 0;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.ios-switch input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.ios-switch-ui {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    background: #E5E7EB;
+    transition: background-color 0.25s ease;
+}
+
+.ios-switch-ui::after {
+    content: "";
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.28);
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ios-switch input:checked + .ios-switch-ui {
+    background: #34C759;
+}
+
+.ios-switch input:checked + .ios-switch-ui::after {
+    transform: translate3d(1.25rem, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ios-switch-ui,
+    .ios-switch-ui::after {
+        transition: none;
+    }
+}
+
+.ios-switch input:focus-visible + .ios-switch-ui {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 .admin-banner-thumb {
     display: block;
     width: 7.5rem;

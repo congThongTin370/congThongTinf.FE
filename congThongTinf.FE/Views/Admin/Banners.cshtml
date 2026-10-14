@@ -38,7 +38,7 @@
     <div class="admin-alert-error" role="alert">@Model.LoadError</div>
 }
 
-<p class="admin-form-status">Danh sách gồm mọi banner đã tải lên kho. Tải lên chỉ thêm ảnh mới. Chọn một banner để hiện trên trang chủ; các banner khác sẽ được ẩn.</p>
+<p class="admin-form-status">Bật công tắc để đưa banner lên trang chủ. Chỉ một banner được bật.</p>
 
 <section class="admin-panel" aria-labelledby="banner-filter-title">
     <div class="admin-panel-header">
@@ -91,7 +91,7 @@
                     <th scope="col">Ảnh</th>
                     <th scope="col">Tiêu đề</th>
                     <th scope="col">Thứ tự</th>
-                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Trang chủ</th>
                     <th scope="col">Dung lượng</th>
                     <th scope="col">Ngày tải</th>
                     <th scope="col" class="admin-table-actions">Thao tác</th>
@@ -128,24 +128,19 @@
                             </td>
                             <td>@banner.DisplayOrder</td>
                             <td>
-                                @if (banner.IsActive)
-                                {
-                                    <span class="admin-badge admin-badge-success">Trang chủ</span>
-                                }
-                                else
-                                {
-                                    <span class="admin-badge admin-badge-muted">Trong kho</span>
-                                }
+                                <form asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post" data-login-url="@Url.Action("Login", "Account")">
+                                    <label class="ios-switch">
+                                        <input type="checkbox"
+                                               role="switch"
+                                               aria-label="Hiện banner này trên trang chủ"
+                                               @(banner.IsActive ? "checked" : null) />
+                                        <span class="ios-switch-ui" aria-hidden="true"></span>
+                                    </label>
+                                </form>
                             </td>
                             <td>@FileSizeText(banner.FileSize)</td>
                             <td>@banner.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="admin-table-actions">
-                                @if (!banner.IsActive)
-                                {
-                                    <form class="admin-inline-form" asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post">
-                                        <button type="submit" class="btn btn-primary btn-sm">Hiện trên trang chủ</button>
-                                    </form>
-                                }
                                 <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditBanner" asp-route-id="@banner.Id">Sửa</a>
                                 <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteBanner" asp-route-id="@banner.Id">Xóa</a>
                             </td>
@@ -156,4 +151,8 @@
         </table>
     </div>
 </section>
+
+@section Scripts {
+    <script src="~/js/banner-switches.js" asp-append-version="true"></script>
+}
 
