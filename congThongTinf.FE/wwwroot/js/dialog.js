@@ -5,6 +5,45 @@
 //       AppDialog.open(element) / AppDialog.close(element) để mở/đóng hộp thoại có sẵn trong HTML.
 (function () {
     var openStack = [];
+    var motionMs = 240;
+
+    function reducedMotion() {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    function present(root) {
+        root._dialogToken = (root._dialogToken || 0) + 1;
+        root.classList.remove('is-leaving');
+        root.classList.add('is-present', 'is-open');
+    }
+
+    function dismiss(root, done) {
+        var token = (root._dialogToken || 0) + 1;
+        root._dialogToken = token;
+        root.classList.remove('is-open');
+        root.classList.add('is-leaving');
+
+        function settle() {
+            if (root._dialogToken !== token) return;
+            root._dialogToken = token + 1;
+            root.classList.remove('is-leaving', 'is-present');
+            if (done) done();
+        }
+
+        if (reducedMotion()) {
+            settle();
+            return;
+        }
+
+        var panel = root.querySelector('.app-dialog-panel');
+        function onEnd(event) {
+            if (event.target !== panel) return;
+            panel.removeEventListener('animationend', onEnd);
+            settle();
+        }
+        if (panel) panel.addEventListener('animationend', onEnd);
+        window.setTimeout(settle, motionMs + 80);
+    }
 
     function esc(text) {
         var div = document.createElement('div');
@@ -58,11 +97,10 @@
                 if (finished) return;
                 finished = true;
                 document.removeEventListener('keydown', onKey, true);
-                root.classList.remove('is-open');
-                setTimeout(function () {
+                dismiss(root, function () {
                     root.remove();
                     if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
-                }, 150);
+                });
                 resolve(result);
             }
 
@@ -106,28 +144,28 @@
 
             document.addEventListener('keydown', onKey, true);
             document.body.appendChild(root);
-            requestAnimationFrame(function () {
-                root.classList.add('is-open');
-                (input || form.querySelector('button[type="submit"]')).focus();
-                if (input) input.select();
-            });
+            present(root);
+            (input || form.querySelector('button[type="submit"]')).focus();
+            if (input) input.select();
         });
     }
 
     // Hộp thoại có sẵn trong HTML (<div class="app-dialog-panel">...)
     function open(el) {
         if (!el) return;
+        if (el.classList.contains('is-open')) return;
         openStack.push(document.activeElement);
-        el.classList.add('is-open');
+        present(el);
         var focusable = el.querySelector('input, select, textarea, button[type="submit"]');
         if (focusable) focusable.focus();
     }
 
     function close(el) {
-        if (!el) return;
-        el.classList.remove('is-open');
+        if (!el || !el.classList.contains('is-open')) return;
         var prev = openStack.pop();
-        if (prev && prev.focus) prev.focus();
+        dismiss(el, function () {
+            if (prev && prev.focus) prev.focus();
+        });
     }
 
     document.addEventListener('click', function (e) {

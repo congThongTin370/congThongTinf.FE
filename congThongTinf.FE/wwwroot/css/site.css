@@ -19,6 +19,9 @@
     --content-width: 1200px;
     --radius: 6px;
     --font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
+    --motion-fast: 0.2s;
+    --motion-dialog: 0.24s;
+    --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html {
@@ -113,6 +116,7 @@ a:hover {
     height: 2px;
     background: currentColor;
     content: "";
+    transition: transform var(--motion-fast) var(--motion-ease), top var(--motion-fast) var(--motion-ease), opacity var(--motion-fast) ease;
 }
 
 .nav-toggle-icon {
@@ -153,6 +157,7 @@ a:hover {
     text-decoration: none;
     text-transform: uppercase;
     white-space: nowrap;
+    transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 
 .site-nav-list a.nav-home {
@@ -179,6 +184,7 @@ a:hover {
     color: var(--color-text-on-primary);
     text-decoration: none;
     cursor: pointer;
+    transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 
 /* Trang danh sách bài theo chuyên mục */
@@ -520,7 +526,7 @@ a:hover {
 }
 
 .nav-dropdown-toggle svg {
-    transition: transform 0.15s ease;
+    transition: transform var(--motion-fast) var(--motion-ease);
 }
 
 .nav-dropdown-toggle[aria-expanded="true"] svg {
@@ -528,7 +534,6 @@ a:hover {
 }
 
 .nav-dropdown-menu {
-    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -540,13 +545,29 @@ a:hover {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-top: 3px solid var(--color-primary);
-    box-shadow: 0 6px 16px rgba(11, 18, 32, 0.1);
+    box-shadow: 0 8px 22px rgba(11, 18, 32, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transform-origin: top center;
+    pointer-events: none;
+    transition:
+        opacity var(--motion-fast) ease,
+        transform var(--motion-fast) var(--motion-ease),
+        visibility 0s linear var(--motion-fast);
 }
 
 .nav-dropdown:hover .nav-dropdown-menu,
 .nav-dropdown:focus-within .nav-dropdown-menu,
 .nav-dropdown.is-open .nav-dropdown-menu {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    transition:
+        opacity var(--motion-fast) ease,
+        transform var(--motion-fast) var(--motion-ease),
+        visibility 0s;
 }
 
 .nav-dropdown-menu a {
@@ -559,6 +580,7 @@ a:hover {
     text-transform: none;
     text-decoration: none;
     white-space: nowrap;
+    transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 
 .nav-dropdown-menu a:hover,
@@ -601,21 +623,47 @@ a:hover {
 }
 
 .nav-profile-card {
-    display: none;
     position: absolute;
-    top: 100%;
+    top: calc(100% + 0.35rem);
     right: 0;
     z-index: 6;
     width: min(16rem, calc(100vw - 2rem));
     padding: 0.85rem 1rem;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 22px rgba(11, 18, 32, 0.12);
     color: var(--color-text);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transform-origin: top right;
+    pointer-events: none;
+    transition:
+        opacity var(--motion-fast) ease,
+        transform var(--motion-fast) var(--motion-ease),
+        visibility 0s linear var(--motion-fast);
+}
+
+.nav-profile-card::before {
+    content: "";
+    position: absolute;
+    top: -0.4rem;
+    right: 0;
+    left: 0;
+    height: 0.4rem;
 }
 
 .nav-profile:hover .nav-profile-card,
 .nav-profile:focus-within .nav-profile-card {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    transition:
+        opacity var(--motion-fast) ease,
+        transform var(--motion-fast) var(--motion-ease),
+        visibility 0s;
 }
 
 .nav-profile-name {
@@ -665,24 +713,77 @@ a:hover {
 }
 
 .nav-search {
-    display: none;
     position: absolute;
-    top: 100%;
+    top: calc(100% + 0.35rem);
     right: 0;
     z-index: 5;
     width: min(18rem, calc(100vw - 2rem));
     padding: 0.55rem;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    box-shadow: 0 4px 12px rgba(11, 18, 32, 0.08);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 22px rgba(11, 18, 32, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transform-origin: top right;
+    pointer-events: none;
+    transition:
+        opacity var(--motion-fast) ease,
+        transform var(--motion-fast) var(--motion-ease),
+        visibility 0s linear var(--motion-fast);
 }
 
 .site-nav-tools {
     position: relative;
 }
 
+.nav-search-toggle {
+    position: relative;
+}
+
+.nav-search-icon {
+    position: absolute;
+    inset: 0;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: opacity var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease);
+}
+
+.nav-search-icon-close {
+    opacity: 0;
+    transform: rotate(-70deg) scale(0.72);
+}
+
+.search-toggle-input:checked + .nav-search-toggle {
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.search-toggle-input:checked + .nav-search-toggle .nav-search-icon-find {
+    opacity: 0;
+    transform: rotate(70deg) scale(0.72);
+}
+
+.search-toggle-input:checked + .nav-search-toggle .nav-search-icon-close {
+    opacity: 1;
+    transform: none;
+}
+
 .search-toggle-input:checked ~ .nav-search {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    transition:
+        opacity var(--motion-fast) ease,
+        transform var(--motion-fast) var(--motion-ease),
+        visibility 0s;
 }
 
 .nav-search input {
@@ -914,7 +1015,7 @@ a:hover {
 
 .btn {
     border-radius: var(--radius);
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: background-color var(--motion-fast) ease, border-color var(--motion-fast) ease, color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
 }
 
 .btn-primary {
@@ -1328,18 +1429,58 @@ a:hover {
     }
 
     .site-nav-list {
-        display: none;
+        display: flex;
         order: 3;
         flex-basis: 100%;
         flex-direction: column;
         align-items: stretch;
         gap: 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.18);
-        padding-bottom: 0.35rem;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        padding-bottom: 0;
+        border-top: 1px solid transparent;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            max-height 0.28s var(--motion-ease),
+            opacity var(--motion-fast) ease,
+            padding-bottom 0.28s ease,
+            border-color var(--motion-fast) ease,
+            visibility 0s linear 0.28s;
     }
 
     .nav-toggle-input:checked ~ .site-nav-list {
-        display: flex;
+        max-height: min(28rem, 70vh);
+        overflow-y: auto;
+        opacity: 1;
+        visibility: visible;
+        padding-bottom: 0.35rem;
+        border-top-color: rgba(255, 255, 255, 0.18);
+        pointer-events: auto;
+        transition:
+            max-height 0.28s var(--motion-ease),
+            opacity var(--motion-fast) ease,
+            padding-bottom 0.28s ease,
+            border-color var(--motion-fast) ease,
+            visibility 0s;
+    }
+
+    .nav-toggle-input:checked + .nav-toggle .nav-toggle-icon {
+        background: transparent;
+    }
+
+    .nav-toggle-input:checked + .nav-toggle .nav-toggle-icon::before,
+    .nav-toggle-input:checked + .nav-toggle .nav-toggle-icon::after {
+        top: 0;
+    }
+
+    .nav-toggle-input:checked + .nav-toggle .nav-toggle-icon::before {
+        transform: rotate(45deg);
+    }
+
+    .nav-toggle-input:checked + .nav-toggle .nav-toggle-icon::after {
+        transform: rotate(-45deg);
     }
 
     .nav-toggle-input:focus-visible + .nav-toggle {
@@ -1365,20 +1506,46 @@ a:hover {
     }
 
     .nav-dropdown:hover .nav-dropdown-menu {
-        display: none;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: none;
+        pointer-events: none;
     }
 
     .nav-dropdown.is-open .nav-dropdown-menu {
-        display: block;
+        max-height: 20rem;
+        padding-top: 0.2rem;
+        padding-bottom: 0.2rem;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        pointer-events: auto;
+        transition:
+            max-height 0.26s var(--motion-ease),
+            opacity var(--motion-fast) ease,
+            padding 0.26s ease,
+            visibility 0s;
     }
 
     .nav-dropdown-menu {
         position: static;
         min-width: 0;
+        max-height: 0;
+        overflow: hidden;
+        padding-top: 0;
+        padding-bottom: 0;
         border: 0;
-        border-top: 0;
         box-shadow: none;
         background: rgba(0, 0, 0, 0.12);
+        transform: none;
+        transition:
+            max-height 0.26s var(--motion-ease),
+            opacity var(--motion-fast) ease,
+            padding 0.26s ease,
+            visibility 0s linear 0.26s;
     }
 
     .nav-dropdown-menu a {
@@ -1434,7 +1601,7 @@ a:hover {
 }
 
 .unit-page > * {
-    animation: unit-rise 0.45s ease both;
+    animation: unit-rise 0.4s var(--motion-ease) both;
 }
 
 .unit-page > *:nth-child(2) { animation-delay: 0.06s; }
@@ -1505,7 +1672,7 @@ a:hover {
     border: 1px solid var(--color-border);
     border-top: 3px solid var(--color-primary);
     border-radius: var(--radius);
-    transition: border-color 0.15s ease, transform 0.15s ease;
+    transition: border-color var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease;
 }
 
 .unit-facts > div:hover {
@@ -1621,7 +1788,7 @@ a:hover {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    transition: border-color 0.15s ease, transform 0.15s ease;
+    transition: border-color var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease;
 }
 
 .unit-person:hover,
@@ -1732,7 +1899,7 @@ a:hover {
     color: var(--color-primary-dark);
     font-size: 1.0625rem;
     font-weight: 700;
-    transition: border-color 0.15s ease, transform 0.15s ease;
+    transition: border-color var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease;
 }
 
 @media (max-width: 991.98px) {
@@ -1763,5 +1930,17 @@ a:hover {
     .unit-regiment:hover,
     .unit-gear li:hover {
         transform: none;
+    }
+
+    .nav-dropdown-menu,
+    .nav-profile-card,
+    .nav-search,
+    .nav-search-icon,
+    .nav-toggle-icon,
+    .nav-toggle-icon::before,
+    .nav-toggle-icon::after,
+    .site-nav-list,
+    .btn {
+        transition: none;
     }
 }

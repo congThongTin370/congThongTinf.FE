@@ -154,6 +154,7 @@
     text-decoration: none;
     border-radius: 8px;
     border-left: 3px solid transparent;
+    transition: background-color var(--motion-fast, 0.2s) ease, color var(--motion-fast, 0.2s) ease, border-color var(--motion-fast, 0.2s) ease;
 }
 
 .admin-menu a:hover {
@@ -636,7 +637,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     .ios-switch-ui,
-    .ios-switch-ui::after {
+    .ios-switch-ui::after,
+    .admin-menu a,
+    .rich-editor-btn {
         transition: none;
     }
 }
@@ -741,7 +744,7 @@
     background: transparent;
     color: var(--color-text-muted);
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: background-color var(--motion-fast, 0.2s) ease, border-color var(--motion-fast, 0.2s) ease, color var(--motion-fast, 0.2s) ease;
 }
 
 .rich-editor-btn svg {

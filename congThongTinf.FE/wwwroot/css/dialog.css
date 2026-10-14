@@ -10,14 +10,27 @@
     padding: 1rem;
 }
 
-.app-dialog.is-open {
+.app-dialog.is-present {
     display: flex;
+}
+
+.app-dialog.is-present:not(.is-open) {
+    pointer-events: none;
 }
 
 .app-dialog-backdrop {
     position: absolute;
     inset: 0;
     background: rgba(11, 18, 32, 0.5);
+    opacity: 0;
+}
+
+.app-dialog.is-open .app-dialog-backdrop {
+    animation: app-dialog-fade-in var(--motion-dialog, 0.24s) ease both;
+}
+
+.app-dialog.is-leaving .app-dialog-backdrop {
+    animation: app-dialog-fade-out var(--motion-dialog, 0.24s) ease both;
 }
 
 .app-dialog-panel {
@@ -30,13 +43,49 @@
     border: 1px solid var(--color-border);
     border-top: 3px solid var(--color-primary);
     border-radius: var(--radius);
-    box-shadow: 0 10px 30px rgba(11, 18, 32, 0.18);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 16px 40px rgba(11, 18, 32, 0.18);
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
 }
 
-.app-dialog:not(.is-open) .app-dialog-panel {
-    opacity: 0;
-    transform: translateY(-6px);
+.app-dialog.is-open .app-dialog-panel {
+    animation: app-dialog-in var(--motion-dialog, 0.24s) var(--motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+.app-dialog.is-leaving .app-dialog-panel {
+    animation: app-dialog-out var(--motion-dialog, 0.24s) ease both;
+}
+
+@keyframes app-dialog-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes app-dialog-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes app-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes app-dialog-out {
+    from {
+        opacity: 1;
+        transform: none;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
 }
 
 .app-dialog-panel-wide {
@@ -71,6 +120,7 @@
     font-size: 1.5rem;
     line-height: 1;
     cursor: pointer;
+    transition: background-color var(--motion-fast, 0.2s) ease, color var(--motion-fast, 0.2s) ease;
 }
 
 .app-dialog-close:hover {
@@ -132,7 +182,20 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .app-dialog-panel {
+    .app-dialog.is-open .app-dialog-backdrop,
+    .app-dialog.is-open .app-dialog-panel,
+    .app-dialog.is-leaving .app-dialog-backdrop,
+    .app-dialog.is-leaving .app-dialog-panel {
+        animation: none;
+    }
+
+    .app-dialog.is-open .app-dialog-backdrop,
+    .app-dialog.is-open .app-dialog-panel {
+        opacity: 1;
+        transform: none;
+    }
+
+    .app-dialog-close {
         transition: none;
     }
 }
