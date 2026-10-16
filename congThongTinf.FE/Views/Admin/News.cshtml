@@ -136,7 +136,7 @@
                                 <a asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id">@news.Title</a>
                                 @if (!string.IsNullOrWhiteSpace(news.Summary))
                                 {
-                                    <div class="admin-table-sub">@news.Summary</div>
+                                    <div class="admin-table-sub news-summary">@news.Summary</div>
                                 }
                             </td>
                             <td>@(string.IsNullOrWhiteSpace(news.CategoryName) ? "—" : news.CategoryName)</td>

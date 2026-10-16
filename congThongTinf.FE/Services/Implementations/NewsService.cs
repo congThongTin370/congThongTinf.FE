@@ -24,32 +24,17 @@ public class NewsService : INewsService
     /// </summary>
     public async Task<List<NewsDto>> GetAllNewsAsync(NewsQueryDto? query = null)
     {
-        try
+        // categoryIds lặp ?categoryIds=a&categoryIds=b. Không gửi status: bài Draft của phóng viên vẫn lên cổng.
+        var endpoint = $"{_apiBaseUrl}/api/news{BuildQueryString(query)}";
+        var response = await _apiClient.GetAsync<ApiResponse<PagedData<NewsDto>>>(endpoint);
+
+        if (response?.IsSuccess == true && response.Value?.Data != null)
         {
-            // categoryIds lặp ?categoryIds=a&categoryIds=b. Không gửi status: bài Draft của phóng viên vẫn lên cổng.
-            var endpoint = $"{_apiBaseUrl}/api/news{BuildQueryString(query)}";
-
-            _logger.LogInformation($"Fetching news from: {endpoint}");
-
-            var response = await _apiClient.GetAsync<ApiResponse<PagedData<NewsDto>>>(endpoint);
-
-            if (response?.IsSuccess == true && response.Value?.Data != null)
-            {
-                var items = response.Value.Data.Items;
-                _logger.LogInformation($"Successfully fetched {items.Count} news items");
-                return items;
-            }
-            else
-            {
-                _logger.LogWarning($"API returned unsuccessful response: {response?.Value?.Message}");
-                return new List<NewsDto>();
-            }
+            return response.Value.Data.Items;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error fetching news: {ex.Message}");
-            throw;
-        }
+
+        _logger.LogWarning("News list request was unsuccessful: {Message}", response?.Value?.Message);
+        return new List<NewsDto>();
     }
 
     /// <summary>
@@ -57,27 +42,15 @@ public class NewsService : INewsService
     /// </summary>
     public async Task<NewsDto> GetNewsByIdAsync(Guid id)
     {
-        try
-        {
-            var endpoint = $"{_apiBaseUrl}/api/news/{id}";
-            _logger.LogInformation($"Fetching news with ID: {id}");
+        var endpoint = $"{_apiBaseUrl}/api/news/{id}";
+        var response = await _apiClient.GetAsync<ApiResponse<NewsDto>>(endpoint);
 
-            var response = await _apiClient.GetAsync<ApiResponse<NewsDto>>(endpoint);
-
-            if (response?.IsSuccess == true && response.Value?.Data != null)
-            {
-                return response.Value.Data;
-            }
-            else
-            {
-                throw new Exception($"Failed to fetch news: {response?.Value?.Message}");
-            }
-        }
-        catch (Exception ex)
+        if (response?.IsSuccess == true && response.Value?.Data != null)
         {
-            _logger.LogError($"Error fetching news by ID: {ex.Message}");
-            throw;
+            return response.Value.Data;
         }
+
+        throw new Exception($"Failed to fetch news: {response?.Value?.Message}");
     }
 
     /// <summary>

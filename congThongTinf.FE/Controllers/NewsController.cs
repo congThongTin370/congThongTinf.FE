@@ -32,13 +32,12 @@ namespace congThongTinf.FE.Controllers
         {
             try
             {
-                _logger.LogInformation("Loading all news...");
                 var news = await _newsService.GetAllNewsAsync();
                 return View(NewsStatuses.VisibleOnPortal(news));
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error loading news: {ex.Message}");
+                _logger.LogError(ex, "Error loading news");
                 ViewBag.Error = UserFacingErrors.LoadNewsFailed;
                 return View(new List<NewsDto>());
             }
@@ -58,7 +57,6 @@ namespace congThongTinf.FE.Controllers
                     CategoryIds = ParseCategoryIds(categoryIds)
                 };
 
-                _logger.LogInformation($"Filtering news with parameters - From: {fromDate}, To: {toDate}, Categories: {categoryIds}");
                 var news = await _newsService.GetAllNewsAsync(query);
 
                 ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
@@ -69,7 +67,7 @@ namespace congThongTinf.FE.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error filtering news: {ex.Message}");
+                _logger.LogError(ex, "Error filtering news");
                 ViewBag.Error = UserFacingErrors.LoadNewsFailed;
                 return View("Index", new List<NewsDto>());
             }

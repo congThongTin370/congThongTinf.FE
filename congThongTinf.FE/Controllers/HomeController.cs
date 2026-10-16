@@ -35,7 +35,6 @@ namespace congThongTinf.FE.Controllers
                 var categoryFilter = ParseCategoryIds(categoryIds);
                 var term = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
                 ViewData["NewsSearch"] = term;
-                _logger.LogInformation("Loading news for home page");
                 var newsList = await _newsService.GetAllNewsAsync(
                     categoryFilter == null && term == null
                         ? null
@@ -46,8 +45,6 @@ namespace congThongTinf.FE.Controllers
                             Search = term
                         });
 
-                _logger.LogInformation($"Fetched {newsList.Count} news items");
-                
                 // API không lọc Draft; bài phóng viên đăng hiện ngay. Chỉ ẩn bài lưu trữ.
                 var sortedNews = NewsStatuses.VisibleOnPortal(newsList)
                     .OrderByDescending(n => n.CreatedAt)
@@ -69,8 +66,7 @@ namespace congThongTinf.FE.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading news: {Message}", ex.Message);
-                _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+                _logger.LogError(ex, "Error loading news for home page");
                 // Trả về view với danh sách trống nếu có lỗi
                 return View(new List<NewsDto>());
             }

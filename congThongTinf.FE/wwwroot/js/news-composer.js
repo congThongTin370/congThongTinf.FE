@@ -98,14 +98,6 @@
         refreshCoverPreview();
     }
 
-    var libraryDialog = document.getElementById('library-dialog');
-    var libraryOpen = form.querySelector('[data-cover-library]');
-    if (libraryOpen) {
-        libraryOpen.addEventListener('click', function () {
-            window.AppDialog.open(libraryDialog);
-        });
-    }
-
     var previewDialog = document.getElementById('preview-dialog');
     var previewOpen = form.querySelector('[data-preview-open]');
 
@@ -170,6 +162,7 @@
             if (body) {
                 body.textContent = 'Đang tải xem trước...';
             }
+            previewDialog.classList.add('is-busy');
 
             var previewData = new FormData();
             previewData.append('content', text);
@@ -200,6 +193,9 @@
                     if (body) {
                         body.textContent = 'Chưa xem trước được nội dung.';
                     }
+                })
+                .finally(function () {
+                    previewDialog.classList.remove('is-busy');
                 });
         });
     }

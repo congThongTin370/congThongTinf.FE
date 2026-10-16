@@ -6,12 +6,10 @@ namespace congThongTinf.FE.Utilities;
 public class ApiClient
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<ApiClient> _logger;
 
-    public ApiClient(HttpClient httpClient, ILogger<ApiClient> logger)
+    public ApiClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _logger = logger;
     }
 
     /// <summary>
@@ -19,54 +17,26 @@ public class ApiClient
     /// </summary>
     public async Task<T> GetAsync<T>(string endpoint, Dictionary<string, string>? queryParams = null)
     {
-        try
-        {
-            var url = endpoint;
-            
-            // Xây dựng query string nếu có tham số
-            if (queryParams != null && queryParams.Count > 0)
-            {
-                var queryString = string.Join("&", queryParams.Select(kvp => 
-                    $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
-                url = $"{endpoint}?{queryString}";
-            }
+        var url = endpoint;
 
-            _logger.LogInformation($"GET request: {url}");
-            
-            var response = await _httpClient.GetAsync(url);
-            
-            var content = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation($"Response status: {response.StatusCode}");
+        // Xây dựng query string nếu có tham số
+        if (queryParams != null && queryParams.Count > 0)
+        {
+            var queryString = string.Join("&", queryParams.Select(kvp =>
+                $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
+            url = $"{endpoint}?{queryString}";
+        }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"API returned status {response.StatusCode}");
-            }
+        var response = await _httpClient.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
 
-            var options = new JsonSerializerOptions 
-            { 
-                PropertyNameCaseInsensitive = true,
-                WriteIndented = true
-            };
-            var result = JsonSerializer.Deserialize<T>(content, options);
-            
-            return result!;
-        }
-        catch (HttpRequestException ex)
+        var options = new JsonSerializerOptions
         {
-            _logger.LogError($"HTTP request error: {ex.Message}");
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogError($"JSON deserialization error: {ex.Message}");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Unexpected error: {ex.Message}");
-            throw;
-        }
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true
+        };
+
+        return JsonSerializer.Deserialize<T>(content, options)!;
     }
 
     /// <summary>
@@ -74,28 +44,17 @@ public class ApiClient
     /// </summary>
     public async Task<T> PostAsync<T>(string endpoint, object? data = null)
     {
-        try
+        HttpContent? content = null;
+        if (data != null)
         {
-            _logger.LogInformation($"POST request to: {endpoint}");
-
-            HttpContent? content = null;
-            if (data != null)
-            {
-                var json = JsonSerializer.Serialize(data);
-                content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            }
-
-            var response = await _httpClient.PostAsync(endpoint, content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<T>(responseContent, options);
-
-            return result!;
+            var json = JsonSerializer.Serialize(data);
+            content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError($"POST request error: {ex.Message}");
-            throw;
-        }
+
+        var response = await _httpClient.PostAsync(endpoint, content);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        return JsonSerializer.Deserialize<T>(responseContent, options)!;
     }
 }

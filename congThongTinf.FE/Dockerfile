@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
@@ -8,20 +9,24 @@ EXPOSE 8080
 EXPOSE 8081
 
 
-# This stage is used to build the service project
+# This stage restores packages. The project file is copied alone so restore stays cached until dependencies change.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    NUGET_XMLDOC_MODE=skip
 COPY ["congThongTinf.FE/congThongTinf.FE.csproj", "congThongTinf.FE/"]
-RUN dotnet restore "./congThongTinf.FE/congThongTinf.FE.csproj"
+RUN --mount=type=cache,id=nuget,sharing=locked,target=/root/.nuget/packages \
+    dotnet restore "./congThongTinf.FE/congThongTinf.FE.csproj"
 COPY . .
 WORKDIR "/src/congThongTinf.FE"
-RUN dotnet build "./congThongTinf.FE.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Publish once. A separate dotnet build would compile the same project again.
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./congThongTinf.FE.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget,sharing=locked,target=/root/.nuget/packages \
+    dotnet publish "./congThongTinf.FE.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final

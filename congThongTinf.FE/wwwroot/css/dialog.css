@@ -135,8 +135,32 @@
 }
 
 .app-dialog-body {
+    position: relative;
     padding: 1.25rem;
     overflow-y: auto;
+}
+
+.app-dialog.is-busy .app-dialog-body {
+    min-height: 7rem;
+}
+
+.app-dialog.is-busy .app-dialog-body > * {
+    opacity: 0.35;
+}
+
+.app-dialog.is-busy .app-dialog-body::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin: -0.675rem 0 0 -0.675rem;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: page-loader-spin 0.7s linear infinite;
 }
 
 .app-dialog-message {
@@ -197,5 +221,10 @@
 
     .app-dialog-close {
         transition: none;
+    }
+
+    .app-dialog.is-busy .app-dialog-body::before {
+        animation: none;
+        border-color: var(--color-primary);
     }
 }

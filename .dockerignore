@@ -19,6 +19,10 @@
 **/node_modules
 **/npm-debug.log
 **/obj
+**/.cursor
+**/docs
+**/App_Data
+**/*.md
 **/secrets.dev.yaml
 **/values.dev.yaml
 LICENSE

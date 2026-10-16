@@ -864,6 +864,10 @@
     color: var(--color-text-muted);
 }
 
+.admin-table-sub.news-summary {
+    font-weight: 700;
+}
+
 .admin-leader-cell {
     display: flex;
     align-items: center;
@@ -1223,7 +1227,7 @@
     padding-left: 0.9rem;
     border-left: 3px solid var(--color-primary);
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.55;
 }
 

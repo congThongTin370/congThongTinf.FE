@@ -327,6 +327,7 @@ a:hover {
 .category-item-summary {
     margin: 0 0 0.5rem;
     color: var(--color-text);
+    font-weight: 700;
     line-height: 1.6;
 }
 
@@ -1110,12 +1111,108 @@ a:hover {
 }
 
 .home-feature-title a {
-    color: var(--color-text);
+    color: var(--color-primary-dark);
     text-decoration: none;
 }
 
 .home-feature-title a:hover {
-    color: var(--color-primary-dark);
+    color: var(--color-primary);
+}
+
+.home-slider {
+    position: relative;
+    min-width: 0;
+    container-type: inline-size;
+}
+
+.home-slider-viewport {
+    overflow: hidden;
+    touch-action: pan-y;
+}
+
+.home-slider-viewport:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.home-slider-track {
+    display: flex;
+    transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+}
+
+.home-slider-track.is-instant {
+    transition: none;
+}
+
+.home-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+}
+
+.home-slider-btn {
+    position: absolute;
+    top: calc(100cqw * 9 / 32);
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.55);
+    color: #fff;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.home-slider-prev {
+    left: 0.5rem;
+}
+
+.home-slider-next {
+    right: 0.5rem;
+}
+
+.home-slider-btn:hover,
+.home-slider-btn:focus-visible {
+    background: var(--color-primary-dark);
+}
+
+.home-slider-single .home-slider-btn,
+.home-slider-single .home-slider-dots {
+    display: none;
+}
+
+.home-slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+
+.home-slider-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-border);
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+}
+
+.home-slider-dot.is-active {
+    background: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-slider-track,
+    .home-slider-dot {
+        transition: none;
+    }
 }
 
 .home-highlights h2 {
@@ -1267,7 +1364,7 @@ a:hover {
     padding-left: 0.9rem;
     border-left: 3px solid var(--color-primary);
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-text);
 }
 
@@ -1956,5 +2053,112 @@ a:hover {
     .site-nav-list,
     .btn {
         transition: none;
+    }
+
+    .page-loader-spin,
+    .notice-toast,
+    .notice-toast.is-leaving {
+        animation: none;
+    }
+}
+
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245, 248, 250, 0.78);
+}
+
+.page-loader[hidden] {
+    display: none;
+}
+
+.page-loader-card {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-primary-dark);
+    font-weight: 700;
+    box-shadow: 0 10px 28px rgba(17, 24, 39, 0.12);
+}
+
+.page-loader-spin {
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: page-loader-spin 0.7s linear infinite;
+}
+
+@keyframes page-loader-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.notice-stack {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: min(22rem, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.notice-toast {
+    position: relative;
+    margin: 0;
+    padding-right: 2.25rem;
+    pointer-events: auto;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+    animation: notice-in 0.28s var(--motion-ease) both;
+}
+
+.notice-toast.is-leaving {
+    animation: notice-out 0.2s ease both;
+}
+
+.notice-toast-close {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+@keyframes notice-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.4rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes notice-out {
+    to {
+        opacity: 0;
+        transform: translateY(-0.35rem);
     }
 }
