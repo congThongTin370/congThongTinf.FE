@@ -59,6 +59,29 @@ a:hover {
     color: var(--color-text);
 }
 
+.site-brand {
+    background: var(--color-surface);
+}
+
+.site-brand-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 0 0.45rem;
+}
+
+.site-logo {
+    display: block;
+    width: auto;
+    height: 4.6rem;
+    max-width: min(100%, 16rem);
+    object-fit: contain;
+}
+
+.site-logo-footer {
+    height: 3.4rem;
+    margin-bottom: 0.65rem;
+}
+
 .site-nav {
     background: var(--color-primary);
     color: var(--color-text-on-primary);
@@ -1526,6 +1549,10 @@ a:hover {
 }
 
 @media (max-width: 767.98px) {
+    .site-logo {
+        height: 3.5rem;
+    }
+
     .nav-toggle {
         display: inline-flex;
         order: 1;

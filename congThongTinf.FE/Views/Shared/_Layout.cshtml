@@ -11,7 +11,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Cổng thông tin Sư đoàn 370</title>
+    <title>Cổng thông tin Sư đoàn 370</title>
+    <link rel="icon" href="https://pub-f9c31e10d1244c9cb46f01196c447ad2.r2.dev/logo/OIP.webp" type="image/webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" />
@@ -23,6 +24,8 @@
 <body>
     <header class="site-header">
         @await Component.InvokeAsync("BannerSlot", new { position = 0 })
+
+       
 
         <nav class="site-nav" aria-label="Điều hướng chính">
             <div class="site-container site-nav-bar">
@@ -140,6 +143,7 @@
     <footer class="site-footer">
         <div class="site-container site-footer-grid">
             <div class="site-footer-brand">
+                <img class="site-logo site-logo-footer" src="https://pub-f9c31e10d1244c9cb46f01196c447ad2.r2.dev/logo/OIP.webp" alt="" />
                 <p class="site-footer-name">Cổng thông tin điện tử</p>
                 <p class="site-footer-unit">Sư đoàn Không quân 370</p>
                 <p class="site-footer-address">
