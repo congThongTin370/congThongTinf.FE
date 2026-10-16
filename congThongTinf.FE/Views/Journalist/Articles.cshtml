@@ -1,4 +1,4 @@
-@model List<congThongTinf.FE.Models.ApiModels.NewsDto>
+@model JournalistArticlesViewModel
 @{
     Layout = "_JournalistLayout";
     ViewData["Title"] = "Quản lý bài báo";
@@ -14,7 +14,88 @@
     <div class="admin-alert" role="status">@message</div>
 }
 
-<section class="admin-panel" aria-labelledby="articles-title">
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="admin-alert-error" role="alert">@Model.LoadError</div>
+}
+
+<section class="admin-panel" aria-labelledby="articles-filter-title">
+    <div class="admin-panel-header">
+        <h2 id="articles-filter-title">Lọc bài</h2>
+    </div>
+    <div class="admin-panel-body">
+        <form method="get" asp-controller="Journalist" asp-action="Articles" class="admin-filter-grid">
+            <div class="admin-form-field">
+                <label for="search">Từ khóa</label>
+                <input id="search" name="search" class="form-control" value="@Model.Search" placeholder="Tìm theo tiêu đề" />
+            </div>
+            <div class="admin-form-field">
+                <label for="categoryId">Chuyên mục</label>
+                <select id="categoryId" name="categoryId" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        if (Model.CategoryId == category.Id)
+                        {
+                            <option value="@category.Id" selected>@category.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var option in NewsStatuses.Options)
+                    {
+                        if (Model.Status == option.Value)
+                        {
+                            <option value="@option.Value" selected>@option.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label for="sortBy">Sắp xếp</label>
+                <select id="sortBy" name="sortBy" class="form-select">
+                    @if (Model.SortBy == 1)
+                    {
+                        <option value="0">Mới nhất</option>
+                        <option value="1" selected>Nhiều lượt xem</option>
+                    }
+                    else
+                    {
+                        <option value="0" selected>Mới nhất</option>
+                        <option value="1">Nhiều lượt xem</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-form-field">
+                <label for="fromDate">Từ ngày</label>
+                <input id="fromDate" name="fromDate" class="form-control" type="date" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="admin-form-field">
+                <label for="toDate">Đến ngày</label>
+                <input id="toDate" name="toDate" class="form-control" type="date" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a class="btn btn-outline-secondary" asp-controller="Journalist" asp-action="Articles">Xóa lọc</a>
+            </div>
+        </form>
+        <p class="admin-field-hint admin-filter-note">Từ khóa tìm theo tiêu đề, không phân biệt hoa thường. Trạng thái lọc thêm trên kết quả đã khớp ngày, chuyên mục và tiêu đề. Sắp xếp theo ngày tạo hoặc lượt xem.</p>
+    </div>
+</section>
+
+<section class="admin-panel admin-section-gap" aria-labelledby="articles-title">
     <div class="admin-panel-header">
         <h2 id="articles-title">Danh sách bài báo</h2>
     </div>
@@ -25,29 +106,37 @@
                     <th scope="col">Tiêu đề</th>
                     <th scope="col">Chuyên mục</th>
                     <th scope="col">Trạng thái</th>
-                    <th scope="col">Cập nhật</th>
+                    <th scope="col">Ngày tạo</th>
+                    <th scope="col">Lượt xem</th>
                     <th scope="col" class="admin-table-actions">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
-                @if (Model.Count == 0)
+                @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="5" class="admin-table-empty">Bạn chưa có bài báo nào.</td>
+                        <td colspan="6" class="admin-table-empty">@(Model.HasFilter ? "Chưa có bài báo phù hợp." : "Bạn chưa có bài báo nào.")</td>
                     </tr>
                 }
                 else
                 {
-                    @foreach (var news in Model)
+                    @foreach (var news in Model.Items)
                     {
                         <tr>
                             <td><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></td>
-                            <td>@news.CategoryName</td>
-                            <td>@NewsStatuses.Label(news.Status)</td>
-                            <td>@news.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(string.IsNullOrWhiteSpace(news.CategoryName) ? "—" : news.CategoryName)</td>
+                            <td><span class="@NewsStatuses.BadgeClass(news.Status)">@NewsStatuses.Label(news.Status)</span></td>
+                            <td>@news.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@news.ViewCount</td>
                             <td class="admin-table-actions">
-                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Journalist" asp-action="Edit" asp-route-id="@news.Id">Sửa</a>
-                                <a class="btn btn-danger btn-sm" asp-controller="Journalist" asp-action="DeleteConfirm" asp-route-id="@news.Id">Xóa</a>
+                                <div class="admin-row-actions">
+                                    <a class="admin-icon-btn" asp-controller="Journalist" asp-action="Edit" asp-route-id="@news.Id" aria-label="Sửa" title="Sửa">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
+                                    </a>
+                                    <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Journalist" asp-action="DeleteConfirm" asp-route-id="@news.Id" aria-label="Xóa" title="Xóa">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }

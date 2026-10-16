@@ -106,6 +106,9 @@ public class NewsService : INewsService
         if (!string.IsNullOrWhiteSpace(query.Search))
             parts.Add($"search={Uri.EscapeDataString(query.Search.Trim())}");
 
+        if (query.SortBy == 1)
+            parts.Add("sortBy=1");
+
         return "?" + string.Join("&", parts);
     }
 }

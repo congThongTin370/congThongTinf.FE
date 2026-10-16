@@ -45,9 +45,27 @@ public class BannerSlotViewModel
     public int Position { get; set; }
 }
 
+public class BannerFileDto
+{
+    public string Key { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+    public long Size { get; set; }
+    public DateTime? LastModified { get; set; }
+}
+
+public class BannerFileListResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public bool SessionExpired { get; set; }
+    public List<BannerFileDto> Items { get; set; } = new();
+}
+
 public class BannerListViewModel
 {
     public List<BannerDto> Items { get; set; } = new();
+    public List<BannerFileDto> Files { get; set; } = new();
+    public string? FilesError { get; set; }
     public string? Search { get; set; }
     public int? Position { get; set; }
     public bool? IsActive { get; set; }

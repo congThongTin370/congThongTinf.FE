@@ -21,7 +21,7 @@ public class NewsImageUploadResult
 /// </summary>
 public interface IJournalistNewsService
 {
-    Task<List<NewsDto>> GetMyNewsAsync(string accessToken, Guid authorId);
+    Task<List<NewsDto>> GetMyNewsAsync(string accessToken, Guid authorId, NewsQueryDto? query = null);
     Task<NewsDto?> GetNewsByIdAsync(Guid id);
     Task<NewsWriteResult> CreateAsync(string accessToken, NewsWriteRequestDto request);
     Task<NewsWriteResult> UpdateAsync(string accessToken, Guid id, NewsWriteRequestDto request);

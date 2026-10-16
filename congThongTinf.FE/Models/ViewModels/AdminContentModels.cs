@@ -31,6 +31,23 @@ public class CategoryWriteResult
     public CategoryDto? Data { get; set; }
 }
 
+public class JournalistArticlesViewModel
+{
+    public List<NewsDto> Items { get; set; } = new();
+    public List<CategoryDto> Categories { get; set; } = new();
+    public DateTime? FromDate { get; set; }
+    public DateTime? ToDate { get; set; }
+    public Guid? CategoryId { get; set; }
+    public int? Status { get; set; }
+    public string? Search { get; set; }
+
+    /// <summary>0 = mới nhất. 1 = nhiều lượt xem nhất.</summary>
+    public int SortBy { get; set; }
+
+    public string? LoadError { get; set; }
+    public bool HasFilter { get; set; }
+}
+
 public class AdminNewsListViewModel
 {
     public List<NewsDto> Items { get; set; } = new();

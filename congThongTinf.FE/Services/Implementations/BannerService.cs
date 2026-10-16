@@ -72,6 +72,47 @@ public class BannerService : IBannerService
         }
     }
 
+    public async Task<BannerFileListResult> GetFilesAsync(string accessToken)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "api/admin/banners/files");
+            var hasToken = ApplyBearer(request, accessToken);
+            using var response = await _httpClient.SendAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized && hasToken)
+            {
+                return new BannerFileListResult
+                {
+                    SessionExpired = true,
+                    ErrorMessage = UserFacingErrors.SessionExpired
+                };
+            }
+
+            var body = await ReadEnvelopeAsync<List<BannerFileDto>>(response);
+            if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
+            {
+                return new BannerFileListResult
+                {
+                    ErrorMessage = string.IsNullOrWhiteSpace(body?.Error?.Message)
+                        ? UserFacingErrors.ForBanners((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message)
+                        : body.Error.Message.Trim()
+                };
+            }
+
+            return new BannerFileListResult
+            {
+                Success = true,
+                Items = body.Value?.Data ?? new List<BannerFileDto>()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list banner files");
+            return new BannerFileListResult { ErrorMessage = UserFacingErrors.TryAgain };
+        }
+    }
+
     public async Task<BannerWriteResult> GetByIdAsync(string accessToken, Guid id)
     {
         try

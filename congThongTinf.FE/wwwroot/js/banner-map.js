@@ -1,48 +1,62 @@
 (function () {
     var zones = document.querySelectorAll("[data-banner-zone]");
-    var pools = document.querySelectorAll("[data-banner-pool]");
     var hint = document.querySelector("[data-banner-hint]");
     if (zones.length === 0) {
         return;
     }
 
-    function select(position) {
-        var current = document.querySelector(".banner-zone.is-selected");
-        var same = current && current.getAttribute("data-banner-zone") === String(position);
-
+    function apply(position) {
         zones.forEach(function (zone) {
-            var on = !same && zone.getAttribute("data-banner-zone") === String(position);
+            var on = zone.getAttribute("data-banner-zone") === String(position);
             zone.classList.toggle("is-selected", on);
             zone.setAttribute("aria-pressed", on ? "true" : "false");
         });
 
-        pools.forEach(function (pool) {
-            pool.hidden = same || pool.getAttribute("data-banner-pool") !== String(position);
+        var selectedZone = document.querySelector(".banner-zone.is-selected");
+        var activeUrl = selectedZone ? selectedZone.getAttribute("data-active-url") || "" : "";
+
+        document.querySelectorAll("[data-banner-position]").forEach(function (input) {
+            input.value = position;
+        });
+
+        document.querySelectorAll("[data-banner-pick]").forEach(function (button) {
+            var card = button.closest(".banner-seat");
+            var url = card ? card.getAttribute("data-url") || "" : "";
+            var current = activeUrl.length > 0 && url === activeUrl;
+            var label = button.querySelector("[data-banner-pick-label]");
+            button.disabled = current;
+            if (label) {
+                label.textContent = current ? "Đang gắn ở ô này" : "Dùng cho ô này";
+            }
+            if (card) {
+                card.classList.toggle("is-live", current);
+            }
         });
 
         if (hint) {
-            hint.hidden = !same;
+            hint.hidden = true;
         }
     }
 
     zones.forEach(function (zone) {
         zone.addEventListener("click", function () {
-            select(zone.getAttribute("data-banner-zone"));
+            apply(zone.getAttribute("data-banner-zone"));
         });
     });
 
-    document.querySelectorAll("[data-banner-search]").forEach(function (input) {
-        input.addEventListener("input", function () {
-            var pool = input.closest("[data-banner-pool]");
-            if (!pool) {
-                return;
-            }
+    var selected = document.querySelector(".banner-zone.is-selected");
+    if (selected) {
+        apply(selected.getAttribute("data-banner-zone"));
+    }
 
-            var term = input.value.trim().toLowerCase();
-            pool.querySelectorAll(".banner-seat").forEach(function (card) {
+    var search = document.querySelector("[data-banner-search]");
+    if (search) {
+        search.addEventListener("input", function () {
+            var term = search.value.trim().toLowerCase();
+            document.querySelectorAll(".banner-seat[data-title]").forEach(function (card) {
                 var title = (card.getAttribute("data-title") || "").toLowerCase();
                 card.hidden = term.length > 0 && title.indexOf(term) === -1;
             });
         });
-    });
+    }
 })();

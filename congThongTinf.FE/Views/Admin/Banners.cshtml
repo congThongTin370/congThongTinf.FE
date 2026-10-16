@@ -154,6 +154,58 @@
     </section>
 }
 
+<section class="admin-panel admin-section-gap" aria-labelledby="banner-files-title">
+    <div class="admin-panel-header">
+        <h2 id="banner-files-title">Ảnh trong thư mục banners</h2>
+    </div>
+    <div class="admin-panel-body">
+        @if (!string.IsNullOrWhiteSpace(Model.FilesError))
+        {
+            <p class="admin-alert-error" role="alert">@Model.FilesError</p>
+        }
+        else if (Model.Files.Count == 0)
+        {
+            <p class="admin-table-empty">Chưa có ảnh trong thư mục banners.</p>
+        }
+        else
+        {
+            <ul class="banner-seat-grid">
+                @foreach (var file in Model.Files)
+                {
+                    var name = string.IsNullOrWhiteSpace(file.Key) ? file.Url : file.Key.Split('/').Last();
+                    <li class="banner-seat">
+                        @if (!string.IsNullOrWhiteSpace(file.Url))
+                        {
+                            <img src="@file.Url" alt="@name" />
+                        }
+                        <div class="banner-seat-body">
+                            <strong>@name</strong>
+                            <span class="admin-list-meta">
+                                @if (file.Size >= 1024 * 1024)
+                                {
+                                    @($"{file.Size / (1024d * 1024d):0.#} MB")
+                                }
+                                else if (file.Size >= 1024)
+                                {
+                                    @($"{file.Size / 1024d:0.#} KB")
+                                }
+                                else
+                                {
+                                    @($"{file.Size} B")
+                                }
+                                @if (file.LastModified.HasValue)
+                                {
+                                    <span> · @file.LastModified.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                }
+                            </span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>
+
 @section Scripts {
     <script src="~/js/banner-map.js" asp-append-version="true"></script>
 }

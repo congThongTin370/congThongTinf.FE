@@ -509,6 +509,53 @@
 
 .admin-table-actions {
     text-align: right;
+    white-space: nowrap;
+}
+
+.admin-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.admin-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-primary-dark);
+    text-decoration: none;
+}
+
+.admin-icon-btn svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.admin-icon-btn:hover {
+    background: var(--color-surface-blue);
+    color: var(--color-primary-dark);
+}
+
+.admin-icon-btn-danger {
+    border-color: #FECACA;
+    background: #FEF2F2;
+    color: var(--color-danger);
+}
+
+.admin-icon-btn-danger:hover {
+    background: #FEE2E2;
+    color: var(--color-danger);
 }
 
 .admin-table-empty {

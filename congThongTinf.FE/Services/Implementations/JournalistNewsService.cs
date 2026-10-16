@@ -17,12 +17,12 @@ public class JournalistNewsService : IJournalistNewsService
         _logger = logger;
     }
 
-    public async Task<List<NewsDto>> GetMyNewsAsync(string accessToken, Guid authorId)
+    public async Task<List<NewsDto>> GetMyNewsAsync(string accessToken, Guid authorId, NewsQueryDto? query = null)
     {
         try
         {
-            // Backend chưa lọc theo tác giả: lấy tất cả rồi lọc theo authorId. Không lọc Draft.
-            using var response = await _httpClient.GetAsync("api/news?pageIndex=0");
+            // Backend chưa lọc theo tác giả: lấy danh sách đã lọc/sắp xếp rồi giữ bài của phóng viên.
+            using var response = await _httpClient.GetAsync(BuildMyNewsUrl(query));
             var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<PagedData<NewsDto>>>();
 
             if (body?.IsSuccess != true || body.Value?.Data == null)
@@ -30,16 +30,58 @@ public class JournalistNewsService : IJournalistNewsService
                 return new List<NewsDto>();
             }
 
-            return body.Value.Data.Items
-                .Where(n => n.AuthorId == authorId)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToList();
+            var mine = body.Value.Data.Items.Where(n => n.AuthorId == authorId);
+            if (query?.SortBy == 1)
+            {
+                return mine
+                    .OrderByDescending(n => n.ViewCount)
+                    .ThenByDescending(n => n.CreatedAt)
+                    .ToList();
+            }
+
+            return mine.OrderByDescending(n => n.CreatedAt).ToList();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load news list");
             return new List<NewsDto>();
         }
+    }
+
+    private static string BuildMyNewsUrl(NewsQueryDto? query)
+    {
+        var parts = new List<string> { "pageIndex=0" };
+        if (query == null)
+        {
+            return "api/news?pageIndex=0";
+        }
+
+        if (query.FromDate.HasValue)
+        {
+            parts.Add($"fromDate={Uri.EscapeDataString(query.FromDate.Value.ToString("o"))}");
+        }
+
+        if (query.ToDate.HasValue)
+        {
+            parts.Add($"toDate={Uri.EscapeDataString(query.ToDate.Value.ToString("o"))}");
+        }
+
+        if (query.CategoryIds != null)
+        {
+            parts.AddRange(query.CategoryIds.Select(id => $"categoryIds={id}"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            parts.Add($"search={Uri.EscapeDataString(query.Search.Trim())}");
+        }
+
+        if (query.SortBy == 1)
+        {
+            parts.Add("sortBy=1");
+        }
+
+        return "api/news?" + string.Join("&", parts);
     }
 
     public async Task<NewsDto?> GetNewsByIdAsync(Guid id)

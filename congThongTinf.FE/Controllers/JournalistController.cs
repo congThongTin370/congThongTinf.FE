@@ -46,7 +46,13 @@ namespace congThongTinf.FE.Controllers
         }
 
         // Danh sách bài báo của chính phóng viên
-        public async Task<IActionResult> Articles()
+        public async Task<IActionResult> Articles(
+            DateTime? fromDate,
+            DateTime? toDate,
+            Guid? categoryId,
+            int? status,
+            string? search,
+            int sortBy = 0)
         {
             if (!IsJournalist())
             {
@@ -54,9 +60,53 @@ namespace congThongTinf.FE.Controllers
             }
 
             SetLayoutData("Articles", "Quản lý bài báo");
-            var authorId = GetCurrentUserId();
-            var news = await _newsService.GetMyNewsAsync(GetToken(), authorId);
-            return View(news);
+
+            if (status.HasValue && NewsStatuses.Options.All(option => option.Value != status.Value))
+            {
+                status = null;
+            }
+
+            if (sortBy != 1)
+            {
+                sortBy = 0;
+            }
+
+            var term = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+            var model = new JournalistArticlesViewModel
+            {
+                FromDate = fromDate,
+                ToDate = toDate,
+                CategoryId = categoryId,
+                Status = status,
+                Search = term,
+                SortBy = sortBy,
+                Categories = await _categoryService.GetActiveCategoriesAsync(),
+                HasFilter = fromDate.HasValue || toDate.HasValue || categoryId.HasValue || status.HasValue || term != null
+            };
+
+            if (fromDate.HasValue && toDate.HasValue && fromDate.Value.Date > toDate.Value.Date)
+            {
+                model.LoadError = "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.";
+                return View(model);
+            }
+
+            var news = await _newsService.GetMyNewsAsync(GetToken(), GetCurrentUserId(), new NewsQueryDto
+            {
+                PageIndex = 0,
+                FromDate = fromDate,
+                ToDate = toDate,
+                CategoryIds = categoryId.HasValue ? new List<Guid> { categoryId.Value } : null,
+                Search = term,
+                SortBy = sortBy
+            });
+
+            if (status.HasValue)
+            {
+                news = news.Where(item => NewsStatuses.MatchesFilter(item.Status, status.Value)).ToList();
+            }
+
+            model.Items = news;
+            return View(model);
         }
 
         [HttpGet]

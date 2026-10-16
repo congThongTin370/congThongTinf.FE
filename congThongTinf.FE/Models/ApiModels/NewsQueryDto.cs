@@ -14,4 +14,7 @@ public class NewsQueryDto
 
     /// <summary>Lọc title chứa chuỗi, không phân biệt hoa thường.</summary>
     public string? Search { get; set; }
+
+    /// <summary>0 = CreatedAt giảm dần. 1 = ViewCount giảm dần, rồi CreatedAt giảm dần.</summary>
+    public int SortBy { get; set; }
 }
