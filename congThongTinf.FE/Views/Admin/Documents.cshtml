@@ -1,6 +1,8 @@
 @model DocumentListViewModel
+@using System.Globalization
 @{
     Layout = "_AdminLayout";
+    var sizeCulture = CultureInfo.GetCultureInfo("vi-VN");
 
     string FileSizeText(long bytes)
     {
@@ -15,6 +17,23 @@
         }
 
         return $"{bytes} B";
+    }
+
+    string StorageSizeText(long bytes)
+    {
+        var value = bytes < 0 ? 0d : bytes;
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+
+        var number = unit == 0
+            ? value.ToString("0", sizeCulture)
+            : value.ToString("0.#", sizeCulture);
+        return $"{number} {units[unit]}";
     }
 
     string FileKind(string fileName)
@@ -152,3 +171,35 @@
         }
     </nav>
 }
+
+<section class="admin-panel admin-section-gap" aria-labelledby="storage-title">
+    <div class="admin-panel-header">
+        <h2 id="storage-title">Dung lượng lưu trữ</h2>
+    </div>
+    <div class="admin-panel-body">
+        @if (!Model.Storage.Success || Model.Storage.Data == null)
+        {
+            <p class="admin-alert-error storage-error" role="alert">@Model.Storage.ErrorMessage</p>
+        }
+        else
+        {
+            var usage = Model.Storage.Data;
+            var fill = Math.Clamp(usage.UsedPercent, 0, 100).ToString("0.##", CultureInfo.InvariantCulture);
+            var overQuota = usage.UsedPercent >= 100;
+            <div class="storage-meter">
+                <p class="storage-headline">
+                    <strong>@StorageSizeText(usage.UsedBytes)</strong>
+                    <span>đã dùng trong @StorageSizeText(usage.QuotaBytes)</span>
+                </p>
+                <div class="storage-track" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@fill" aria-label="Phần trăm dung lượng đã dùng">
+                    <span class="storage-fill@(overQuota ? " is-full" : "")" style="width: @(fill)%"></span>
+                </div>
+                <ul class="storage-legend">
+                    <li><span class="storage-dot storage-dot-used@(overQuota ? " is-full" : "")" aria-hidden="true"></span>Đã dùng @StorageSizeText(usage.UsedBytes)</li>
+                    <li><span class="storage-dot storage-dot-free" aria-hidden="true"></span>Còn lại @StorageSizeText(usage.RemainingBytes)</li>
+                    <li>@usage.UsedPercent.ToString("0.##", sizeCulture)%</li>
+                </ul>
+            </div>
+        }
+    </div>
+</section>

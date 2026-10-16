@@ -25,6 +25,7 @@ namespace congThongTinf.FE.Controllers
         private readonly INewsService _newsService;
         private readonly IAdminUserService _userService;
         private readonly IDashboardService _dashboardService;
+        private readonly IStorageService _storageService;
         private readonly IBannerService _bannerService;
         private readonly ILeaderService _leaderService;
 
@@ -34,6 +35,7 @@ namespace congThongTinf.FE.Controllers
             INewsService newsService,
             IAdminUserService userService,
             IDashboardService dashboardService,
+            IStorageService storageService,
             IBannerService bannerService,
             ILeaderService leaderService)
         {
@@ -42,6 +44,7 @@ namespace congThongTinf.FE.Controllers
             _newsService = newsService;
             _userService = userService;
             _dashboardService = dashboardService;
+            _storageService = storageService;
             _bannerService = bannerService;
             _leaderService = leaderService;
         }
@@ -113,13 +116,20 @@ namespace congThongTinf.FE.Controllers
                 Category = category
             });
 
+            var storage = await _storageService.GetUsageAsync(GetToken());
+            if (storage.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
             return View(new DocumentListViewModel
             {
                 Items = items,
                 Search = search,
                 Category = category,
                 PageIndex = pageIndex,
-                PageSize = 10
+                PageSize = 10,
+                Storage = storage
             });
         }
 

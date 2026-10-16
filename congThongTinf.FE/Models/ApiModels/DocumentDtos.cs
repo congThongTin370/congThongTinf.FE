@@ -29,6 +29,7 @@ public class DocumentListViewModel
     public int? Category { get; set; }
     public int PageIndex { get; set; } = 1;
     public int PageSize { get; set; } = 10;
+    public StorageUsageResult Storage { get; set; } = new();
 
     public bool HasPrevious => PageIndex > 1;
     public bool HasNext => Items.Count >= PageSize;

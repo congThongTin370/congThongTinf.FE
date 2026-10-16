@@ -11,6 +11,8 @@
 
   Ngoại lệ: tạo/sửa bài báo và upload file dùng `multipart/form-data` (`POST /api/news`, `PUT /api/news/{id}`, `POST /api/news/images`, `POST /api/admin/banners`, `PUT /api/admin/banners/{id}`, `POST /api/documents`, `POST /api/blobs/upload`). Tên field form bind không phân biệt hoa thường (`file`, `title`, `coverImage`, …).
 
+  Mọi file ảnh (ảnh bìa, ảnh trong bài, banner, và `POST /api/blobs/upload`) được kiểm tra định dạng thật và kích thước (tối đa 10 MB, cạnh tối đa 8192 px) rồi chuyển sang WebP quality 82 trước khi lưu R2. Nhận `Content-Type: image/*` hoặc đuôi `.jpg`, `.jpeg`, `.jfif`, `.png`, `.gif`, `.webp`, `.bmp`, `.tif`, `.tiff`, `.tga`, `.pbm`, `.pgm`, `.ppm`, `.qoi`. URL trả về kết thúc bằng `.webp`, `contentType` là `image/webp`. Tài liệu nội bộ không bị chuyển đổi.
+
   ## Hệ thống
 
   Cổng thông tin nội bộ Sư đoàn Không quân 370. Backend là ASP.NET Core 10, PostgreSQL, kiến trúc phân lớp:
@@ -43,7 +45,7 @@
   - Document: lấy danh sách có phân trang, tải file (`downloadUrl`), admin upload tài liệu nội bộ
   - Banner: lấy danh sách (lọc theo vị trí và `isActive`), lấy chi tiết (public), tạo, sửa, xóa, đặt banner đang hiện theo vị trí (chỉ Admin ghi)
   - Leader: lấy danh sách, lấy chi tiết (public), tạo, sửa, xóa (chỉ Admin ghi)
-  - Admin: CRUD tài khoản (phân trang), dashboard thống kê
+  - Admin: CRUD tài khoản (phân trang), dashboard thống kê, dung lượng R2
   - Blob: endpoint test upload/xóa file Cloudflare R2
   - System: seed / xóa dữ liệu local
 
@@ -55,7 +57,7 @@
 
   | Giá trị | Số | Quyền đang gắn trên API |
   | --- | --- | --- |
-  | `Admin` | `0` | Tạo tài khoản phóng viên. Gọi được `GET /api/me/check-admin` và `GET /api/dashboard`. Tạo, sửa, xóa danh mục. Tạo, sửa, xóa banner và đặt banner đang hiện theo vị trí layout. Tạo, sửa, xóa thủ trưởng. Upload tài liệu nội bộ. CRUD user. |
+  | `Admin` | `0` | Tạo tài khoản phóng viên. Gọi được `GET /api/me/check-admin`, `GET /api/dashboard` và `GET /api/admin/storage`. Tạo, sửa, xóa danh mục. Tạo, sửa, xóa banner và đặt banner đang hiện theo vị trí layout. Tạo, sửa, xóa thủ trưởng. Upload tài liệu nội bộ. CRUD user. |
   | `Journalist` | `1` | Đăng nhập, đăng xuất, đọc role của chính mình. Tạo bài viết, sửa và xóa **bài của chính mình**. Xem danh mục. |
 
   Trong JWT, role là **chuỗi** `"Admin"` hoặc `"Journalist"`, vì token ghi `ClaimTypes.Role` bằng `RoleType.ToString()`.
@@ -275,9 +277,33 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
 
 `total`, `active`.
 
+  ## Dung lượng R2
+
+  `GET /api/admin/storage` — chỉ role `Admin`. Controller `R2StorageAnalyticsController`. Không có query. Server gọi Cloudflare GraphQL Analytics (`r2StorageAdaptiveGroups`) cho bucket đã cấu hình, lấy mẫu mới nhất trong 7 ngày, rồi tính dung lượng còn lại theo `CloudflareR2Analytics:StorageQuotaBytes`.
+
+  Thiếu token: HTTP `401` (framework). Không phải Admin: HTTP `403` (framework).
+
+  Thành công: HTTP `200`, message `Lấy dung lượng R2 thành công.`
+
+  `value.data`:
+
+  | Field | Ý nghĩa |
+  | --- | --- |
+  | `bucketName` | Bucket đã truy vấn. Bucket có jurisdiction thì dạng `{jurisdiction}_{bucket}` |
+  | `payloadBytes` | Dung lượng object |
+  | `metadataBytes` | Dung lượng metadata |
+  | `usedBytes` | `payloadBytes + metadataBytes` |
+  | `objectCount` | Số object |
+  | `quotaBytes` | Hạn mức cấu hình, bytes |
+  | `remainingBytes` | `quotaBytes - usedBytes`, nhỏ nhất là `0` |
+  | `usedPercent` | Phần trăm đã dùng, làm tròn 2 chữ số. Có thể lớn hơn 100 khi vượt hạn mức |
+  | `measuredAt` | Thời điểm mẫu Cloudflare, UTC. `null` nếu không đọc được datetime |
+
+  Lỗi nghiệp vụ vẫn bọc `ApiResult`: thiếu `AccountId` / `ApiToken` / tên bucket / hạn mức → HTTP `500`. Cloudflare từ chối hoặc lỗi mạng → HTTP `502`. Không có mẫu trong 7 ngày → HTTP `404`, message `Cloudflare chưa trả số liệu lưu trữ cho bucket này trong 7 ngày gần nhất.`
+
   ## Envelope `ApiResult<T>`
 
-  Mọi action auth, me, dashboard, news, category, documents (trừ download file), admin users/banner, blobs, và nhánh thành công của system dùng class `ApiResult<T>` trong `congThongTinf.Service/Utils/ApiResult.cs`.
+  Mọi action auth, me, dashboard, storage R2, news, category, documents (trừ download file), admin users/banner, blobs, và nhánh thành công của system dùng class `ApiResult<T>` trong `congThongTinf.Service/Utils/ApiResult.cs`.
 
   Ngoại lệ: `GET /api/documents/{id}/download` trả **binary file**, không bọc `ApiResult`. Thành công thì body là bytes, header `Content-Disposition: attachment`.
 
@@ -495,13 +521,13 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   | `content` | string | Có | Không được chỉ có khoảng trắng |
   | `categoryId` | Guid | Có | Phải là Guid của category đang active |
   | `summary` | string | Không | Mặc định chuỗi rỗng |
-  | `coverImage` | file | Không | `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, tối đa 10 MB. Không gửi thì `coverImageUrl` là `null` |
+  | `coverImage` | file | Không | File ảnh, tối đa 10 MB. Mọi ảnh được lưu thành `.webp`. Không gửi thì `coverImageUrl` là `null` |
 
   Thành công: HTTP `200`, `value.data` là `NewsDto` vừa tạo.
 
   - Thiếu `title`, `content` hoặc `categoryId`: HTTP `400`, `Tiêu đề, nội dung và danh mục là bắt buộc.`
   - `categoryId` không tồn tại: HTTP `404`, `Danh mục với ID {id} không tồn tại.`
-  - `coverImage` rỗng hoặc sai loại: HTTP `400`, `File là bắt buộc.` hoặc `Ảnh phải là jpg, jpeg, png, webp hoặc gif.`
+  - `coverImage` rỗng hoặc không phải ảnh: HTTP `400`, `File là bắt buộc.` hoặc `File phải là ảnh.`
   - `coverImage` lớn hơn 10 MB: HTTP `400`, `File exceeds 10 MB limit.`
   - Không phải Journalist (kể cả Admin): HTTP `403`, `Chỉ phóng viên mới được thực hiện thao tác này.`
   - User trong token không còn trong DB hoặc bị khóa: HTTP `401`, `Không xác định được người dùng hiện tại.`
@@ -514,11 +540,14 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
     <input name="summary" value="Tóm tắt bài báo">
     <textarea name="content">Nội dung bài báo</textarea>
     <input name="categoryId" value="{categoryGuid}">
-    <input type="file" name="coverImage" accept=".jpg,.jpeg,.png,.webp,.gif">
+    <input type="file" name="coverImage" accept="image/*">
   </form>
   ```
 
-  Ví dụ `coverImageUrl` trong `NewsDto` trả về: `https://<PublicUrl>/news/{userId}/{guid}.jpg`.
+  Ví dụ `coverImageUrl` trong `NewsDto`: `https://<PublicUrl>/news/{userId}/{guid}.webp`.
+
+  - File khai là ảnh nhưng không đọc được: HTTP `400`, `Image file is invalid.`
+  - Cạnh ảnh lớn hơn 8192 px: HTTP `400`, `Image dimensions exceed 8192 pixels.`
 
   ### Upload ảnh trong bài
 
@@ -526,18 +555,18 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
 
   | Field | Bắt buộc | Ghi chú |
   | --- | --- | --- |
-  | `file` | Có | `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, tối đa 10 MB |
+  | `file` | Có | File ảnh, tối đa 10 MB. Mọi ảnh được lưu thành `.webp` |
 
   Thành công: HTTP `200`, `value.data` là `NewsImageDto`, message `Tải ảnh thành công.`
 
   ```json
   {
-    "url": "https://<PublicUrl>/news/{userId}/{guid}.jpg"
+    "url": "https://<PublicUrl>/news/{userId}/{guid}.webp"
   }
   ```
 
   - Không gửi file / file rỗng: HTTP `400`, `File là bắt buộc.`
-  - Sai loại ảnh: HTTP `400`, `Ảnh phải là jpg, jpeg, png, webp hoặc gif.`
+  - Không phải ảnh: HTTP `400`, `File phải là ảnh.`
   - Token không phải Journalist: HTTP `403` (framework).
 
   Endpoint này chỉ trả URL. Không tạo bản ghi bài báo. Dùng khi cần chèn ảnh vào nội dung bài.
@@ -554,7 +583,7 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   | `content` | string | Có | Không được chỉ có khoảng trắng |
   | `categoryId` | Guid | Có | Phải là Guid của category đang tồn tại |
   | `summary` | string | Không | Mặc định chuỗi rỗng |
-  | `coverImage` | file | Không | `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, tối đa 10 MB. Có file thì upload lên R2 và thay `coverImageUrl`. Không gửi thì giữ ảnh bìa cũ. Client **không** gửi `coverImageUrl`. |
+  | `coverImage` | file | Không | File ảnh, tối đa 10 MB. Có file thì chuyển WebP, upload lên R2 và thay `coverImageUrl`. Không gửi thì giữ ảnh bìa cũ. Client **không** gửi `coverImageUrl`. |
 
   Thành công: HTTP `200`, `value.data` là `NewsDto` sau khi sửa.
 
@@ -563,7 +592,7 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   - `categoryId` không tồn tại: HTTP `404`, `Danh mục với ID {id} không tồn tại.`
   - Không phải tác giả: HTTP `403`, `Bạn chỉ được thao tác trên bài viết của chính mình.`
   - Không phải Journalist: HTTP `403`, `Chỉ phóng viên mới được thực hiện thao tác này.`
-  - `coverImage` rỗng hoặc sai loại: HTTP `400`, `File là bắt buộc.` hoặc `Ảnh phải là jpg, jpeg, png, webp hoặc gif.`
+  - `coverImage` rỗng hoặc không phải ảnh: HTTP `400`, `File là bắt buộc.` hoặc `File phải là ảnh.`
   - `coverImage` lớn hơn 10 MB: HTTP `400`, `File exceeds 10 MB limit.`
 
   ### Xóa bài
@@ -904,7 +933,7 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
 
   | Field | Bắt buộc | Ghi chú |
   | --- | --- | --- |
-  | `file` | Có | `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif` |
+  | `file` | Có | File ảnh. Mọi ảnh được lưu thành `.webp`; `imageUrl` là URL WebP |
   | `title` | Không | Trống thì lấy tên file bỏ phần mở rộng |
   | `linkUrl` | Không | URL khi click banner. Trống/`null` thì `linkUrl` là `null`. Dài hơn 1000 ký tự: HTTP `400`, `Link banner không được vượt quá 1000 ký tự.` |
   | `position` | Không | Số `0` hoặc `1`. Mặc định `0` (Header). Giá trị khác: HTTP `400`, `Vị trí banner không hợp lệ.` |
@@ -913,7 +942,7 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   Thành công: HTTP `200`, `value.data` là `BannerDto`, message `Tải banner thành công.`
 
   - Không gửi file / file rỗng: HTTP `400`, `File là bắt buộc.`
-  - Sai loại ảnh: HTTP `400`, `Banner phải là ảnh (jpg, jpeg, png, webp, gif).`
+  - Không phải ảnh: HTTP `400`, `Banner phải là ảnh.`
   - File lớn hơn 10 MB: HTTP `400`, `File exceeds 10 MB limit.`
   - Thiếu token: HTTP `401` (framework, không có envelope).
   - Token không phải Admin: HTTP `403` (framework).
@@ -974,7 +1003,8 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   | `contentType` | string |
 
   Thiếu file: HTTP `400`, `File is required.`  
-  Quá 10 MB: HTTP `400`, `File exceeds 10 MB limit.`
+  Quá 10 MB: HTTP `400`, `File exceeds 10 MB limit.`  
+  Ảnh không đọc được hoặc cạnh quá 8192 px: HTTP `400`, `Image file is invalid.` hoặc `Image dimensions exceed 8192 pixels.` File ảnh thành công có `url` kết thúc `.webp`, `contentType` = `image/webp`, `size` là dung lượng WebP.
 
   `DELETE /api/blobs?key={key}` — xóa object theo key. Thành công: `value.data` = `true`. Key rỗng: HTTP `400`, `Key is required.`
 
@@ -998,7 +1028,7 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
 
   ## Việc frontend nên làm
 
-  - Gửi `Authorization: Bearer {accessToken}` cho `/api/auth/logout`, `/api/auth/create-journalist`, `/api/me/*`, `GET /api/dashboard`, `POST`/`PUT`/`DELETE` `/api/categories`, `POST`/`PUT`/`DELETE` `/api/news`, `POST /api/news/images`, `/api/admin/users`, `POST`/`PUT`/`DELETE` `/api/admin/banners`, `PUT /api/admin/banners/{id}/active`, `POST`/`PUT`/`DELETE` `/api/leaders`, `POST /api/documents`.
+  - Gửi `Authorization: Bearer {accessToken}` cho `/api/auth/logout`, `/api/auth/create-journalist`, `/api/me/*`, `GET /api/dashboard`, `GET /api/admin/storage`, `POST`/`PUT`/`DELETE` `/api/categories`, `POST`/`PUT`/`DELETE` `/api/news`, `POST /api/news/images`, `/api/admin/users`, `POST`/`PUT`/`DELETE` `/api/admin/banners`, `PUT /api/admin/banners/{id}/active`, `POST`/`PUT`/`DELETE` `/api/leaders`, `POST /api/documents`.
   - `GET /api/news`, `GET /api/news/{id}`, `POST /api/news/{id}/view`, `GET /api/categories`, `GET /api/documents`, `GET /api/documents/{id}/download`, `GET /api/admin/banners`, `GET /api/admin/banners/{id}`, `GET /api/leaders`, `GET /api/leaders/{id}` là public.
   - Tạo/sửa bài báo, upload ảnh bài, tạo/sửa banner và tài liệu dùng `multipart/form-data`, không dùng JSON. `POST /api/news` và `PUT /api/news/{id}` gửi ảnh bìa qua field `coverImage`, không gửi `coverImageUrl`. `{id}` bài cần sửa nằm trên URL. `PUT /api/admin/banners/{id}` chỉ gửi field cần đổi; `file` là tùy chọn.
   - Giữ token phía client. Hết 30 phút hoặc gặp 401 framework thì bắt đăng nhập lại.
@@ -1011,5 +1041,5 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   - `GET /api/news`, `GET /api/documents`, `GET /api/admin/users`, `GET /api/admin/banners`: `value.data` là object `{ items, totalCount, currentPage, totalPages, pageSize, hasPrevious, hasNext }`. Tài liệu trong `items` còn có `downloadUrl`.
   - Nút tải tài liệu: `<a href="@item.DownloadUrl" download="@item.FileName">Tải xuống</a>`. Không dùng `fileUrl` cho nút download. Không `fetch` endpoint download.
   - `GET /api/me/role` trả `role` dạng chuỗi khi cần label đúng với claim.
-  - Ẩn dashboard (`GET /api/dashboard`), tạo phóng viên, quản lý user (`/api/admin/users`), tạo/sửa/xóa banner (`POST`/`PUT`/`DELETE` `/api/admin/banners`) và đặt banner theo vị trí (`PUT /api/admin/banners/{id}/active`), tạo/sửa/xóa thủ trưởng (`POST`/`PUT`/`DELETE` `/api/leaders`), upload tài liệu, và gọi `check-admin` khi role không phải `Admin`. Layout gọi `GET /api/admin/banners?position=0&isActive=true&pageIndex=0` (Header). Dải giữa trang chủ: `position=1`. Không cần token. Banner đang hiện của slot là `items[0]`. `linkUrl` khác null thì dùng làm `href`. Dải Ban Chỉ huy gọi `GET /api/leaders` (public), sắp sẵn theo `displayOrder`.
+  - Ẩn dashboard (`GET /api/dashboard`), dung lượng R2 (`GET /api/admin/storage`), tạo phóng viên, quản lý user (`/api/admin/users`), tạo/sửa/xóa banner (`POST`/`PUT`/`DELETE` `/api/admin/banners`) và đặt banner theo vị trí (`PUT /api/admin/banners/{id}/active`), tạo/sửa/xóa thủ trưởng (`POST`/`PUT`/`DELETE` `/api/leaders`), upload tài liệu, và gọi `check-admin` khi role không phải `Admin`. Layout gọi `GET /api/admin/banners?position=0&isActive=true&pageIndex=0` (Header). Dải giữa trang chủ: `position=1`. Không cần token. Banner đang hiện của slot là `items[0]`. `linkUrl` khác null thì dùng làm `href`. Dải Ban Chỉ huy gọi `GET /api/leaders` (public), sắp sẵn theo `displayOrder`.
   - Coi `/api/system/*` và `/api/blobs/*` là công cụ local/test, không đưa vào UI người dùng.
