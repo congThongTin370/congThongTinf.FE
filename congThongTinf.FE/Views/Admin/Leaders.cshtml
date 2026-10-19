@@ -72,8 +72,14 @@
                             <td>@leader.DisplayOrder</td>
                             <td>@leader.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="admin-table-actions">
-                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditLeader" asp-route-id="@leader.Id">Sửa</a>
-                                <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteLeader" asp-route-id="@leader.Id">Xóa</a>
+                                <div class="admin-row-actions">
+                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="EditLeader" asp-route-id="@leader.Id" aria-label="Sửa @leader.FullName" title="Sửa">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
+                                    </a>
+                                    <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Admin" asp-action="DeleteLeader" asp-route-id="@leader.Id" aria-label="Xóa @leader.FullName" title="Xóa">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }

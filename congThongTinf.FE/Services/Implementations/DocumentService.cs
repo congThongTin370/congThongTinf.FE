@@ -115,6 +115,56 @@ public class DocumentService : IDocumentService
         }
     }
 
+    public async Task<DocumentWriteResult> DeleteAsync(string accessToken, Guid id)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Delete, $"api/documents/{id}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            using var response = await _httpClient.SendAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return new DocumentWriteResult
+                {
+                    Success = false,
+                    SessionExpired = true,
+                    ErrorMessage = UserFacingErrors.SessionExpired
+                };
+            }
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return new DocumentWriteResult
+                {
+                    Success = false,
+                    ErrorMessage = "Tài liệu không còn tồn tại hoặc đã bị xóa."
+                };
+            }
+
+            BackendEnvelope<bool>? body = null;
+            var responseText = await response.Content.ReadAsStringAsync();
+            if (!string.IsNullOrWhiteSpace(responseText))
+            {
+                body = System.Text.Json.JsonSerializer.Deserialize<BackendEnvelope<bool>>(
+                    responseText,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+
+            if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
+            {
+                return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+            }
+
+            return new DocumentWriteResult { Success = true };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete document {DocumentId}", id);
+            return Failure(0, null, null);
+        }
+    }
+
     private static string BuildListUrl(DocumentQuery query)
     {
         var parts = new List<string>

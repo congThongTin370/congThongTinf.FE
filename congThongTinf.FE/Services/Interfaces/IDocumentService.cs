@@ -11,10 +11,11 @@ public class DocumentQuery
 }
 
 /// <summary>
-/// Danh sách tài liệu (public) và upload (Admin).
+/// Danh sách tài liệu (public), upload và xóa (Admin).
 /// </summary>
 public interface IDocumentService
 {
     Task<List<DocumentDto>> GetDocumentsAsync(DocumentQuery query);
     Task<DocumentWriteResult> UploadAsync(string accessToken, DocumentUploadViewModel model);
+    Task<DocumentWriteResult> DeleteAsync(string accessToken, Guid id);
 }

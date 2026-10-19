@@ -53,6 +53,11 @@
     <div class="admin-alert" role="status">@message</div>
 }
 
+@if (TempData["Error"] is string error)
+{
+    <div class="admin-alert-error" role="alert">@error</div>
+}
+
 <section class="admin-panel" aria-labelledby="document-filter-title">
     <div class="admin-panel-header">
         <h2 id="document-filter-title">Tìm kiếm</h2>
@@ -130,14 +135,33 @@
                             <td>@(string.IsNullOrWhiteSpace(document.UploadedByUserName) ? "—" : document.UploadedByUserName)</td>
                             <td>@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="admin-table-actions">
-                                @if (!string.IsNullOrWhiteSpace(document.FileUrl))
-                                {
-                                    <a class="btn btn-outline-secondary btn-sm" href="@document.FileUrl" target="_blank" rel="noopener">Xem</a>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(document.DownloadUrl))
-                                {
-                                    <a class="btn btn-primary btn-sm" href="@document.DownloadUrl" download="@document.FileName">Tải xuống</a>
-                                }
+                                <div class="admin-row-actions">
+                                    @if (!string.IsNullOrWhiteSpace(document.FileUrl))
+                                    {
+                                        <a class="admin-icon-btn" href="@document.FileUrl" target="_blank" rel="noopener" aria-label="Xem @document.Title" title="Xem">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(document.DownloadUrl))
+                                    {
+                                        <a class="admin-icon-btn" href="@document.DownloadUrl" download="@document.FileName" aria-label="Tải xuống @document.Title" title="Tải xuống">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>
+                                        </a>
+                                    }
+                                    <form class="admin-inline-form" method="post"
+                                          asp-controller="Admin"
+                                          asp-action="DeleteDocument"
+                                          asp-route-id="@document.Id"
+                                          asp-route-search="@Model.Search"
+                                          asp-route-category="@Model.Category"
+                                          asp-route-pageIndex="@Model.PageIndex"
+                                          data-confirm-delete
+                                          data-document-title="@document.Title">
+                                        <button type="submit" class="admin-icon-btn admin-icon-btn-danger" aria-label="Xóa @document.Title" title="Xóa">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -203,3 +227,24 @@
         }
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('form[data-confirm-delete]').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                if (form.dataset.confirmed) return;
+                e.preventDefault();
+                AppDialog.confirm({
+                    title: 'Xóa tài liệu?',
+                    message: '“' + form.dataset.documentTitle + '” sẽ bị xóa khỏi cổng thông tin và không thể khôi phục.',
+                    okText: 'Xóa',
+                    danger: true
+                }).then(function (ok) {
+                    if (!ok) return;
+                    form.dataset.confirmed = 'true';
+                    form.submit();
+                });
+            });
+        });
+    </script>
+}

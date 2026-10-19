@@ -181,6 +181,33 @@ namespace congThongTinf.FE.Controllers
             return RedirectToAction(nameof(Documents));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteDocument(Guid id, string? search, int? category, int pageIndex = 1)
+        {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var result = await _documentService.DeleteAsync(GetToken(), id);
+            if (result.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
+            if (result.Success)
+            {
+                TempData["Message"] = "Đã xóa tài liệu.";
+            }
+            else
+            {
+                TempData["Error"] = result.ErrorMessage ?? UserFacingErrors.TryAgain;
+            }
+
+            return RedirectToAction(nameof(Documents), new { search, category, pageIndex });
+        }
+
         [HttpGet]
         public async Task<IActionResult> Categories()
         {

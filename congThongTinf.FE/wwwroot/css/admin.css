@@ -530,6 +530,13 @@
     background: var(--color-surface);
     color: var(--color-primary-dark);
     text-decoration: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.admin-icon-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
 }
 
 .admin-icon-btn svg {

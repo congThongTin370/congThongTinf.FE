@@ -134,11 +134,17 @@
                             </td>
                             <td>@user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="admin-table-actions">
-                                <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="EditUser" asp-route-id="@user.UserId">Sửa</a>
-                                @if (user.IsActive && !isSelf)
-                                {
-                                    <a class="btn btn-danger btn-sm" asp-controller="Admin" asp-action="DeleteUser" asp-route-id="@user.UserId">Khóa</a>
-                                }
+                                <div class="admin-row-actions">
+                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="EditUser" asp-route-id="@user.UserId" aria-label="Sửa @user.FullName" title="Sửa">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
+                                    </a>
+                                    @if (user.IsActive && !isSelf)
+                                    {
+                                        <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Admin" asp-action="DeleteUser" asp-route-id="@user.UserId" aria-label="Khóa @user.FullName" title="Khóa">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                                        </a>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
