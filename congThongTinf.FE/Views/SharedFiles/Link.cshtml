@@ -1,0 +1,71 @@
+@model SharedFileOpenViewModel
+@{
+    ViewData["Title"] = "Mở file chia sẻ";
+
+    string FileSizeText(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+        {
+            return $"{bytes / (1024d * 1024d):0.#} MB";
+        }
+
+        if (bytes >= 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return $"{bytes} B";
+    }
+
+    var file = Model.File;
+}
+
+<div class="cloud-container">
+    <header class="cloud-header">
+        <h1>File được chia sẻ</h1>
+        <p class="cloud-description">Chỉ thành viên đã đăng nhập mới xem được file này.</p>
+    </header>
+
+    @if (file == null)
+    {
+        <section class="cloud-section">
+            <div class="cloud-alert cloud-alert-danger" role="alert">
+                @(Model.ErrorMessage ?? "Liên kết chia sẻ không hợp lệ hoặc đã bị thu hồi.")
+            </div>
+            <a class="btn btn-outline" asp-controller="SharedFiles" asp-action="Index">Về lưu trữ trực tuyến</a>
+        </section>
+    }
+    else
+    {
+        <section class="cloud-section">
+            <h2 class="cloud-file-name">@file.FileName</h2>
+            <div class="cloud-item-meta">
+                <span>Người chia sẻ: @(file.UploadedByUserName ?? "—")</span>
+                <span>Dung lượng: @FileSizeText(file.FileSize)</span>
+                <span>Tải lên: @file.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            <div class="cloud-actions">
+                <a class="btn btn-outline" href="@Url.Action("Stream", "SharedFiles", new { url = file.ViewUrl, download = false })" target="_blank" rel="noopener">Xem</a>
+                <a class="btn btn-primary" href="@Url.Action("Stream", "SharedFiles", new { url = file.DownloadUrl, download = true })">Tải xuống</a>
+            </div>
+        </section>
+    }
+</div>
+
+<style asp-append-version="true">
+    .cloud-container { max-width: 760px; margin: 0 auto; }
+    .cloud-header { margin-bottom: 2rem; text-align: center; }
+    .cloud-header h1 { margin-bottom: 0.5rem; font-size: 2rem; font-weight: 800; color: var(--color-primary-dark); }
+    .cloud-description { margin: 0; color: var(--color-text-muted); }
+    .cloud-section { padding: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+    .cloud-file-name { margin: 0 0 0.75rem; font-size: 1.2rem; font-weight: 700; color: var(--color-text); overflow-wrap: anywhere; }
+    .cloud-item-meta { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--color-text-muted); }
+    .cloud-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+    .cloud-alert { margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius); border: 1px solid var(--color-danger); background: #FDECEA; color: var(--color-danger); font-size: 0.9rem; }
+
+    .cloud-container .btn { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border: 1px solid transparent; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; }
+    .cloud-container .btn-primary { background-color: var(--color-primary); color: var(--color-text-on-primary); }
+    .cloud-container .btn-primary:hover { background-color: var(--color-primary-dark); }
+    .cloud-container .btn-outline { background-color: var(--color-surface); border-color: var(--color-border); color: var(--color-dark); }
+    .cloud-container .btn-outline:hover { border-color: var(--color-primary); color: var(--color-primary-dark); }
+</style>

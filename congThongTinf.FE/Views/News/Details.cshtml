@@ -43,6 +43,11 @@
         @Html.Raw(congThongTinf.FE.Utilities.HtmlSanitizer.RenderMarkdown(Model.Content))
     </div>
 
+    @if (!string.IsNullOrWhiteSpace(Model.AuthorName))
+    {
+        <p class="news-detail-author">@Model.AuthorName</p>
+    }
+
     <p class="news-detail-back">
         <a asp-controller="Home" asp-action="Index">&larr; Quay lại trang tin tức</a>
     </p>

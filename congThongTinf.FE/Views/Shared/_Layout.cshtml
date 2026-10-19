@@ -61,6 +61,12 @@
                       <li>
                         <a asp-area="" asp-controller="Home" asp-action="Documents">Tài liệu</a>
                     </li>
+                    @if (!string.IsNullOrEmpty(Context.Session.GetString("Role")))
+                    {
+                        <li>
+                            <a class="@(currentController == "SharedFiles" ? "is-active" : null)" asp-area="" asp-controller="SharedFiles" asp-action="Index">Lưu trữ trực tuyến</a>
+                        </li>
+                    }
                     
                   
                 </ul>

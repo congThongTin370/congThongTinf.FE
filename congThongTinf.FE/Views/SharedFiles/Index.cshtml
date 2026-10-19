@@ -1,0 +1,691 @@
+@model SharedFileListViewModel
+@{
+    ViewData["Title"] = "Lưu trữ trực tuyến";
+
+    string FileSizeText(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+        {
+            return $"{bytes / (1024d * 1024d):0.#} MB";
+        }
+
+        if (bytes >= 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return $"{bytes} B";
+    }
+
+    string DateText(DateTime createdAt)
+    {
+        var local = createdAt.ToLocalTime();
+        return local.Date == DateTime.Today ? $"Hôm nay, {local:HH:mm}" : local.ToString("dd/MM/yyyy");
+    }
+
+    (string Kind, string Label) FileKind(SharedFileDto file)
+    {
+        var type = (file.FileType ?? string.Empty).ToLowerInvariant();
+        var ext = System.IO.Path.GetExtension(file.FileName ?? string.Empty).TrimStart('.').ToLowerInvariant();
+
+        if (type.StartsWith("image/")) return ("image", "IMG");
+        if (type == "application/pdf" || ext == "pdf") return ("pdf", "PDF");
+        if (ext is "doc" or "docx" or "odt" or "rtf") return ("doc", "DOC");
+        if (ext is "xls" or "xlsx" or "ods" or "csv") return ("sheet", "XLS");
+        if (ext is "ppt" or "pptx" or "odp") return ("slide", "PPT");
+        if (type.StartsWith("video/")) return ("video", "VID");
+        if (type.StartsWith("audio/")) return ("audio", "AUD");
+        if (ext is "zip" or "rar" or "7z" or "tar" or "gz") return ("archive", "ZIP");
+        if (type.StartsWith("text/") || ext is "txt" or "md") return ("text", "TXT");
+        return ("file", "FILE");
+    }
+
+    void Icon(string name)
+    {
+        <svg class="drive-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            @switch (name)
+            {
+                case "plus":
+                    <path d="M12 5v14M5 12h14" />
+                    break;
+                case "search":
+                    <circle cx="11" cy="11" r="6.25" />
+                    <path d="M15.8 15.8L20 20" />
+                    break;
+                case "close":
+                    <path d="M7 7l10 10M17 7L7 17" />
+                    break;
+                case "more":
+                    <circle cx="12" cy="5.5" r="1.4" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none" />
+                    break;
+                case "download":
+                    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+                    break;
+                case "upload":
+                    <path d="M12 16V5M7 10l5-5 5 5M5 20h14" />
+                    break;
+                case "link":
+                    <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" />
+                    <path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" />
+                    break;
+                case "unlink":
+                    <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" />
+                    <path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" />
+                    <path d="M4 4l16 16" />
+                    break;
+                case "open":
+                    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+                    <circle cx="12" cy="12" r="3" />
+                    break;
+                case "share":
+                    <circle cx="9" cy="8" r="3.25" />
+                    <path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+                    <path d="M17 6.5v5M14.5 9h5" />
+                    break;
+                case "people":
+                    <circle cx="9" cy="8" r="3.25" />
+                    <path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+                    <circle cx="17" cy="9" r="2.5" />
+                    <path d="M16.5 13.6c2.7 0 4.5 1.9 4.5 4.9" />
+                    break;
+                case "drive":
+                    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    break;
+                case "cloud":
+                    <path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9a4.25 4.25 0 0 1-.5 9.5z" />
+                    break;
+                case "prev":
+                    <path d="M14.5 6l-6 6 6 6" />
+                    break;
+                case "next":
+                    <path d="M9.5 6l6 6-6 6" />
+                    break;
+            }
+        </svg>
+    }
+
+    var flashMessage = TempData["Message"] as string;
+    var flashError = TempData["Error"] as string ?? Model.ErrorMessage;
+    var sharedFileId = Context.Request.Query["shared"].ToString();
+    var fullName = Context.Session.GetString("FullName");
+    var ownerInitial = string.IsNullOrEmpty(fullName) ? "?" : fullName.Substring(0, 1).ToUpperInvariant();
+    var hasSearch = !string.IsNullOrWhiteSpace(Model.Search);
+    var firstIndex = Model.TotalCount == 0 ? 0 : (Model.PageIndex - 1) * Model.PageSize + 1;
+    var lastIndex = firstIndex == 0 ? 0 : firstIndex + Model.Items.Count - 1;
+}
+
+@if (!string.IsNullOrEmpty(flashMessage))
+{
+    <div class="cloud-alert cloud-alert-success admin-alert" role="status">@flashMessage</div>
+}
+@if (!string.IsNullOrEmpty(flashError))
+{
+    <div class="cloud-alert cloud-alert-danger admin-alert-error" role="alert">@flashError</div>
+}
+
+<div class="drive">
+    <aside class="drive-side" aria-label="Lưu trữ trực tuyến">
+        <p class="drive-brand">
+            @{ Icon("cloud"); }
+            <span>Lưu trữ trực tuyến</span>
+        </p>
+
+        <form class="drive-upload" method="post" enctype="multipart/form-data" asp-action="Upload" data-upload-form>
+            @Html.AntiForgeryToken()
+            <label class="visually-hidden" for="drive-file">Chọn file tải lên</label>
+            <input id="drive-file" name="file" type="file" class="visually-hidden" required data-upload-input />
+            <button type="button" class="drive-new" data-upload-trigger>
+                @{ Icon("plus"); }
+                <span>Mới</span>
+            </button>
+        </form>
+
+        <nav class="drive-nav" aria-label="Thư mục">
+            <a class="is-active" asp-action="Index" aria-current="page">
+                @{ Icon("drive"); }
+                <span>File của tôi</span>
+            </a>
+        </nav>
+
+        <p class="drive-quota">Tối đa 10 MB mỗi file. Ảnh được chuyển sang định dạng WebP.</p>
+    </aside>
+
+    <section class="drive-main" aria-labelledby="drive-title" data-drop-zone>
+        <form class="drive-search" method="get" asp-action="Index" role="search">
+            <button type="submit" class="drive-icon-btn" aria-label="Tìm kiếm">
+                @{ Icon("search"); }
+            </button>
+            <label class="visually-hidden" for="drive-search">Tìm trong lưu trữ</label>
+            <input id="drive-search" name="search" type="search" value="@Model.Search" placeholder="Tìm trong lưu trữ" autocomplete="off" />
+            @if (hasSearch)
+            {
+                <a class="drive-icon-btn" asp-action="Index" aria-label="Xóa tìm kiếm">
+                    @{ Icon("close"); }
+                </a>
+            }
+        </form>
+
+        <div class="drive-head">
+            <h1 id="drive-title" class="drive-title">
+                @(hasSearch ? $"Kết quả cho “{Model.Search}”" : "File của tôi")
+            </h1>
+            @if (Model.TotalCount > 0)
+            {
+                <span class="drive-count">@Model.TotalCount file</span>
+            }
+        </div>
+
+        @if (Model.Items.Count == 0)
+        {
+            if (string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="drive-empty">
+                    @if (hasSearch)
+                    {
+                        Icon("search");
+                        <h2>Không tìm thấy file phù hợp</h2>
+                        <p>Thử tìm bằng tên file khác.</p>
+                        <a class="btn btn-outline-secondary" asp-action="Index">Xóa tìm kiếm</a>
+                    }
+                    else
+                    {
+                        Icon("cloud");
+                        <h2>Chưa có file nào</h2>
+                        <p>Kéo và thả file vào đây hoặc dùng nút “Mới” để tải lên.</p>
+                        <button type="button" class="btn btn-primary" data-upload-trigger>Tải file lên</button>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <table class="drive-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="drive-col-name">Tên</th>
+                        <th scope="col" class="drive-col-owner">Chủ sở hữu</th>
+                        <th scope="col" class="drive-col-date">Ngày tải lên <span aria-hidden="true">↓</span></th>
+                        <th scope="col" class="drive-col-size">Kích thước</th>
+                        <th scope="col" class="drive-col-actions"><span class="visually-hidden">Thao tác</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var file in Model.Items)
+                    {
+                        var kind = FileKind(file);
+                        var viewHref = Url.Action("Stream", "SharedFiles", new { url = file.ViewUrl, download = false });
+                        var downloadHref = Url.Action("Stream", "SharedFiles", new { url = file.DownloadUrl, download = true });
+                        var shareLink = file.IsShared && !string.IsNullOrWhiteSpace(file.ShareToken)
+                            ? Url.Action("Link", "SharedFiles", new { token = file.ShareToken }, Context.Request.Scheme)
+                            : null;
+                        var createdLocal = file.CreatedAt.ToLocalTime();
+
+                        <tr class="drive-row"
+                            data-file-name="@file.FileName"
+                            data-open-url="@viewHref"
+                            data-share-link="@shareLink"
+                            data-revoke-url="@Url.Action("Revoke", new { id = file.Id })"
+                            data-share-open="@(sharedFileId == file.Id.ToString() && shareLink != null ? "true" : null)">
+                            <td class="drive-col-name">
+                                <div class="drive-name">
+                                    <span class="drive-type drive-type-@kind.Kind" aria-hidden="true">@kind.Label</span>
+                                    <div class="drive-name-text">
+                                        <a class="drive-name-link" href="@viewHref" target="_blank" rel="noopener" title="@file.FileName">@file.FileName</a>
+                                        <span class="drive-name-sub">@DateText(file.CreatedAt) · @FileSizeText(file.FileSize)</span>
+                                    </div>
+                                    @if (file.IsShared)
+                                    {
+                                        <span class="drive-shared" title="Đang chia sẻ bằng liên kết">
+                                            @{ Icon("people"); }
+                                            <span class="visually-hidden">Đang chia sẻ bằng liên kết</span>
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="drive-col-owner">
+                                <span class="drive-owner">
+                                    <span class="drive-avatar" aria-hidden="true">@ownerInitial</span>
+                                    <span>Tôi</span>
+                                </span>
+                            </td>
+                            <td class="drive-col-date" title="@createdLocal.ToString("dd/MM/yyyy HH:mm")">@DateText(file.CreatedAt)</td>
+                            <td class="drive-col-size">@FileSizeText(file.FileSize)</td>
+                            <td class="drive-col-actions">
+                                <div class="drive-actions">
+                                    <div class="drive-quick">
+                                        <a class="drive-icon-btn" href="@downloadHref" download title="Tải xuống" aria-label="Tải xuống @file.FileName">
+                                            @{ Icon("download"); }
+                                        </a>
+                                        @if (shareLink != null)
+                                        {
+                                            <button type="button" class="drive-icon-btn" data-copy-link title="Sao chép đường liên kết" aria-label="Sao chép đường liên kết của @file.FileName">
+                                                @{ Icon("link"); }
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <form method="post" asp-action="Share" asp-route-id="@file.Id">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="drive-icon-btn" title="Chia sẻ" aria-label="Chia sẻ @file.FileName">
+                                                    @{ Icon("share"); }
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                    <details class="drive-menu">
+                                        <summary class="drive-icon-btn" title="Thao tác khác" aria-label="Thao tác khác cho @file.FileName">
+                                            @{ Icon("more"); }
+                                        </summary>
+                                        <div class="drive-menu-list">
+                                            <a class="drive-menu-item" href="@viewHref" target="_blank" rel="noopener">
+                                                @{ Icon("open"); }
+                                                <span>Mở</span>
+                                            </a>
+                                            <a class="drive-menu-item" href="@downloadHref" download>
+                                                @{ Icon("download"); }
+                                                <span>Tải xuống</span>
+                                            </a>
+                                            <div class="drive-menu-sep" role="separator"></div>
+                                            @if (shareLink != null)
+                                            {
+                                                <button type="button" class="drive-menu-item" data-share-dialog>
+                                                    @{ Icon("share"); }
+                                                    <span>Chia sẻ</span>
+                                                </button>
+                                                <button type="button" class="drive-menu-item" data-copy-link>
+                                                    @{ Icon("link"); }
+                                                    <span>Sao chép đường liên kết</span>
+                                                </button>
+                                                <form method="post" asp-action="Revoke" asp-route-id="@file.Id" data-confirm-revoke data-file-name="@file.FileName">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="drive-menu-item is-danger">
+                                                        @{ Icon("unlink"); }
+                                                        <span>Thu hồi đường liên kết</span>
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <form method="post" asp-action="Share" asp-route-id="@file.Id">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="drive-menu-item">
+                                                        @{ Icon("share"); }
+                                                        <span>Chia sẻ (tạo đường liên kết)</span>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </details>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="drive-pager" aria-label="Phân trang">
+                    <span class="drive-pager-text">@firstIndex–@lastIndex trong @Model.TotalCount</span>
+                    @if (Model.HasPrevious)
+                    {
+                        <a class="drive-icon-btn" href="@Url.Action("Index", new { pageIndex = Model.PageIndex - 1, search = Model.Search })" aria-label="Trang trước">
+                            @{ Icon("prev"); }
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="drive-icon-btn is-disabled" aria-hidden="true">@{ Icon("prev"); }</span>
+                    }
+                    @if (Model.HasNext)
+                    {
+                        <a class="drive-icon-btn" href="@Url.Action("Index", new { pageIndex = Model.PageIndex + 1, search = Model.Search })" aria-label="Trang sau">
+                            @{ Icon("next"); }
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="drive-icon-btn is-disabled" aria-hidden="true">@{ Icon("next"); }</span>
+                    }
+                </nav>
+            }
+        }
+
+        <div class="drive-drop-hint" aria-hidden="true">
+            @{ Icon("upload"); }
+            <span>Thả file để tải lên</span>
+        </div>
+    </section>
+</div>
+
+<div class="app-dialog" id="share-dialog" data-dialog-root>
+    <div class="app-dialog-backdrop" data-dialog-dismiss></div>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="share-dialog-title">
+        <div class="app-dialog-header">
+            <h2 id="share-dialog-title" class="app-dialog-title">Chia sẻ “<span data-share-name></span>”</h2>
+            <button type="button" class="app-dialog-close" data-dialog-close aria-label="Đóng">&times;</button>
+        </div>
+        <div class="app-dialog-body">
+            <label class="drive-share-label" for="share-link">Đường liên kết</label>
+            <div class="drive-share-link">
+                <input id="share-link" type="text" class="form-control" readonly autocomplete="off" data-share-input />
+                <button type="button" class="btn btn-primary" data-share-copy>Sao chép</button>
+            </div>
+            <p class="drive-share-note">
+                @{ Icon("people"); }
+                <span>Người đã đăng nhập hệ thống và có đường liên kết này đều có thể xem và tải file.</span>
+            </p>
+        </div>
+        <div class="app-dialog-footer drive-share-footer">
+            <form method="post" data-confirm-revoke data-share-revoke>
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger">Thu hồi đường liên kết</button>
+            </form>
+            <button type="button" class="btn btn-outline-secondary" data-dialog-close>Xong</button>
+        </div>
+    </div>
+</div>
+
+<div class="drive-snackbar" role="status" aria-live="polite" hidden data-snackbar></div>
+
+<style>
+    .cloud-alert { margin-bottom: 1.25rem; padding: 0.75rem 1rem; border-radius: var(--radius); border: 1px solid; font-size: 0.9rem; }
+    .cloud-alert-success { background: #EAF6EF; border-color: var(--color-success); color: var(--color-success); }
+    .cloud-alert-danger { background: #FDECEA; border-color: var(--color-danger); color: var(--color-danger); }
+
+    .drive { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 1rem; align-items: start; }
+    .drive-svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .drive-side { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .drive-brand { display: flex; align-items: center; gap: 0.6rem; margin: 0; padding: 0.25rem 0.5rem; font-size: 1.05rem; font-weight: 700; color: var(--color-dark); }
+    .drive-brand .drive-svg { width: 30px; height: 30px; color: var(--color-primary); }
+    .drive-upload { margin: 0; }
+    .drive-new { display: inline-flex; align-items: center; gap: 0.7rem; padding: 0.85rem 1.4rem 0.85rem 1rem; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-dark); font-size: 0.95rem; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(17, 24, 39, 0.12), 0 1px 3px rgba(17, 24, 39, 0.08); transition: box-shadow 0.15s ease, background-color 0.15s ease; }
+    .drive-new:hover { background: var(--color-surface-blue); box-shadow: 0 2px 6px rgba(17, 24, 39, 0.16); }
+    .drive-new:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .drive-new .drive-svg { width: 22px; height: 22px; color: var(--color-primary); stroke-width: 2.2; }
+    .drive-nav { display: flex; flex-direction: column; gap: 0.15rem; }
+    .drive-nav a { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; border-radius: 999px; color: var(--color-text); font-size: 0.9rem; text-decoration: none; }
+    .drive-nav a:hover { background: var(--color-border); }
+    .drive-nav a.is-active { background: var(--color-surface-blue); color: var(--color-primary-dark); font-weight: 600; }
+    .drive-quota { margin: 0; padding: 0 1rem; font-size: 0.78rem; color: var(--color-text-muted); }
+
+    .drive-main { position: relative; min-height: 480px; padding: 1rem 1.25rem 1.25rem; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+    .drive-main.is-dragging { outline: 2px dashed var(--color-primary); outline-offset: -8px; background: var(--color-surface-blue); }
+    .drive-drop-hint { display: none; position: absolute; left: 50%; bottom: 1.5rem; transform: translateX(-50%); align-items: center; gap: 0.6rem; padding: 0.75rem 1.25rem; border-radius: 999px; background: var(--color-primary-dark); color: var(--color-text-on-primary); font-size: 0.9rem; font-weight: 600; pointer-events: none; }
+    .drive-main.is-dragging .drive-drop-hint { display: inline-flex; }
+
+    .drive-search { display: flex; align-items: center; gap: 0.25rem; max-width: 720px; height: 48px; margin: 0; padding: 0 0.4rem; border: 1px solid transparent; border-radius: 999px; background: var(--color-background); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+    .drive-search:focus-within { border-color: var(--color-border); background: var(--color-surface); box-shadow: 0 1px 3px rgba(17, 24, 39, 0.15); }
+    .drive-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: 0.95rem; }
+    .drive-search input::-webkit-search-cancel-button { display: none; }
+
+    .drive-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin: 1.25rem 0 0.5rem; padding: 0 0.25rem; }
+    .drive-title { margin: 0; font-size: 1.4rem; font-weight: 600; color: var(--color-dark); overflow-wrap: anywhere; }
+    .drive-count { font-size: 0.85rem; color: var(--color-text-muted); }
+
+    .drive-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.875rem; }
+    .drive-table th { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 0.8rem; font-weight: 600; text-align: left; white-space: nowrap; }
+    .drive-table td { padding: 0.35rem 0.75rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); vertical-align: middle; white-space: nowrap; }
+    .drive-col-owner { width: 150px; }
+    .drive-col-date { width: 140px; }
+    .drive-col-size { width: 110px; }
+    .drive-col-actions { width: 132px; }
+    .drive-row { cursor: default; }
+    .drive-row:hover td { background: var(--color-background); }
+    .drive-row:focus-within td { background: var(--color-surface-blue); }
+
+    .drive-name { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+    .drive-name-text { display: flex; flex-direction: column; min-width: 0; }
+    .drive-name-link { overflow: hidden; color: var(--color-text); font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+    .drive-name-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+    .drive-name-sub { display: none; font-size: 0.78rem; color: var(--color-text-muted); }
+    .drive-shared { display: inline-flex; flex: none; color: var(--color-text-muted); }
+    .drive-shared .drive-svg { width: 16px; height: 16px; }
+
+    .drive-type { display: inline-grid; flex: none; place-items: center; width: 32px; height: 26px; border-radius: 4px; background: #667085; color: #FFFFFF; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; }
+    .drive-type-image { background: #8E5BA8; }
+    .drive-type-pdf { background: var(--color-danger); }
+    .drive-type-doc { background: var(--color-primary-dark); }
+    .drive-type-sheet { background: var(--color-success); }
+    .drive-type-slide { background: var(--color-warning); }
+    .drive-type-video { background: #9F3A5B; }
+    .drive-type-audio { background: #5B6BA8; }
+    .drive-type-archive { background: #6B7280; }
+    .drive-type-text { background: #475467; }
+
+    .drive-owner { display: inline-flex; align-items: center; gap: 0.5rem; }
+    .drive-avatar { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); color: var(--color-text-on-primary); font-size: 0.7rem; font-weight: 700; }
+
+    .drive-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.15rem; }
+    .drive-quick { display: flex; gap: 0.15rem; }
+    .drive-quick form { margin: 0; }
+    .drive-icon-btn { display: inline-grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-dark-soft); text-decoration: none; cursor: pointer; list-style: none; transition: background-color 0.15s ease; }
+    .drive-icon-btn:hover { background: rgba(17, 24, 39, 0.08); color: var(--color-dark); }
+    .drive-icon-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+    .drive-icon-btn.is-disabled { opacity: 0.35; pointer-events: none; }
+    summary.drive-icon-btn::-webkit-details-marker { display: none; }
+    summary.drive-icon-btn::marker { content: ""; }
+
+    @@media (hover: hover) and (pointer: fine) {
+        .drive-quick { visibility: hidden; }
+        .drive-row:hover .drive-quick, .drive-row:focus-within .drive-quick { visibility: visible; }
+    }
+
+    .drive-menu { position: relative; }
+    .drive-menu[open] > summary { background: rgba(17, 24, 39, 0.08); }
+    .drive-menu-list { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 250px; padding: 0.4rem 0; border-radius: 8px; background: var(--color-surface); box-shadow: 0 4px 16px rgba(17, 24, 39, 0.18), 0 1px 3px rgba(17, 24, 39, 0.1); }
+    .drive-menu-list form { margin: 0; }
+    .drive-menu-item { display: flex; align-items: center; gap: 0.85rem; width: 100%; padding: 0.55rem 1rem; border: 0; background: transparent; color: var(--color-text); font-size: 0.875rem; text-align: left; text-decoration: none; cursor: pointer; }
+    .drive-menu-item:hover, .drive-menu-item:focus-visible { background: var(--color-background); color: var(--color-text); outline: 0; }
+    .drive-menu-item .drive-svg { color: var(--color-text-muted); }
+    .drive-menu-item.is-danger, .drive-menu-item.is-danger .drive-svg { color: var(--color-danger); }
+    .drive-menu-sep { height: 1px; margin: 0.35rem 0; background: var(--color-border); }
+
+    .drive-empty { display: flex; flex-direction: column; align-items: center; padding: 3.5rem 1rem; color: var(--color-text-muted); text-align: center; }
+    .drive-empty > .drive-svg { width: 72px; height: 72px; color: var(--color-primary-light); stroke-width: 1.2; }
+    .drive-empty h2 { margin: 1rem 0 0.35rem; font-size: 1.1rem; font-weight: 600; color: var(--color-text); }
+    .drive-empty p { margin: 0 0 1.25rem; font-size: 0.9rem; }
+
+    .drive-pager { display: flex; align-items: center; justify-content: flex-end; gap: 0.15rem; margin-top: 0.75rem; font-size: 0.85rem; color: var(--color-text-muted); }
+    .drive-pager-text { margin-right: 0.5rem; }
+
+    .drive-share-label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--color-text); }
+    .drive-share-link { display: flex; gap: 0.5rem; }
+    .drive-share-link input { min-width: 0; background: var(--color-background); }
+    .drive-share-link .btn { flex: none; }
+    .drive-share-note { display: flex; align-items: flex-start; gap: 0.5rem; margin: 0.85rem 0 0; font-size: 0.825rem; color: var(--color-text-muted); }
+    .drive-share-note .drive-svg { width: 18px; height: 18px; }
+    .drive-share-footer { justify-content: space-between; }
+    .drive-share-footer form { margin: 0; }
+
+    .drive-snackbar { position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 1050; max-width: calc(100vw - 3rem); padding: 0.85rem 1.25rem; border-radius: 6px; background: var(--color-dark-soft); color: #FFFFFF; font-size: 0.875rem; box-shadow: 0 4px 16px rgba(17, 24, 39, 0.25); }
+
+    @@media (max-width: 900px) {
+        .drive { grid-template-columns: minmax(0, 1fr); }
+        .drive-side { position: static; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+        .drive-brand, .drive-quota { display: none; }
+        .drive-nav { flex-direction: row; }
+        .drive-col-owner { display: none; }
+    }
+
+    @@media (max-width: 640px) {
+        .drive-main { padding: 0.75rem; border-radius: 8px; }
+        .drive-col-date, .drive-col-size, .drive-quick { display: none; }
+        .drive-col-actions { width: 48px; }
+        .drive-table td { padding: 0.5rem; }
+        .drive-name-sub { display: block; }
+        .drive-share-link { flex-direction: column; }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var maxBytes = 10 * 1024 * 1024;
+            var uploadForm = document.querySelector('[data-upload-form]');
+            var uploadInput = document.querySelector('[data-upload-input]');
+            var dropZone = document.querySelector('[data-drop-zone]');
+            var snackbar = document.querySelector('[data-snackbar]');
+            var shareDialog = document.getElementById('share-dialog');
+            var snackbarTimer;
+
+            function notify(message) {
+                snackbar.textContent = message;
+                snackbar.hidden = false;
+                window.clearTimeout(snackbarTimer);
+                snackbarTimer = window.setTimeout(function () { snackbar.hidden = true; }, 3500);
+            }
+
+            function submitForm(form) {
+                if (form.requestSubmit) form.requestSubmit();
+                else form.submit();
+            }
+
+            function uploadFile(file) {
+                if (!file) return;
+                if (file.size > maxBytes) {
+                    uploadInput.value = '';
+                    AppDialog.alert({
+                        title: 'Không thể tải lên',
+                        message: 'File không được lớn hơn 10 MB.'
+                    });
+                    return;
+                }
+                if (uploadInput.files[0] !== file) {
+                    var transfer = new DataTransfer();
+                    transfer.items.add(file);
+                    uploadInput.files = transfer.files;
+                }
+                submitForm(uploadForm);
+            }
+
+            document.querySelectorAll('[data-upload-trigger]').forEach(function (btn) {
+                btn.addEventListener('click', function () { uploadInput.click(); });
+            });
+            uploadInput.addEventListener('change', function () { uploadFile(uploadInput.files[0]); });
+
+            function hasFiles(e) {
+                return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') !== -1;
+            }
+            dropZone.addEventListener('dragover', function (e) {
+                if (!hasFiles(e)) return;
+                e.preventDefault();
+                dropZone.classList.add('is-dragging');
+            });
+            dropZone.addEventListener('dragleave', function (e) {
+                if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('is-dragging');
+            });
+            dropZone.addEventListener('drop', function (e) {
+                if (!hasFiles(e)) return;
+                e.preventDefault();
+                dropZone.classList.remove('is-dragging');
+                if (e.dataTransfer.files.length > 1) notify('Mỗi lần chỉ tải được một file.');
+                uploadFile(e.dataTransfer.files[0]);
+            });
+
+            var menus = document.querySelectorAll('.drive-menu');
+            menus.forEach(function (menu) {
+                menu.addEventListener('toggle', function () {
+                    if (!menu.open) return;
+                    menus.forEach(function (other) { if (other !== menu) other.open = false; });
+                });
+            });
+            function closeMenus() {
+                menus.forEach(function (menu) { menu.open = false; });
+            }
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.drive-menu')) closeMenus();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeMenus();
+            });
+
+            function copyText(text) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(text);
+                }
+                return new Promise(function (resolve, reject) {
+                    var area = document.createElement('textarea');
+                    area.value = text;
+                    area.setAttribute('readonly', '');
+                    area.style.position = 'fixed';
+                    area.style.opacity = '0';
+                    document.body.appendChild(area);
+                    area.select();
+                    var ok = false;
+                    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+                    area.remove();
+                    if (ok) resolve(); else reject();
+                });
+            }
+            function copyLink(link) {
+                copyText(link).then(
+                    function () { notify('Đã sao chép đường liên kết.'); },
+                    function () { notify('Không sao chép được, hãy chọn và sao chép thủ công.'); }
+                );
+            }
+
+            function openShareDialog(row) {
+                shareDialog.querySelector('[data-share-name]').textContent = row.dataset.fileName;
+                shareDialog.querySelector('[data-share-input]').value = row.dataset.shareLink;
+                var revokeForm = shareDialog.querySelector('[data-share-revoke]');
+                revokeForm.action = row.dataset.revokeUrl;
+                revokeForm.dataset.fileName = row.dataset.fileName;
+                AppDialog.open(shareDialog);
+                shareDialog.querySelector('[data-share-input]').select();
+            }
+
+            document.querySelectorAll('.drive-row').forEach(function (row) {
+                row.querySelectorAll('[data-copy-link]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        closeMenus();
+                        copyLink(row.dataset.shareLink);
+                    });
+                });
+                var shareBtn = row.querySelector('[data-share-dialog]');
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', function () {
+                        closeMenus();
+                        openShareDialog(row);
+                    });
+                }
+                row.addEventListener('dblclick', function (e) {
+                    if (e.target.closest('a, button, summary, form')) return;
+                    window.open(row.dataset.openUrl, '_blank', 'noopener');
+                });
+            });
+
+            shareDialog.querySelector('[data-share-copy]').addEventListener('click', function () {
+                copyLink(shareDialog.querySelector('[data-share-input]').value);
+            });
+
+            document.querySelectorAll('form[data-confirm-revoke]').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed) return;
+                    e.preventDefault();
+                    AppDialog.confirm({
+                        title: 'Thu hồi đường liên kết?',
+                        message: 'Người khác sẽ không mở được “' + form.dataset.fileName + '” bằng đường liên kết cũ nữa.',
+                        okText: 'Thu hồi',
+                        danger: true
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        form.dataset.confirmed = 'true';
+                        submitForm(form);
+                    });
+                });
+            });
+
+            var pageUrl = new URL(window.location.href);
+            if (pageUrl.searchParams.has('shared')) {
+                pageUrl.searchParams.delete('shared');
+                history.replaceState(null, '', pageUrl.pathname + pageUrl.search + pageUrl.hash);
+                var justShared = document.querySelector('.drive-row[data-share-open]');
+                if (justShared) openShareDialog(justShared);
+            }
+        })();
+    </script>
+}

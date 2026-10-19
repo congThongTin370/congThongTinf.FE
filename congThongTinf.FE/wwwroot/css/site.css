@@ -1469,6 +1469,13 @@ a:hover {
 .news-detail-body .ql-size-large { font-size: 1.5em; }
 .news-detail-body .ql-size-huge { font-size: 2.5em; }
 
+.news-detail-author {
+    margin: 1.5rem 0 0;
+    text-align: right;
+    font-weight: 700;
+    color: #000;
+}
+
 .news-detail-back {
     margin-top: 1.5rem;
     padding-top: 1rem;
