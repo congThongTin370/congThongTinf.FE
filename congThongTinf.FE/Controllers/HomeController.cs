@@ -123,7 +123,7 @@ namespace congThongTinf.FE.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Documents()
+        public async Task<IActionResult> Documents(string? search, int? category, string? sort)
         {
             // pageIndex = 0: API trả toàn bộ danh sách, không phân trang
             var documents = await _documentService.GetDocumentsAsync(new DocumentQuery
@@ -131,6 +131,15 @@ namespace congThongTinf.FE.Controllers
                 PageIndex = 0,
                 PageSize = 10
             });
+
+            if (category.HasValue && DocumentCategories.Options.All(o => o.Value != category.Value))
+            {
+                category = null;
+            }
+
+            ViewData["DocumentSearch"] = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+            ViewData["DocumentCategory"] = category;
+            ViewData["DocumentSort"] = sort is "name" or "size" ? sort : "date";
             return View(documents);
         }
 

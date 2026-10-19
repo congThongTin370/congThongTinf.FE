@@ -18,4 +18,9 @@ public interface IDocumentService
     Task<List<DocumentDto>> GetDocumentsAsync(DocumentQuery query);
     Task<DocumentWriteResult> UploadAsync(string accessToken, DocumentUploadViewModel model);
     Task<DocumentWriteResult> DeleteAsync(string accessToken, Guid id);
+
+    /// <summary>
+    /// Lấy bytes file từ GET /api/documents/{id}/download để FE stream lại cho trình duyệt.
+    /// </summary>
+    Task<SharedFileStreamResult> OpenFileAsync(Guid id);
 }

@@ -1,6 +1,6 @@
 @model List<DocumentDto>
 @{
-    ViewData["Title"] = "Kho tài liệu BQP";
+    ViewData["Title"] = "Kho tài liệu";
 
     string FileSizeText(long bytes)
     {
@@ -17,253 +17,489 @@
         return $"{bytes} B";
     }
 
-    string FileKind(string fileName)
+    string DateText(DateTime createdAt)
     {
-        var ext = System.IO.Path.GetExtension(fileName);
-        return string.IsNullOrEmpty(ext) ? "—" : ext.TrimStart('.').ToUpperInvariant();
+        var local = createdAt.ToLocalTime();
+        return local.Date == DateTime.Today ? $"Hôm nay, {local:HH:mm}" : local.ToString("dd/MM/yyyy");
     }
+
+    (string Kind, string Label) FileKind(DocumentDto doc)
+    {
+        var type = (doc.FileType ?? string.Empty).ToLowerInvariant();
+        var ext = System.IO.Path.GetExtension(doc.FileName ?? string.Empty).TrimStart('.').ToLowerInvariant();
+
+        if (type.StartsWith("image/")) return ("image", "IMG");
+        if (type == "application/pdf" || ext == "pdf") return ("pdf", "PDF");
+        if (ext is "doc" or "docx" or "odt" or "rtf") return ("doc", "DOC");
+        if (ext is "xls" or "xlsx" or "ods" or "csv") return ("sheet", "XLS");
+        if (ext is "ppt" or "pptx" or "odp") return ("slide", "PPT");
+        if (ext is "zip" or "rar" or "7z" or "tar" or "gz") return ("archive", "ZIP");
+        if (type.StartsWith("text/") || ext is "txt" or "md") return ("text", "TXT");
+        return ("file", "FILE");
+    }
+
+    string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name.Trim().Substring(0, 1).ToUpperInvariant();
+
+    void Icon(string name)
+    {
+        <svg class="docs-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            @switch (name)
+            {
+                case "plus":
+                    <path d="M12 5v14M5 12h14" />
+                    break;
+                case "search":
+                    <circle cx="11" cy="11" r="6.25" />
+                    <path d="M15.8 15.8L20 20" />
+                    break;
+                case "close":
+                    <path d="M7 7l10 10M17 7L7 17" />
+                    break;
+                case "more":
+                    <circle cx="12" cy="5.5" r="1.4" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none" />
+                    break;
+                case "download":
+                    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+                    break;
+                case "open":
+                    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+                    <circle cx="12" cy="12" r="3" />
+                    break;
+                case "folder":
+                    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    break;
+                case "library":
+                    <path d="M4 5.5h6v13H4zM10 5.5h6v13h-6z" />
+                    <path d="M16.5 6.2l3.6-.9 2.4 12.6-3.6.9z" />
+                    break;
+                case "lock":
+                    <rect x="5" y="10.5" width="14" height="9.5" rx="1.5" />
+                    <path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+                    break;
+                case "settings":
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" />
+                    break;
+            }
+        </svg>
+    }
+
+    var isAdmin = Context.Session.GetString("Role") == "Admin";
+    var search = ViewData["DocumentSearch"] as string;
+    var category = ViewData["DocumentCategory"] as int?;
+    var sort = ViewData["DocumentSort"] as string ?? "date";
+    var hasSearch = !string.IsNullOrEmpty(search);
+    var hasFilter = hasSearch || category.HasValue;
+
+    var countByCategory = Model.GroupBy(d => d.Category).ToDictionary(g => g.Key, g => g.Count());
+    var totalSize = Model.Sum(d => d.FileSize);
+
+    IEnumerable<DocumentDto> query = Model;
+    if (category.HasValue)
+    {
+        query = query.Where(d => d.Category == category.Value);
+    }
+    if (hasSearch)
+    {
+        query = query.Where(d =>
+            (d.Title?.Contains(search!, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (d.FileName?.Contains(search!, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (d.Description?.Contains(search!, StringComparison.OrdinalIgnoreCase) ?? false));
+    }
+    query = sort switch
+    {
+        "name" => query.OrderBy(d => d.Title, StringComparer.CurrentCultureIgnoreCase),
+        "size" => query.OrderByDescending(d => d.FileSize),
+        _ => query.OrderByDescending(d => d.CreatedAt)
+    };
+    var items = query.ToList();
+
+    var title = category.HasValue ? DocumentCategories.Label(category.Value) : "Tất cả tài liệu";
+    if (hasSearch)
+    {
+        title = $"Kết quả cho “{search}”";
+    }
+
+    string SortUrl(string key) => Url.Action("Documents", new { search, category, sort = key == "date" ? null : key })!;
 }
 
-<div class="documents-container">
-    <header class="documents-header">
-        <h1>Kho tài liệu Sư đoàn 370</h1>
-        <p class="documents-description">Danh sách tài liệu được cập nhật bởi quản trị viên</p>
-    </header>
+<div class="docs">
+    <aside class="docs-side" aria-label="Kho tài liệu">
+        <p class="docs-brand">
+            @{ Icon("library"); }
+            <span>Kho tài liệu</span>
+        </p>
 
-    <div class="documents-list">
-        @foreach (var doc in Model)
+        @if (isAdmin)
         {
-            var kind = FileKind(doc.FileName);
-            <article class="document-item">
-                <div class="document-icon" aria-hidden="true">
-                    @if (kind == "PDF")
+            <a class="docs-new" asp-controller="Admin" asp-action="UploadDocument">
+                @{ Icon("plus"); }
+                <span>Tải lên</span>
+            </a>
+        }
+
+        <nav class="docs-nav" aria-label="Danh mục tài liệu">
+            <a class="@(category.HasValue ? null : "is-active")" href="@Url.Action("Documents", new { search, sort = sort == "date" ? null : sort })" aria-current="@(category.HasValue ? null : "page")">
+                @{ Icon("folder"); }
+                <span class="docs-nav-label">Tất cả tài liệu</span>
+                <span class="docs-nav-count">@Model.Count</span>
+            </a>
+            @foreach (var option in DocumentCategories.Options)
+            {
+                var active = category == option.Value;
+                <a class="@(active ? "is-active" : null)" href="@Url.Action("Documents", new { search, category = option.Value, sort = sort == "date" ? null : sort })" aria-current="@(active ? "page" : null)">
+                    @{ Icon("folder"); }
+                    <span class="docs-nav-label">@option.Label</span>
+                    <span class="docs-nav-count">@(countByCategory.TryGetValue(option.Value, out var c) ? c : 0)</span>
+                </a>
+            }
+        </nav>
+
+        <p class="docs-note">
+            @{ Icon("lock"); }
+            <span>
+                @Model.Count tài liệu · @FileSizeText(totalSize).
+                Tài liệu do quản trị viên đăng tải; bạn có thể xem và tải xuống.
+            </span>
+        </p>
+
+        @if (isAdmin)
+        {
+            <a class="docs-manage" asp-controller="Admin" asp-action="Documents">
+                @{ Icon("settings"); }
+                <span>Quản lý tài liệu</span>
+            </a>
+        }
+    </aside>
+
+    <section class="docs-main" aria-labelledby="docs-title">
+        <form class="docs-search" method="get" asp-action="Documents" role="search">
+            <button type="submit" class="docs-icon-btn" aria-label="Tìm kiếm">
+                @{ Icon("search"); }
+            </button>
+            <label class="visually-hidden" for="docs-search">Tìm trong kho tài liệu</label>
+            <input id="docs-search" name="search" type="search" value="@search" placeholder="Tìm theo tên, tên file hoặc mô tả" autocomplete="off" />
+            @if (category.HasValue)
+            {
+                <input type="hidden" name="category" value="@category" />
+            }
+            @if (sort != "date")
+            {
+                <input type="hidden" name="sort" value="@sort" />
+            }
+            @if (hasSearch)
+            {
+                <a class="docs-icon-btn" href="@Url.Action("Documents", new { category, sort = sort == "date" ? null : sort })" aria-label="Xóa tìm kiếm">
+                    @{ Icon("close"); }
+                </a>
+            }
+        </form>
+
+        <div class="docs-head">
+            <h1 id="docs-title" class="docs-title">@title</h1>
+            @if (items.Count > 0)
+            {
+                <span class="docs-count">@items.Count tài liệu</span>
+            }
+        </div>
+
+        @if (items.Count == 0)
+        {
+            <div class="docs-empty">
+                @if (hasFilter)
+                {
+                    Icon("search");
+                    <h2>Không tìm thấy tài liệu phù hợp</h2>
+                    <p>Thử từ khóa khác hoặc chọn danh mục khác.</p>
+                    <a class="btn btn-outline-secondary" asp-action="Documents">Xem tất cả tài liệu</a>
+                }
+                else
+                {
+                    Icon("library");
+                    <h2>Chưa có tài liệu nào</h2>
+                    if (isAdmin)
                     {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4.646 9.854a.5.5 0 1 1-.708-.708L5.793 8l-1.855-1.854a.5.5 0 1 1 .708-.708L6.5 7.293l1.854-1.855a.5.5 0 1 1 .708.708L7.207 8l1.855 1.854a.5.5 0 1 1-.708.708L6.5 8.707l-1.854 1.854z" />
-                        </svg>
-                    }
-                    else if (kind is "DOC" or "DOCX")
-                    {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4 9H3V7h1v2zm2 0H5V7h1v2zm2 0H7V7h1v2zm2 0H9V7h1v2z" />
-                        </svg>
+                        <p>Tải tài liệu đầu tiên lên để cán bộ, chiến sĩ có thể xem và tải xuống.</p>
+                        <a class="btn btn-primary" asp-controller="Admin" asp-action="UploadDocument">Tải lên tài liệu</a>
                     }
                     else
                     {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M14 2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 7.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" />
-                        </svg>
+                        <p>Tài liệu sẽ hiển thị tại đây khi quản trị viên đăng tải.</p>
                     }
-                </div>
-                <div class="document-content">
-                    <h3 class="document-name">@doc.Title</h3>
-                    @if (!string.IsNullOrWhiteSpace(doc.Description))
-                    {
-                        <p class="document-description">@doc.Description</p>
-                    }
-                    <div class="document-meta">
-                        <span class="meta-item">
-                            <strong>Loại:</strong> @kind
-                        </span>
-                        <span class="meta-item">
-                            <strong>Danh mục:</strong> @DocumentCategories.Label(doc.Category)
-                        </span>
-                        <span class="meta-item">
-                            <strong>Dung lượng:</strong> @FileSizeText(doc.FileSize)
-                        </span>
-                        <span class="meta-item">
-                            <strong>Cập nhật:</strong> @doc.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
-                        </span>
-                    </div>
-                </div>
-                <div class="document-actions">
-                    @if (!string.IsNullOrWhiteSpace(doc.FileUrl))
-                    {
-                        <a href="@doc.FileUrl" class="btn btn-outline" target="_blank" rel="noopener" aria-label="Xem @doc.Title">Xem</a>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(doc.DownloadUrl))
-                    {
-                        <a href="@doc.DownloadUrl" class="btn btn-primary" download="@doc.FileName" aria-label="Tải xuống @doc.Title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-                            </svg>
-                            Tải xuống
-                        </a>
-                    }
-                </div>
-            </article>
+                }
+            </div>
         }
-    </div>
+        else
+        {
+            <table class="docs-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="docs-col-name">
+                            <a class="docs-sort @(sort == "name" ? "is-active" : null)" href="@SortUrl("name")">Tên @if (sort == "name") { <span aria-hidden="true">↑</span> }</a>
+                        </th>
+                        <th scope="col" class="docs-col-category">Danh mục</th>
+                        <th scope="col" class="docs-col-owner">Người đăng tải</th>
+                        <th scope="col" class="docs-col-date">
+                            <a class="docs-sort @(sort == "date" ? "is-active" : null)" href="@SortUrl("date")">Ngày đăng @if (sort == "date") { <span aria-hidden="true">↓</span> }</a>
+                        </th>
+                        <th scope="col" class="docs-col-size">
+                            <a class="docs-sort @(sort == "size" ? "is-active" : null)" href="@SortUrl("size")">Kích thước @if (sort == "size") { <span aria-hidden="true">↓</span> }</a>
+                        </th>
+                        <th scope="col" class="docs-col-actions"><span class="visually-hidden">Thao tác</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in items)
+                    {
+                        var kind = FileKind(doc);
+                        var displayName = string.IsNullOrWhiteSpace(doc.Title) ? doc.FileName : doc.Title;
+                        var owner = string.IsNullOrWhiteSpace(doc.UploadedByUserName) ? "Quản trị viên" : doc.UploadedByUserName;
+                        var hasView = !string.IsNullOrWhiteSpace(doc.FileUrl);
+                        var hasDownload = !string.IsNullOrWhiteSpace(doc.DownloadUrl);
 
-    @if (Model.Count == 0)
-    {
-        <div class="documents-empty">
-            <p>Chưa có tài liệu nào trong kho.</p>
-        </div>
-    }
+                        <tr class="docs-row" data-open-url="@(hasView ? doc.FileUrl : null)">
+                            <td class="docs-col-name">
+                                <div class="docs-name">
+                                    <span class="docs-type docs-type-@kind.Kind" aria-hidden="true">@kind.Label</span>
+                                    <div class="docs-name-text">
+                                        @if (hasView)
+                                        {
+                                            <a class="docs-name-link" href="@doc.FileUrl" target="_blank" rel="noopener" title="@displayName">@displayName</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="docs-name-link" title="@displayName">@displayName</span>
+                                        }
+                                        <span class="docs-name-file" title="@doc.Description">
+                                            @(string.IsNullOrWhiteSpace(doc.Description) ? doc.FileName : doc.Description)
+                                        </span>
+                                        <span class="docs-name-sub">@DocumentCategories.Label(doc.Category) · @DateText(doc.CreatedAt) · @FileSizeText(doc.FileSize)</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="docs-col-category">
+                                <span class="docs-chip">@DocumentCategories.Label(doc.Category)</span>
+                            </td>
+                            <td class="docs-col-owner">
+                                <span class="docs-owner" title="@owner">
+                                    <span class="docs-avatar" aria-hidden="true">@Initial(owner)</span>
+                                    <span class="docs-owner-name">@owner</span>
+                                </span>
+                            </td>
+                            <td class="docs-col-date" title="@doc.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">@DateText(doc.CreatedAt)</td>
+                            <td class="docs-col-size">@FileSizeText(doc.FileSize)</td>
+                            <td class="docs-col-actions">
+                                <div class="docs-actions">
+                                    <div class="docs-quick">
+                                        @if (hasView)
+                                        {
+                                            <a class="docs-icon-btn" href="@doc.FileUrl" target="_blank" rel="noopener" title="Xem" aria-label="Xem @displayName">
+                                                @{ Icon("open"); }
+                                            </a>
+                                        }
+                                        @if (hasDownload)
+                                        {
+                                            <a class="docs-icon-btn" href="@doc.DownloadUrl" download="@doc.FileName" title="Tải xuống" aria-label="Tải xuống @displayName">
+                                                @{ Icon("download"); }
+                                            </a>
+                                        }
+                                    </div>
+                                    <details class="docs-menu">
+                                        <summary class="docs-icon-btn" title="Thao tác khác" aria-label="Thao tác khác cho @displayName">
+                                            @{ Icon("more"); }
+                                        </summary>
+                                        <div class="docs-menu-list">
+                                            @if (hasView)
+                                            {
+                                                <a class="docs-menu-item" href="@doc.FileUrl" target="_blank" rel="noopener">
+                                                    @{ Icon("open"); }
+                                                    <span>Mở</span>
+                                                </a>
+                                            }
+                                            @if (hasDownload)
+                                            {
+                                                <a class="docs-menu-item" href="@doc.DownloadUrl" download="@doc.FileName">
+                                                    @{ Icon("download"); }
+                                                    <span>Tải xuống</span>
+                                                </a>
+                                            }
+                                            @if (isAdmin)
+                                            {
+                                                <div class="docs-menu-sep" role="separator"></div>
+                                                <a class="docs-menu-item" asp-controller="Admin" asp-action="Documents" asp-route-search="@doc.Title">
+                                                    @{ Icon("settings"); }
+                                                    <span>Quản lý trong trang quản trị</span>
+                                                </a>
+                                            }
+                                            <div class="docs-menu-info">
+                                                <span>Tên file: @doc.FileName</span>
+                                                <span>Đăng bởi @owner, @doc.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
 </div>
 
-<style asp-append-version="true">
-    .documents-container {
-        max-width: 900px;
-        margin: 0 auto;
+<style>
+    .docs { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1rem; align-items: start; }
+    .docs-svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .docs-side { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .docs-brand { display: flex; align-items: center; gap: 0.6rem; margin: 0; padding: 0.25rem 0.5rem; font-size: 1.05rem; font-weight: 700; color: var(--color-dark); }
+    .docs-brand .docs-svg { width: 30px; height: 30px; color: var(--color-primary); }
+    .docs-new { display: inline-flex; align-self: flex-start; align-items: center; gap: 0.7rem; padding: 0.85rem 1.4rem 0.85rem 1rem; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-dark); font-size: 0.95rem; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(17, 24, 39, 0.12), 0 1px 3px rgba(17, 24, 39, 0.08); transition: box-shadow 0.15s ease, background-color 0.15s ease; }
+    .docs-new:hover { background: var(--color-surface-blue); color: var(--color-dark); box-shadow: 0 2px 6px rgba(17, 24, 39, 0.16); }
+    .docs-new:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .docs-new .docs-svg { width: 22px; height: 22px; color: var(--color-primary); stroke-width: 2.2; }
+
+    .docs-nav { display: flex; flex-direction: column; gap: 0.15rem; }
+    .docs-nav a { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; border-radius: 999px; color: var(--color-text); font-size: 0.9rem; text-decoration: none; white-space: nowrap; }
+    .docs-nav a:hover { background: var(--color-border); }
+    .docs-nav a.is-active { background: var(--color-surface-blue); color: var(--color-primary-dark); font-weight: 600; }
+    .docs-nav a .docs-svg { color: var(--color-text-muted); }
+    .docs-nav a.is-active .docs-svg { color: var(--color-primary); }
+    .docs-nav-label { flex: 1; }
+    .docs-nav-count { font-size: 0.78rem; color: var(--color-text-muted); }
+
+    .docs-note { display: flex; gap: 0.5rem; margin: 0; padding: 0.75rem 1rem; border-radius: var(--radius); background: var(--color-surface-blue); font-size: 0.78rem; color: var(--color-text-muted); }
+    .docs-note .docs-svg { width: 16px; height: 16px; margin-top: 0.1rem; color: var(--color-primary-dark); }
+    .docs-manage { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 1rem; color: var(--color-primary-dark); font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+    .docs-manage:hover { text-decoration: underline; }
+    .docs-manage .docs-svg { width: 18px; height: 18px; }
+
+    .docs-main { min-height: 480px; padding: 1rem 1.25rem 1.25rem; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+
+    .docs-search { display: flex; align-items: center; gap: 0.25rem; max-width: 720px; height: 48px; margin: 0; padding: 0 0.4rem; border: 1px solid transparent; border-radius: 999px; background: var(--color-background); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+    .docs-search:focus-within { border-color: var(--color-border); background: var(--color-surface); box-shadow: 0 1px 3px rgba(17, 24, 39, 0.15); }
+    .docs-search input[type="search"] { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: 0.95rem; }
+    .docs-search input::-webkit-search-cancel-button { display: none; }
+
+    .docs-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin: 1.25rem 0 0.5rem; padding: 0 0.25rem; }
+    .docs-title { margin: 0; font-size: 1.4rem; font-weight: 600; color: var(--color-dark); overflow-wrap: anywhere; }
+    .docs-count { font-size: 0.85rem; color: var(--color-text-muted); }
+
+    .docs-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.875rem; }
+    .docs-table th { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 0.8rem; font-weight: 600; text-align: left; white-space: nowrap; }
+    .docs-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .docs-table td.docs-col-actions { overflow: visible; }
+    .docs-col-category { width: 120px; }
+    .docs-col-owner { width: 180px; }
+    .docs-col-date { width: 130px; }
+    .docs-col-size { width: 100px; }
+    .docs-col-actions { width: 124px; }
+    .docs-sort { color: inherit; text-decoration: none; }
+    .docs-sort:hover { color: var(--color-text); }
+    .docs-sort.is-active { color: var(--color-text); }
+    .docs-row:hover td { background: var(--color-background); }
+    .docs-row:focus-within td { background: var(--color-surface-blue); }
+
+    .docs-name { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+    .docs-name-text { display: flex; flex-direction: column; min-width: 0; }
+    .docs-name-link { overflow: hidden; color: var(--color-text); font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+    a.docs-name-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+    .docs-name-file { overflow: hidden; font-size: 0.78rem; color: var(--color-text-muted); text-overflow: ellipsis; white-space: nowrap; }
+    .docs-name-sub { display: none; font-size: 0.78rem; color: var(--color-text-muted); }
+
+    .docs-type { display: inline-grid; flex: none; place-items: center; width: 34px; height: 28px; border-radius: 4px; background: #667085; color: #FFFFFF; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; }
+    .docs-type-image { background: #8E5BA8; }
+    .docs-type-pdf { background: var(--color-danger); }
+    .docs-type-doc { background: var(--color-primary-dark); }
+    .docs-type-sheet { background: var(--color-success); }
+    .docs-type-slide { background: var(--color-warning); }
+    .docs-type-archive { background: #6B7280; }
+    .docs-type-text { background: #475467; }
+
+    .docs-chip { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--color-surface-blue); color: var(--color-primary-dark); font-size: 0.75rem; font-weight: 600; }
+
+    .docs-owner { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; color: var(--color-text); }
+    .docs-owner-name { overflow: hidden; text-overflow: ellipsis; }
+    .docs-avatar { display: inline-grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--color-primary); color: var(--color-text-on-primary); font-size: 0.7rem; font-weight: 700; }
+
+    .docs-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.15rem; }
+    .docs-quick { display: flex; gap: 0.15rem; }
+    .docs-icon-btn { display: inline-grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-dark-soft); text-decoration: none; cursor: pointer; list-style: none; transition: background-color 0.15s ease; }
+    .docs-icon-btn:hover { background: rgba(17, 24, 39, 0.08); color: var(--color-dark); }
+    .docs-icon-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+    summary.docs-icon-btn::-webkit-details-marker { display: none; }
+    summary.docs-icon-btn::marker { content: ""; }
+
+    @@media (hover: hover) and (pointer: fine) {
+        .docs-quick { visibility: hidden; }
+        .docs-row:hover .docs-quick, .docs-row:focus-within .docs-quick { visibility: visible; }
     }
 
-    .documents-header {
-        margin-bottom: 2rem;
-        text-align: center;
+    .docs-menu { position: relative; }
+    .docs-menu[open] > summary { background: rgba(17, 24, 39, 0.08); }
+    .docs-menu-list { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 260px; padding: 0.4rem 0; border-radius: 8px; background: var(--color-surface); box-shadow: 0 4px 16px rgba(17, 24, 39, 0.18), 0 1px 3px rgba(17, 24, 39, 0.1); }
+    .docs-menu-item { display: flex; align-items: center; gap: 0.85rem; width: 100%; padding: 0.55rem 1rem; color: var(--color-text); font-size: 0.875rem; text-decoration: none; }
+    .docs-menu-item:hover, .docs-menu-item:focus-visible { background: var(--color-background); color: var(--color-text); outline: 0; }
+    .docs-menu-item .docs-svg { color: var(--color-text-muted); }
+    .docs-menu-sep { height: 1px; margin: 0.35rem 0; background: var(--color-border); }
+    .docs-menu-info { display: flex; flex-direction: column; gap: 0.2rem; margin-top: 0.35rem; padding: 0.6rem 1rem 0.3rem; border-top: 1px solid var(--color-border); font-size: 0.75rem; color: var(--color-text-muted); white-space: normal; overflow-wrap: anywhere; }
+
+    .docs-empty { display: flex; flex-direction: column; align-items: center; padding: 3.5rem 1rem; color: var(--color-text-muted); text-align: center; }
+    .docs-empty > .docs-svg { width: 72px; height: 72px; color: var(--color-primary-light); stroke-width: 1.2; }
+    .docs-empty h2 { margin: 1rem 0 0.35rem; font-size: 1.1rem; font-weight: 600; color: var(--color-text); }
+    .docs-empty p { margin: 0 0 1.25rem; font-size: 0.9rem; }
+
+    @@media (max-width: 1100px) {
+        .docs-col-category { display: none; }
     }
 
-    .documents-header h1 {
-        margin-bottom: 0.5rem;
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--color-primary-dark);
-    }
-
-    .documents-header .documents-description {
-        margin: 0;
-        color: var(--color-text-muted);
-    }
-
-    .documents-list {
-        display: grid;
-        gap: 1.25rem;
-    }
-
-    .document-item {
-        display: grid;
-        grid-template-columns: 48px 1fr auto;
-        gap: 1rem;
-        align-items: start;
-        padding: 1rem;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius);
-        background: var(--color-surface);
-        transition: box-shadow 0.15s ease, border-color 0.15s ease;
-    }
-
-    .document-item:hover {
-        border-color: var(--color-primary-light);
-        box-shadow: 0 2px 8px rgba(63, 128, 167, 0.12);
-    }
-
-    .document-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
-        background: var(--color-surface-blue);
-        border-radius: var(--radius);
-        color: var(--color-primary);
-        flex-shrink: 0;
-    }
-
-    .document-content {
-        min-width: 0;
-    }
-
-    .document-name {
-        margin: 0 0 0.35rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--color-text);
-    }
-
-    .document-item .document-description {
-        margin: 0 0 0.6rem;
-        font-size: 0.9rem;
-        color: var(--color-text-muted);
-    }
-
-    .document-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        font-size: 0.825rem;
-        color: var(--color-text-muted);
-    }
-
-    .meta-item {
-        display: inline-flex;
-        gap: 0.35rem;
-    }
-
-    .meta-item strong {
-        color: var(--color-text);
-        font-weight: 600;
-    }
-
-    .document-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: var(--radius);
-        font-size: 0.875rem;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease;
-    }
-
-    .btn-primary {
-        background-color: var(--color-primary);
-        color: var(--color-text-on-primary);
-    }
-
-    .btn-primary:hover {
-        background-color: var(--color-primary-dark);
-    }
-
-    .btn-outline {
-        background-color: var(--color-surface);
-        border: 1px solid var(--color-border);
-        color: var(--color-dark);
-    }
-
-    .btn-outline:hover {
-        border-color: var(--color-primary);
-        color: var(--color-primary-dark);
-    }
-
-    .documents-empty {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: var(--color-text-muted);
+    @@media (max-width: 900px) {
+        .docs { grid-template-columns: minmax(0, 1fr); }
+        .docs-side { position: static; gap: 0.75rem; }
+        .docs-brand, .docs-note { display: none; }
+        .docs-nav { flex-direction: row; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.25rem; }
+        .docs-nav a { flex: none; padding: 0.4rem 0.85rem; border: 1px solid var(--color-border); }
+        .docs-nav a.is-active { border-color: var(--color-primary-light); }
+        .docs-col-owner { display: none; }
     }
 
     @@media (max-width: 640px) {
-        .document-item {
-            grid-template-columns: 40px 1fr;
-            gap: 0.75rem;
-        }
-
-        .document-icon {
-            width: 40px;
-            height: 40px;
-        }
-
-        .document-actions {
-            grid-column: 1 / -1;
-            margin-top: 0.5rem;
-        }
-
-        .document-meta {
-            flex-direction: column;
-            gap: 0.35rem;
-        }
-
-        .documents-header h1 {
-            font-size: 1.5rem;
-        }
+        .docs-main { padding: 0.75rem; border-radius: 8px; }
+        .docs-col-date, .docs-col-size, .docs-quick, .docs-name-file { display: none; }
+        .docs-col-actions { width: 48px; }
+        .docs-table td { padding: 0.5rem; }
+        .docs-name-sub { display: block; }
     }
 </style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var menus = document.querySelectorAll('.docs-menu');
+            menus.forEach(function (menu) {
+                menu.addEventListener('toggle', function () {
+                    if (!menu.open) return;
+                    menus.forEach(function (other) { if (other !== menu) other.open = false; });
+                });
+            });
+            function closeMenus() {
+                menus.forEach(function (menu) { menu.open = false; });
+            }
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.docs-menu')) closeMenus();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeMenus();
+            });
+
+            document.querySelectorAll('.docs-row[data-open-url]').forEach(function (row) {
+                row.addEventListener('dblclick', function (e) {
+                    if (e.target.closest('a, button, summary, details')) return;
+                    window.open(row.dataset.openUrl, '_blank', 'noopener');
+                });
+            });
+        })();
+    </script>
+}

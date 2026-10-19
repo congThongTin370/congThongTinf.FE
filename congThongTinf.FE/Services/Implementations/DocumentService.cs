@@ -11,13 +11,11 @@ public class DocumentService : IDocumentService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<DocumentService> _logger;
-    private readonly string _publicBaseUrl;
 
-    public DocumentService(HttpClient httpClient, IConfiguration configuration, ILogger<DocumentService> logger)
+    public DocumentService(HttpClient httpClient, ILogger<DocumentService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _publicBaseUrl = ResolvePublicBaseUrl(configuration);
     }
 
     public async Task<List<DocumentDto>> GetDocumentsAsync(DocumentQuery query)
@@ -35,7 +33,7 @@ public class DocumentService : IDocumentService
 
             foreach (var document in body.Value.Data.Items)
             {
-                SetBrowserDownloadUrl(document);
+                HideBackendUrls(document);
             }
 
             return body.Value.Data.Items;
@@ -105,7 +103,7 @@ public class DocumentService : IDocumentService
                 return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
             }
 
-            SetBrowserDownloadUrl(body.Value.Data);
+            HideBackendUrls(body.Value.Data);
             return new DocumentWriteResult { Success = true, Data = body.Value.Data };
         }
         catch (Exception ex)
@@ -186,25 +184,50 @@ public class DocumentService : IDocumentService
         return "api/documents?" + string.Join("&", parts);
     }
 
-    private void SetBrowserDownloadUrl(DocumentDto document)
+    public async Task<SharedFileStreamResult> OpenFileAsync(Guid id)
     {
-        document.DownloadUrl = $"{_publicBaseUrl}/api/documents/{document.Id}/download";
+        try
+        {
+            // Không dispose response ở đây: controller stream xong mới dispose qua ResponseStream
+            var response = await _httpClient.GetAsync($"api/documents/{id}/download", HttpCompletionOption.ResponseHeadersRead);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var statusCode = (int)response.StatusCode;
+                response.Dispose();
+                return new SharedFileStreamResult
+                {
+                    ErrorMessage = statusCode == 404
+                        ? "Tài liệu không còn tồn tại hoặc đã bị xóa."
+                        : UserFacingErrors.ForDocuments(statusCode, null, null)
+                };
+            }
+
+            var disposition = response.Content.Headers.ContentDisposition;
+            var stream = await response.Content.ReadAsStreamAsync();
+
+            return new SharedFileStreamResult
+            {
+                Success = true,
+                Content = new ResponseStream(stream, response),
+                ContentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream",
+                FileName = (disposition?.FileNameStar ?? disposition?.FileName)?.Trim('"')
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open document {DocumentId}", id);
+            return new SharedFileStreamResult { ErrorMessage = UserFacingErrors.TryAgain };
+        }
     }
 
-    private static string ResolvePublicBaseUrl(IConfiguration configuration)
+    /// <summary>
+    /// Không đưa URL backend/R2 ra HTML. View dùng Home/DocumentFile/{id} để xem và tải.
+    /// </summary>
+    private static void HideBackendUrls(DocumentDto document)
     {
-        var publicBase = configuration["ApiSettings:PublicBaseUrl"];
-        var serverBase = configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
-        var baseUrl = string.IsNullOrWhiteSpace(publicBase) ? serverBase : publicBase;
-        baseUrl = baseUrl.TrimEnd('/');
-
-        // Container gọi API qua host.docker.internal; trình duyệt trên máy host dùng localhost.
-        if (baseUrl.Contains("host.docker.internal", StringComparison.OrdinalIgnoreCase))
-        {
-            baseUrl = baseUrl.Replace("host.docker.internal", "localhost", StringComparison.OrdinalIgnoreCase);
-        }
-
-        return baseUrl;
+        document.FileUrl = string.Empty;
+        document.DownloadUrl = string.Empty;
     }
 
     private static DocumentWriteResult Failure(int statusCode, string? code, string? message) => new()

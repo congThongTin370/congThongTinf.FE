@@ -59,7 +59,7 @@
                         <a class="@(currentAction == "Introduction" ? "is-active" : null)" asp-area="" asp-controller="Home" asp-action="Introduction">Giới thiệu</a>
                     </li>
                       <li>
-                        <a asp-area="" asp-controller="Home" asp-action="Documents">Tài liệu</a>
+                        <a class="@(currentController == "Home" && currentAction == "Documents" ? "is-active" : null)" asp-area="" asp-controller="Home" asp-action="Documents">Tài liệu</a>
                     </li>
                     @if (!string.IsNullOrEmpty(Context.Session.GetString("Role")))
                     {
