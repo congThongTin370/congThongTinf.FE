@@ -11,6 +11,7 @@ public interface ISharedFileService
     Task<SharedFileWriteResult> UploadAsync(string accessToken, IFormFile file);
     Task<SharedFileWriteResult> CreateShareLinkAsync(string accessToken, Guid id);
     Task<SharedFileWriteResult> RevokeShareLinkAsync(string accessToken, Guid id);
+    Task<SharedFileWriteResult> DeleteAsync(string accessToken, Guid id);
     Task<SharedFileReadResult> GetByLinkTokenAsync(string accessToken, string token);
 
     /// <summary>

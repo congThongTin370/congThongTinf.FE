@@ -96,6 +96,9 @@
                 case "cloud":
                     <path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9a4.25 4.25 0 0 1-.5 9.5z" />
                     break;
+                case "trash":
+                    <path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5" />
+                    break;
                 case "prev":
                     <path d="M14.5 6l-6 6 6 6" />
                     break;
@@ -116,12 +119,12 @@
     var lastIndex = firstIndex == 0 ? 0 : firstIndex + Model.Items.Count - 1;
 }
 
-@if (!string.IsNullOrEmpty(flashMessage))
-{
+    @if (!string.IsNullOrEmpty(flashMessage))
+    {
     <div class="cloud-alert cloud-alert-success admin-alert" role="status">@flashMessage</div>
-}
-@if (!string.IsNullOrEmpty(flashError))
-{
+    }
+    @if (!string.IsNullOrEmpty(flashError))
+    {
     <div class="cloud-alert cloud-alert-danger admin-alert-error" role="alert">@flashError</div>
 }
 
@@ -165,7 +168,7 @@
                     @{ Icon("close"); }
                 </a>
             }
-        </form>
+            </form>
 
         <div class="drive-head">
             <h1 id="drive-title" class="drive-title">
@@ -196,7 +199,7 @@
                         <p>Kéo và thả file vào đây hoặc dùng nút “Mới” để tải lên.</p>
                         <button type="button" class="btn btn-primary" data-upload-trigger>Tải file lên</button>
                     }
-                </div>
+            </div>
             }
         }
         else
@@ -212,8 +215,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var file in Model.Items)
-                    {
+                @foreach (var file in Model.Items)
+                {
                         var kind = FileKind(file);
                         var viewHref = Url.Action("Stream", "SharedFiles", new { url = file.ViewUrl, download = false });
                         var downloadHref = Url.Action("Stream", "SharedFiles", new { url = file.DownloadUrl, download = true });
@@ -234,7 +237,7 @@
                                     <div class="drive-name-text">
                                         <a class="drive-name-link" href="@viewHref" target="_blank" rel="noopener" title="@file.FileName">@file.FileName</a>
                                         <span class="drive-name-sub">@DateText(file.CreatedAt) · @FileSizeText(file.FileSize)</span>
-                                    </div>
+                            </div>
                                     @if (file.IsShared)
                                     {
                                         <span class="drive-shared" title="Đang chia sẻ bằng liên kết">
@@ -272,8 +275,14 @@
                                                     @{ Icon("share"); }
                                                 </button>
                                             </form>
-                                        }
-                                    </div>
+                            }
+                                        <form method="post" asp-action="Delete" asp-route-id="@file.Id" data-confirm-delete data-file-name="@file.FileName">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="drive-icon-btn" title="Xóa" aria-label="Xóa @file.FileName">
+                                                @{ Icon("trash"); }
+                                            </button>
+                                        </form>
+                        </div>
                                     <details class="drive-menu">
                                         <summary class="drive-icon-btn" title="Thao tác khác" aria-label="Thao tác khác cho @file.FileName">
                                             @{ Icon("more"); }
@@ -299,29 +308,37 @@
                                                     <span>Sao chép đường liên kết</span>
                                                 </button>
                                                 <form method="post" asp-action="Revoke" asp-route-id="@file.Id" data-confirm-revoke data-file-name="@file.FileName">
-                                                    @Html.AntiForgeryToken()
+                                    @Html.AntiForgeryToken()
                                                     <button type="submit" class="drive-menu-item is-danger">
                                                         @{ Icon("unlink"); }
                                                         <span>Thu hồi đường liên kết</span>
                                                     </button>
-                                                </form>
-                                            }
-                                            else
-                                            {
-                                                <form method="post" asp-action="Share" asp-route-id="@file.Id">
-                                                    @Html.AntiForgeryToken()
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-action="Share" asp-route-id="@file.Id">
+                                    @Html.AntiForgeryToken()
                                                     <button type="submit" class="drive-menu-item">
                                                         @{ Icon("share"); }
                                                         <span>Chia sẻ (tạo đường liên kết)</span>
                                                     </button>
-                                                </form>
-                                            }
-                                        </div>
+                                </form>
+                            }
+                            <div class="drive-menu-sep" role="separator"></div>
+                            <form method="post" asp-action="Delete" asp-route-id="@file.Id" data-confirm-delete data-file-name="@file.FileName">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="drive-menu-item is-danger">
+                                    @{ Icon("trash"); }
+                                    <span>Xóa</span>
+                                </button>
+                            </form>
+                        </div>
                                     </details>
                                 </div>
                             </td>
                         </tr>
-                    }
+                }
                 </tbody>
             </table>
 
@@ -432,7 +449,7 @@
     .drive-col-owner { width: 150px; }
     .drive-col-date { width: 140px; }
     .drive-col-size { width: 110px; }
-    .drive-col-actions { width: 132px; }
+    .drive-col-actions { width: 172px; }
     .drive-row { cursor: default; }
     .drive-row:hover td { background: var(--color-background); }
     .drive-row:focus-within td { background: var(--color-surface-blue); }
@@ -522,7 +539,7 @@
 </style>
 
 @section Scripts {
-    <script>
+<script>
         (function () {
             var maxBytes = 10 * 1024 * 1024;
             var uploadForm = document.querySelector('[data-upload-form]');
@@ -676,6 +693,24 @@
                         form.dataset.confirmed = 'true';
                         submitForm(form);
                     });
+        });
+    });
+
+            document.querySelectorAll('form[data-confirm-delete]').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed) return;
+                    e.preventDefault();
+                    closeMenus();
+                    AppDialog.confirm({
+                        title: 'Xóa file?',
+                        message: '“' + form.dataset.fileName + '” sẽ bị xóa vĩnh viễn và không thể khôi phục. Đường liên kết chia sẻ (nếu có) cũng hết hiệu lực.',
+                        okText: 'Xóa',
+                        danger: true
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        form.dataset.confirmed = 'true';
+                        submitForm(form);
+                    });
                 });
             });
 
@@ -687,5 +722,5 @@
                 if (justShared) openShareDialog(justShared);
             }
         })();
-    </script>
+</script>
 }

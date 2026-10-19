@@ -90,6 +90,19 @@ namespace congThongTinf.FE.Controllers
             return FinishWrite(result, "Đã thu hồi liên kết chia sẻ.");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            if (!IsLoggedIn())
+            {
+                return RedirectToLogin();
+            }
+
+            var result = await _sharedFileService.DeleteAsync(GetToken(), id);
+            return FinishWrite(result, "Đã xóa file.");
+        }
+
         /// <summary>
         /// Trang người nhận mở link chia sẻ. Yêu cầu đăng nhập; token không lộ ra cho người nhận.
         /// </summary>

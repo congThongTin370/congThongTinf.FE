@@ -242,4 +242,9 @@ else
 @await Component.InvokeAsync("BannerSlot", new { position = 1 })
 
 @await Component.InvokeAsync("LeaderStrip")
+
+@if (ViewData["CategoryFilterActive"] is not true)
+{
+    @await Component.InvokeAsync("CategoryNewsSections", new { news = Model })
+}
 }

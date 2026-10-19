@@ -1,0 +1,55 @@
+﻿@model List<CategoryPageViewModel>
+
+<div class="home-categories">
+    @foreach (var block in Model)
+    {
+        var headingId = $"home-category-{block.Category.Id}";
+        <section class="home-category" aria-labelledby="@headingId">
+            <h2 id="@headingId" class="home-category-title">
+                <a asp-controller="Home" asp-action="Category" asp-route-id="@block.Category.Id">@block.Category.Name</a>
+            </h2>
+
+            @if (block.News.Count == 0)
+            {
+                <p class="home-category-empty">Chưa có bài viết.</p>
+            }
+            else
+            {
+                var lead = block.News[0];
+                <div class="home-category-body">
+                    <article class="home-category-lead">
+                        <div class="home-category-lead-head">
+                            <a class="home-category-lead-media" asp-controller="News" asp-action="Details" asp-route-id="@lead.Id">
+                                @if (!string.IsNullOrEmpty(lead.CoverImageUrl))
+                                {
+                                    <img src="@lead.CoverImageUrl" alt="@lead.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="category-item-placeholder" aria-hidden="true"></span>
+                                }
+                            </a>
+                            <h3 class="home-category-lead-title">
+                                <a asp-controller="News" asp-action="Details" asp-route-id="@lead.Id">@lead.Title</a>
+                            </h3>
+                        </div>
+                        @if (!string.IsNullOrEmpty(lead.Summary))
+                        {
+                            <p class="home-category-lead-summary">@lead.Summary</p>
+                        }
+                    </article>
+
+                    @if (block.News.Count > 1)
+                    {
+                        <ul class="home-category-list">
+                            @foreach (var news in block.News.Skip(1))
+                            {
+                                <li><a asp-controller="News" asp-action="Details" asp-route-id="@news.Id">@news.Title</a></li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>

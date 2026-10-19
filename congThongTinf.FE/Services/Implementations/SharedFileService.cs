@@ -112,6 +112,35 @@ public class SharedFileService : ISharedFileService
     public Task<SharedFileWriteResult> RevokeShareLinkAsync(string accessToken, Guid id) =>
         SendWriteAsync(HttpMethod.Delete, $"api/shared-files/{id}/share", accessToken);
 
+    public async Task<SharedFileWriteResult> DeleteAsync(string accessToken, Guid id)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Delete, $"api/shared-files/{id}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            using var response = await _httpClient.SendAsync(request);
+            var body = await ReadEnvelopeAsync<bool>(response);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return new SharedFileWriteResult { SessionExpired = true, ErrorMessage = UserFacingErrors.SessionExpired };
+            }
+
+            if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
+            {
+                return Failure((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message);
+            }
+
+            return new SharedFileWriteResult { Success = true };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete shared file");
+            return Failure(0, null, null);
+        }
+    }
+
     public async Task<SharedFileReadResult> GetByLinkTokenAsync(string accessToken, string token)
     {
         try
