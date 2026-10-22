@@ -5,43 +5,68 @@ using System.Text.Json;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
 using congThongTinf.FE.Utilities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace congThongTinf.FE.Services.Implementations;
 
 public class LeaderService : ILeaderService
 {
+    private const string PublicLeadersCacheKey = "leaders:public";
+
     private readonly HttpClient _httpClient;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<LeaderService> _logger;
 
-    public LeaderService(HttpClient httpClient, ILogger<LeaderService> logger)
+    public LeaderService(HttpClient httpClient, IMemoryCache cache, ILogger<LeaderService> logger)
     {
         _httpClient = httpClient;
+        _cache = cache;
         _logger = logger;
     }
 
     public async Task<LeaderListResult> GetLeadersAsync()
     {
+        if (PublicReadCache.TryGetFresh(_cache, PublicLeadersCacheKey, out LeaderListResult? fresh)
+            && fresh is { Success: true })
+        {
+            return fresh;
+        }
+
         try
         {
             using var response = await _httpClient.GetAsync("api/leaders");
             var body = await ReadEnvelopeAsync<List<LeaderDto>>(response);
-            if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
+            if (response.IsSuccessStatusCode && body?.IsSuccess == true)
             {
-                return new LeaderListResult
+                var listed = new LeaderListResult
                 {
-                    ErrorMessage = UserFacingErrors.ForLeaders((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message)
+                    Success = true,
+                    Items = body.Value?.Data ?? new List<LeaderDto>()
                 };
+                PublicReadCache.Set(_cache, PublicLeadersCacheKey, listed);
+                return listed;
+            }
+
+            if (PublicReadCache.TryGetStale(_cache, PublicLeadersCacheKey, out LeaderListResult? stale)
+                && stale is { Success: true })
+            {
+                return stale;
             }
 
             return new LeaderListResult
             {
-                Success = true,
-                Items = body.Value?.Data ?? new List<LeaderDto>()
+                ErrorMessage = UserFacingErrors.ForLeaders((int)response.StatusCode, body?.Error?.Code, body?.Error?.Message)
             };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load leaders");
+            if (PublicReadCache.TryGetStale(_cache, PublicLeadersCacheKey, out LeaderListResult? stale)
+                && stale is { Success: true })
+            {
+                return stale;
+            }
+
             return new LeaderListResult { ErrorMessage = UserFacingErrors.TryAgain };
         }
     }

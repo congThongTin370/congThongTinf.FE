@@ -20,6 +20,7 @@ builder.Services.AddControllersWithViews(options =>
 });
 
 // Session lưu access token và role sau khi đăng nhập
+builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

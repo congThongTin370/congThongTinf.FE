@@ -1,6 +1,8 @@
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
+using congThongTinf.FE.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace congThongTinf.FE.ViewComponents;
 
@@ -12,11 +14,16 @@ namespace congThongTinf.FE.ViewComponents;
 public class BannerSlotViewComponent : ViewComponent
 {
     private readonly IBannerService _bannerService;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<BannerSlotViewComponent> _logger;
 
-    public BannerSlotViewComponent(IBannerService bannerService, ILogger<BannerSlotViewComponent> logger)
+    public BannerSlotViewComponent(
+        IBannerService bannerService,
+        IMemoryCache cache,
+        ILogger<BannerSlotViewComponent> logger)
     {
         _bannerService = bannerService;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -25,6 +32,12 @@ public class BannerSlotViewComponent : ViewComponent
         if (!BannerPositions.IsValid(position))
         {
             return Content(string.Empty);
+        }
+
+        var cacheKey = "banner-slot:" + position;
+        if (PublicReadCache.TryGetFresh(_cache, cacheKey, out BannerDto? fresh))
+        {
+            return Slot(fresh, position);
         }
 
         try
@@ -36,22 +49,34 @@ public class BannerSlotViewComponent : ViewComponent
                 IsActive = true
             });
 
-            var banner = listed.Success ? listed.Items.FirstOrDefault() : null;
-            if (banner == null || string.IsNullOrWhiteSpace(banner.ImageUrl))
+            if (listed.Success)
             {
-                return Content(string.Empty);
+                var banner = listed.Items.FirstOrDefault();
+                PublicReadCache.Set<BannerDto?>(_cache, cacheKey, banner);
+                return Slot(banner, position);
             }
-
-            return View(new BannerSlotViewModel
-            {
-                Banner = banner,
-                Position = position
-            });
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Could not load banner slot {Position}", position);
+        }
+
+        return PublicReadCache.TryGetStale(_cache, cacheKey, out BannerDto? stale)
+            ? Slot(stale, position)
+            : Content(string.Empty);
+    }
+
+    private IViewComponentResult Slot(BannerDto? banner, int position)
+    {
+        if (banner == null || string.IsNullOrWhiteSpace(banner.ImageUrl))
+        {
             return Content(string.Empty);
         }
+
+        return View(new BannerSlotViewModel
+        {
+            Banner = banner,
+            Position = position
+        });
     }
 }

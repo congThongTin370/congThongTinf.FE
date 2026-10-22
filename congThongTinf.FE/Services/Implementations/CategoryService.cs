@@ -6,40 +6,53 @@ using congThongTinf.FE.Models;
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
 using congThongTinf.FE.Utilities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace congThongTinf.FE.Services.Implementations;
 
 public class CategoryService : ICategoryService
 {
+    private const string ActiveCategoriesCacheKey = "categories:active";
+
     private readonly HttpClient _httpClient;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<CategoryService> _logger;
 
-    public CategoryService(HttpClient httpClient, ILogger<CategoryService> logger)
+    public CategoryService(HttpClient httpClient, IMemoryCache cache, ILogger<CategoryService> logger)
     {
         _httpClient = httpClient;
+        _cache = cache;
         _logger = logger;
     }
 
     public async Task<List<CategoryDto>> GetActiveCategoriesAsync()
     {
+        if (PublicReadCache.TryGetFresh(_cache, ActiveCategoriesCacheKey, out List<CategoryDto>? fresh) && fresh != null)
+        {
+            return fresh;
+        }
+
         try
         {
             // GET api/categories là công khai, không cần token
             using var response = await _httpClient.GetAsync("api/categories");
             var body = await response.Content.ReadFromJsonAsync<BackendEnvelope<List<CategoryDto>>>();
 
-            if (!response.IsSuccessStatusCode || body?.IsSuccess != true)
+            if (response.IsSuccessStatusCode && body?.IsSuccess == true)
             {
-                return new List<CategoryDto>();
+                var items = body.Value?.Data ?? new List<CategoryDto>();
+                PublicReadCache.Set(_cache, ActiveCategoriesCacheKey, items);
+                return items;
             }
-
-            return body.Value?.Data ?? new List<CategoryDto>();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load categories");
-            return new List<CategoryDto>();
         }
+
+        return PublicReadCache.TryGetStale(_cache, ActiveCategoriesCacheKey, out List<CategoryDto>? stale) && stale != null
+            ? stale
+            : new List<CategoryDto>();
     }
 
     public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id)

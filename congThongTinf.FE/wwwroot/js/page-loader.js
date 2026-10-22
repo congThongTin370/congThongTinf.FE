@@ -42,7 +42,11 @@
         if (url.origin !== window.location.origin) {
             return;
         }
+        // Đang ở đúng trang đó rồi: không reload. Spam icon Home trên Index
+        // sẽ hủy request banner giữa chừng và slot biến mất.
         if (url.pathname === window.location.pathname && url.search === window.location.search) {
+            event.preventDefault();
+            window.scrollTo(0, 0);
             return;
         }
         showLoader();

@@ -1,4 +1,5 @@
 :root {
+    --bs-font-sans-serif: var(--font-family);
     --bs-body-font-family: var(--font-family);
     --color-primary: #3F80A7;
     --color-primary-dark: #2F6688;
@@ -18,7 +19,7 @@
     --color-danger: #B42318;
     --content-width: 1200px;
     --radius: 6px;
-    --font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
+    --font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
     --motion-fast: 0.2s;
     --motion-dialog: 0.24s;
     --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);

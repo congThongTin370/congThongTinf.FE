@@ -17,7 +17,7 @@
     var navy = (theme.getPropertyValue("--color-navy") || "#102A43").trim();
     var gridLine = "#E2E8F0";
 
-    Chart.defaults.font.family = "'Be Vietnam Pro', sans-serif";
+    Chart.defaults.font.family = "Inter, 'Segoe UI', Roboto, Arial, sans-serif";
     Chart.defaults.font.size = 12;
     Chart.defaults.color = muted;
     Chart.defaults.borderColor = border;

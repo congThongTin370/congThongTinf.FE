@@ -1,19 +1,26 @@
 using congThongTinf.FE.Models.ApiModels;
 using congThongTinf.FE.Services.Interfaces;
 using congThongTinf.FE.Utilities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace congThongTinf.FE.Services.Implementations;
 
 public class NewsService : INewsService
 {
     private readonly ApiClient _apiClient;
+    private readonly IMemoryCache _cache;
     private readonly IConfiguration _configuration;
     private readonly ILogger<NewsService> _logger;
     private string _apiBaseUrl;
 
-    public NewsService(ApiClient apiClient, IConfiguration configuration, ILogger<NewsService> logger)
+    public NewsService(
+        ApiClient apiClient,
+        IMemoryCache cache,
+        IConfiguration configuration,
+        ILogger<NewsService> logger)
     {
         _apiClient = apiClient;
+        _cache = cache;
         _configuration = configuration;
         _logger = logger;
         _apiBaseUrl = configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
@@ -24,17 +31,35 @@ public class NewsService : INewsService
     /// </summary>
     public async Task<List<NewsDto>> GetAllNewsAsync(NewsQueryDto? query = null)
     {
-        // categoryIds lặp ?categoryIds=a&categoryIds=b. Không gửi status: bài Draft của phóng viên vẫn lên cổng.
-        var endpoint = $"{_apiBaseUrl}/api/news{BuildQueryString(query)}";
-        var response = await _apiClient.GetAsync<ApiResponse<PagedData<NewsDto>>>(endpoint);
-
-        if (response?.IsSuccess == true && response.Value?.Data != null)
+        var cacheKey = "news" + BuildQueryString(query);
+        if (PublicReadCache.TryGetFresh(_cache, cacheKey, out List<NewsDto>? fresh) && fresh != null)
         {
-            return response.Value.Data.Items;
+            return fresh;
         }
 
-        _logger.LogWarning("News list request was unsuccessful: {Message}", response?.Value?.Message);
-        return new List<NewsDto>();
+        try
+        {
+            // categoryIds lặp ?categoryIds=a&categoryIds=b. Không gửi status: bài Draft của phóng viên vẫn lên cổng.
+            var endpoint = $"{_apiBaseUrl}/api/news{BuildQueryString(query)}";
+            var response = await _apiClient.GetAsync<ApiResponse<PagedData<NewsDto>>>(endpoint);
+
+            if (response?.IsSuccess == true && response.Value?.Data != null)
+            {
+                var items = response.Value.Data.Items ?? new List<NewsDto>();
+                PublicReadCache.Set(_cache, cacheKey, items);
+                return items;
+            }
+
+            _logger.LogWarning("News list request was unsuccessful: {Message}", response?.Value?.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "News list request failed");
+        }
+
+        return PublicReadCache.TryGetStale(_cache, cacheKey, out List<NewsDto>? stale) && stale != null
+            ? stale
+            : new List<NewsDto>();
     }
 
     /// <summary>
