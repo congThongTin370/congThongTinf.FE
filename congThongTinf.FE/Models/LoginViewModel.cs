@@ -7,7 +7,7 @@ namespace congThongTinf.FE.Models
         [Required(ErrorMessage = "Nhập email đăng nhập.")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
         [StringLength(256)]
-        [Display(Name = "Email")]
+        [Display(Name = "Tài khoản")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Nhập mật khẩu.")]
