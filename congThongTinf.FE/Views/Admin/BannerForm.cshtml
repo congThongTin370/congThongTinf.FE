@@ -16,11 +16,11 @@
     <div class="admin-panel-body">
         @if (Model.IsEdit)
         {
-            <p class="admin-form-status">Để trống tệp nếu giữ ảnh hiện tại. Tiêu đề không được để trống. Ảnh mới thay ảnh của banner này, tối đa 10 MB. Bật “Đang hiện” thì banner này thay banner đang hiện của cùng vị trí.</p>
+            <p class="admin-form-status">Để trống tệp nếu giữ ảnh hiện tại. Tiêu đề không được để trống. Ảnh mới được lưu thành WebP, tối đa 10 MB, cạnh tối đa 8192 px. Bật “Đang hiện” thì banner này thay banner đang hiện của cùng vị trí.</p>
         }
         else
         {
-            <p class="admin-form-status">Ảnh jpg, jpeg, png, webp hoặc gif, tối đa 10 MB. Để trống tiêu đề sẽ lấy tên tệp. Bỏ chọn “Đang hiện” nếu chỉ thêm vào kho. Bật thì banner này thay banner đang hiện của cùng vị trí.</p>
+            <p class="admin-form-status">Ảnh được lưu thành WebP, tối đa 10 MB, cạnh tối đa 8192 px. Để trống tiêu đề sẽ lấy tên tệp. Bỏ chọn “Đang hiện” nếu chỉ thêm vào kho. Bật thì banner này thay banner đang hiện của cùng vị trí.</p>
         }
 
         <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditBanner" : "CreateBanner")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="admin-form">
@@ -42,8 +42,8 @@
 
             <div class="admin-form-field">
                 <label asp-for="File"></label>
-                <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif" />
-                <span class="admin-field-hint">Định dạng: jpg, jpeg, png, webp, gif. Tối đa 10 MB.</span>
+                <input asp-for="File" class="form-control" type="file" accept="image/*" />
+                <span class="admin-field-hint">Nhận ảnh (jpg, png, webp, gif, bmp, tiff…). Server lưu thành WebP. Tối đa 10 MB, cạnh tối đa 8192 px.</span>
                 <span asp-validation-for="File" class="field-validation-error"></span>
             </div>
 

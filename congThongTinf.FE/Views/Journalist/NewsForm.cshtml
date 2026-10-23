@@ -59,10 +59,10 @@
                             <div class="composer-cover-toolbar">
                                 <button type="button" class="btn btn-outline-secondary btn-sm" data-cover-upload>Tải ảnh lên</button>
                                 <input asp-for="CoverImageUrl" type="hidden" data-cover-url />
-                                <input asp-for="CoverImage" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif" hidden data-cover-file />
+                                <input asp-for="CoverImage" type="file" accept="image/*" hidden data-cover-file />
                             </div>
                             <span asp-validation-for="CoverImage" class="field-validation-error"></span>
-                            <p class="admin-field-hint">@(isEdit ? "Chọn ảnh mới để thay ảnh bìa. Không chọn thì giữ ảnh hiện tại." : "Ảnh jpg, jpeg, png, webp hoặc gif, tối đa 10 MB.")</p>
+                            <p class="admin-field-hint">@(isEdit ? "Chọn ảnh mới để thay ảnh bìa. Không chọn thì giữ ảnh hiện tại. Ảnh được lưu thành WebP, tối đa 10 MB, cạnh tối đa 8192 px." : "Ảnh bất kỳ định dạng image/*, được lưu thành WebP. Tối đa 10 MB, cạnh tối đa 8192 px.")</p>
                         </div>
                     </div>
 
@@ -100,7 +100,7 @@
                                 <button type="button" class="rich-editor-btn" data-cmd="image" title="Chèn ảnh" aria-label="Chèn ảnh">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>
                                 </button>
-                                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-image-file />
+                                <input type="file" accept="image/*" hidden data-image-file />
                             </div>
                             <div class="rich-editor-content" id="news-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nội dung bài viết" data-editor-surface></div>
                             <textarea asp-for="Content" hidden data-content-editor></textarea>

@@ -87,12 +87,12 @@ public class LeaderService : ILeaderService
 
     public Task<LeaderWriteResult> CreateAsync(string accessToken, LeaderFormViewModel model)
     {
-        return SendAsync(HttpMethod.Post, "api/leaders", accessToken, ToRequest(model));
+        return SendFormAsync(HttpMethod.Post, "api/leaders", accessToken, model);
     }
 
     public Task<LeaderWriteResult> UpdateAsync(string accessToken, Guid id, LeaderFormViewModel model)
     {
-        return SendAsync(HttpMethod.Put, $"api/leaders/{id}", accessToken, ToRequest(model));
+        return SendFormAsync(HttpMethod.Put, $"api/leaders/{id}", accessToken, model);
     }
 
     public async Task<LeaderWriteResult> DeleteAsync(string accessToken, Guid id)
@@ -102,7 +102,13 @@ public class LeaderService : ILeaderService
             using var request = new HttpRequestMessage(HttpMethod.Delete, $"api/leaders/{id}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             using var response = await _httpClient.SendAsync(request);
-            return await ReadDeleteAsync(response);
+            var deleted = await ReadDeleteAsync(response);
+            if (deleted.Success)
+            {
+                _cache.Remove(PublicLeadersCacheKey);
+            }
+
+            return deleted;
         }
         catch (Exception ex)
         {
@@ -111,23 +117,54 @@ public class LeaderService : ILeaderService
         }
     }
 
-    private async Task<LeaderWriteResult> SendAsync(HttpMethod method, string url, string accessToken, LeaderWriteRequest payload)
+    private async Task<LeaderWriteResult> SendFormAsync(
+        HttpMethod method,
+        string url,
+        string accessToken,
+        LeaderFormViewModel model)
     {
+        Stream? fileStream = null;
         try
         {
-            using var request = new HttpRequestMessage(method, url)
-            {
-                Content = JsonContent.Create(payload)
-            };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(model.FullName.Trim()), "fullName");
+            content.Add(new StringContent(model.Position.Trim()), "position");
+            content.Add(new StringContent(model.Rank.Trim()), "rank");
+            content.Add(new StringContent(model.DisplayOrder.ToString(System.Globalization.CultureInfo.InvariantCulture)), "displayOrder");
 
+            if (model.Image is { Length: > 0 })
+            {
+                fileStream = model.Image.OpenReadStream();
+                var fileContent = new StreamContent(fileStream);
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                    string.IsNullOrWhiteSpace(model.Image.ContentType)
+                        ? "application/octet-stream"
+                        : model.Image.ContentType);
+                content.Add(fileContent, "image", model.Image.FileName);
+            }
+
+            using var request = new HttpRequestMessage(method, url) { Content = content };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             using var response = await _httpClient.SendAsync(request);
-            return await ReadLeaderAsync(response);
+            var written = await ReadLeaderAsync(response);
+            if (written.Success)
+            {
+                _cache.Remove(PublicLeadersCacheKey);
+            }
+
+            return written;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Leader request {Method} {Url} failed", method, url);
             return Failure(0, null, null);
+        }
+        finally
+        {
+            if (fileStream != null)
+            {
+                await fileStream.DisposeAsync();
+            }
         }
     }
 
@@ -177,18 +214,6 @@ public class LeaderService : ILeaderService
         });
     }
 
-    private static LeaderWriteRequest ToRequest(LeaderFormViewModel model)
-    {
-        return new LeaderWriteRequest
-        {
-            FullName = model.FullName.Trim(),
-            Position = model.Position.Trim(),
-            Rank = model.Rank.Trim(),
-            ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl) ? string.Empty : model.ImageUrl.Trim(),
-            DisplayOrder = model.DisplayOrder
-        };
-    }
-
     private static LeaderWriteResult SessionExpiredResult() => new()
     {
         Success = false,
@@ -201,13 +226,4 @@ public class LeaderService : ILeaderService
         Success = false,
         ErrorMessage = UserFacingErrors.ForLeaders(statusCode, code, message)
     };
-
-    private sealed class LeaderWriteRequest
-    {
-        public string FullName { get; set; } = string.Empty;
-        public string Position { get; set; } = string.Empty;
-        public string Rank { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public int DisplayOrder { get; set; }
-    }
 }

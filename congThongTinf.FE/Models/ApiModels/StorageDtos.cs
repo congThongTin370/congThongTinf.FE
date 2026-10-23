@@ -5,11 +5,15 @@ namespace congThongTinf.FE.Models.ApiModels;
 /// </summary>
 public class StorageUsageDto
 {
+    public string? BucketName { get; set; }
+    public long PayloadBytes { get; set; }
+    public long MetadataBytes { get; set; }
     public long UsedBytes { get; set; }
     public long RemainingBytes { get; set; }
     public long QuotaBytes { get; set; }
     public long ObjectCount { get; set; }
     public double UsedPercent { get; set; }
+    public DateTime MeasuredAt { get; set; }
 }
 
 public class StorageUsageResult

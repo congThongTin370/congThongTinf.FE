@@ -45,7 +45,10 @@
 
 <div class="admin-page-header">
     <h1 class="admin-page-title">Tài liệu nội bộ</h1>
-    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="UploadDocument">Tải lên tài liệu</a>
+    <a class="btn btn-primary btn-sm btn-with-icon" asp-controller="Admin" asp-action="UploadDocument" data-tip="Đưa tệp mới vào kho tài liệu nội bộ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5"/><path d="M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19.5h14"/></svg>
+        Tải lên tài liệu
+    </a>
 </div>
 
 @if (TempData["Message"] is string message)
@@ -138,13 +141,13 @@
                                 <div class="admin-row-actions">
                                     @if (!string.IsNullOrWhiteSpace(document.FileUrl))
                                     {
-                                        <a class="admin-icon-btn" href="@document.FileUrl" target="_blank" rel="noopener" aria-label="Xem @document.Title" title="Xem">
+                                        <a class="admin-icon-btn" href="@document.FileUrl" target="_blank" rel="noopener" data-tip="Mở tài liệu trong tab mới" aria-label="Xem @document.Title">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
                                         </a>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(document.DownloadUrl))
                                     {
-                                        <a class="admin-icon-btn" href="@document.DownloadUrl" download="@document.FileName" aria-label="Tải xuống @document.Title" title="Tải xuống">
+                                        <a class="admin-icon-btn" href="@document.DownloadUrl" download="@document.FileName" data-tip="Tải bản gốc về máy" aria-label="Tải xuống @document.Title">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>
                                         </a>
                                     }
@@ -157,7 +160,7 @@
                                           asp-route-pageIndex="@Model.PageIndex"
                                           data-confirm-delete
                                           data-document-title="@document.Title">
-                                        <button type="submit" class="admin-icon-btn admin-icon-btn-danger" aria-label="Xóa @document.Title" title="Xóa">
+                                        <button type="submit" class="admin-icon-btn admin-icon-btn-danger" data-tip="Xóa tài liệu khỏi kho lưu trữ" aria-label="Xóa @document.Title">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>
                                         </button>
                                     </form>
@@ -222,6 +225,15 @@
                     <li><span class="storage-dot storage-dot-used@(overQuota ? " is-full" : "")" aria-hidden="true"></span>Đã dùng @StorageSizeText(usage.UsedBytes)</li>
                     <li><span class="storage-dot storage-dot-free" aria-hidden="true"></span>Còn lại @StorageSizeText(usage.RemainingBytes)</li>
                     <li>@usage.UsedPercent.ToString("0.##", sizeCulture)%</li>
+                    <li>@usage.ObjectCount.ToString("N0", sizeCulture) tệp</li>
+                    @if (!string.IsNullOrWhiteSpace(usage.BucketName))
+                    {
+                        <li>Bucket @usage.BucketName</li>
+                    }
+                    @if (usage.MeasuredAt != default)
+                    {
+                        <li>Đo lúc @usage.MeasuredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</li>
+                    }
                 </ul>
             </div>
         }

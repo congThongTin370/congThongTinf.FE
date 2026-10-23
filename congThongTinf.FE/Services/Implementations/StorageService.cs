@@ -45,7 +45,7 @@ public class StorageService : IStorageService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load R2 storage usage");
+            _logger.LogError(ex, "Failed to load storage usage");
             return new StorageUsageResult { ErrorMessage = "Không lấy được dung lượng lưu trữ." };
         }
     }

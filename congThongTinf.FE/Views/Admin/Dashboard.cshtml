@@ -46,13 +46,15 @@
             },
             newsStatus = new
             {
-                labels = new[] { "Đã đăng", "Lưu trữ" },
+                labels = new[] { "Đã đăng", "Nháp", "Chờ duyệt", "Lưu trữ" },
                 data = new[]
                 {
-                    data.News.Draft + data.News.Pending + data.News.Published,
+                    data.News.Published,
+                    data.News.Draft,
+                    data.News.Pending,
                     data.News.Archived
                 },
-                colors = new[] { "#059669", "#64748B" }
+                colors = new[] { "#059669", "#94A3B8", "#D97706", "#64748B" }
             },
             newsByCategory = new
             {
@@ -126,11 +128,17 @@
                 <input id="toDate" name="toDate" type="date" class="form-control" value="@Model.ToDate.ToString("yyyy-MM-dd")" required />
             </div>
             <div class="admin-dashboard-filter-actions">
-                <button type="submit" class="btn btn-primary">Lọc dữ liệu</button>
-                <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Dashboard">30 ngày gần nhất</a>
+                <button type="submit" class="btn btn-primary btn-with-icon" data-tip="Cập nhật số liệu và biểu đồ theo khoảng ngày đã chọn">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7.2V19l-4 2v-8.8L4 5z"/></svg>
+                    Lọc dữ liệu
+                </button>
+                <a class="btn btn-outline-secondary btn-with-icon" asp-controller="Admin" asp-action="Dashboard" data-tip="Bỏ ngày đang chọn và xem 30 ngày gần nhất">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.2-5.5"/><path d="M20 4v5h-5"/></svg>
+                    30 ngày gần nhất
+                </a>
             </div>
         </form>
-        <p class="admin-field-hint admin-dashboard-hint">Các chỉ số tổng số là toàn bộ dữ liệu; biểu đồ theo ngày được lọc theo khoảng đã chọn.</p>
+        <p class="admin-field-hint admin-dashboard-hint">Tổng số, trạng thái, lượt xem và dung lượng là toàn bộ dữ liệu. Đăng nhập, tin tạo/đăng, tài liệu tải lên và biểu đồ theo ngày theo khoảng đã chọn.</p>
     </div>
 </section>
 
@@ -152,8 +160,11 @@
                 <div class="admin-stat-copy">
                     <p class="admin-stat-label">Người dùng</p>
                     <p class="admin-stat-value">@data.Users.Total</p>
-                    <a class="admin-stat-link" asp-controller="Admin" asp-action="Users">@data.Users.Active đang hoạt động · Quản lý</a>
+                    <p class="admin-stat-meta">@data.Users.Active đang hoạt động · @data.Users.LoggedInInRange đăng nhập trong khoảng</p>
                 </div>
+                <a class="admin-icon-btn admin-stat-action" asp-controller="Admin" asp-action="Users" data-tip="Mở trang quản lý tài khoản" aria-label="Quản lý người dùng">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+                </a>
             </div>
             <div class="admin-stat-card admin-stat-card-news">
                 <span class="admin-stat-icon" aria-hidden="true">
@@ -162,8 +173,11 @@
                 <div class="admin-stat-copy">
                     <p class="admin-stat-label">Tin tức</p>
                     <p class="admin-stat-value">@data.News.Total</p>
-                    <a class="admin-stat-link" asp-controller="Admin" asp-action="News">@(data.News.Draft + data.News.Pending + data.News.Published) đã đăng · Quản lý</a>
+                    <p class="admin-stat-meta">@data.News.Published đã đăng · @data.News.TotalViews.ToString("N0") lượt xem</p>
                 </div>
+                <a class="admin-icon-btn admin-stat-action" asp-controller="Admin" asp-action="News" data-tip="Mở trang quản lý tin tức" aria-label="Quản lý tin tức">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+                </a>
             </div>
             <div class="admin-stat-card admin-stat-card-documents">
                 <span class="admin-stat-icon" aria-hidden="true">
@@ -172,8 +186,11 @@
                 <div class="admin-stat-copy">
                     <p class="admin-stat-label">Tài liệu</p>
                     <p class="admin-stat-value">@data.Documents.Total</p>
-                    <a class="admin-stat-link" asp-controller="Admin" asp-action="Documents">@(FileSizeText(data.Documents.TotalFileSize)) · Quản lý</a>
+                    <p class="admin-stat-meta">@data.Documents.UploadedInRange tải lên trong khoảng · @FileSizeText(data.Documents.TotalFileSize)</p>
                 </div>
+                <a class="admin-icon-btn admin-stat-action" asp-controller="Admin" asp-action="Documents" data-tip="Mở trang quản lý tài liệu" aria-label="Quản lý tài liệu">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+                </a>
             </div>
             <div class="admin-stat-card admin-stat-card-categories">
                 <span class="admin-stat-icon" aria-hidden="true">
@@ -182,8 +199,11 @@
                 <div class="admin-stat-copy">
                     <p class="admin-stat-label">Danh mục</p>
                     <p class="admin-stat-value">@data.Categories.Total</p>
-                    <a class="admin-stat-link" asp-controller="Admin" asp-action="Categories">@data.Categories.Active đang hoạt động · Quản lý</a>
+                    <p class="admin-stat-meta">@data.Categories.Active đang hoạt động</p>
                 </div>
+                <a class="admin-icon-btn admin-stat-action" asp-controller="Admin" asp-action="Categories" data-tip="Mở trang quản lý danh mục" aria-label="Quản lý danh mục">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+                </a>
             </div>
             <div class="admin-stat-card admin-stat-card-banners">
                 <span class="admin-stat-icon" aria-hidden="true">
@@ -192,11 +212,22 @@
                 <div class="admin-stat-copy">
                     <p class="admin-stat-label">Banner</p>
                     <p class="admin-stat-value">@data.Banners.Total</p>
-                    <a class="admin-stat-link" asp-controller="Admin" asp-action="Banners">@data.Banners.Active đang hiện · Quản lý</a>
+                    <p class="admin-stat-meta">@data.Banners.Active đang hiện</p>
                 </div>
+                <a class="admin-icon-btn admin-stat-action" asp-controller="Admin" asp-action="Banners" data-tip="Mở trang quản lý banner" aria-label="Quản lý banner">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+                </a>
             </div>
         </div>
     </section>
+
+    <ul class="dashboard-range-stats" aria-label="Hoạt động trong khoảng ngày">
+        <li><strong>@data.Users.LoggedInInRange</strong> đăng nhập</li>
+        <li><strong>@data.News.CreatedInRange</strong> tin được tạo</li>
+        <li><strong>@data.News.PublishedInRange</strong> tin được đăng</li>
+        <li><strong>@data.Documents.UploadedInRange</strong> tài liệu tải lên</li>
+        <li><strong>@data.News.TotalViews.ToString("N0")</strong> lượt xem (toàn bộ)</li>
+    </ul>
 
     <section class="admin-panel admin-section-gap" aria-labelledby="news-by-day-title">
         <div class="admin-panel-header">
@@ -285,6 +316,14 @@
                         @FileSizeText(usage.UsedBytes) / @FileSizeText(usage.QuotaBytes)
                         · @usage.UsedPercent.ToString("0.##")%
                         · @usage.ObjectCount.ToString("N0") tệp
+                        @if (!string.IsNullOrWhiteSpace(usage.BucketName))
+                        {
+                            <text>· bucket @usage.BucketName</text>
+                        }
+                        @if (usage.MeasuredAt != default)
+                        {
+                            <text>· đo lúc @usage.MeasuredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</text>
+                        }
                     </p>
                 }
             </div>
@@ -311,6 +350,40 @@
             </div>
         </section>
 
+        <section class="admin-panel" aria-labelledby="pending-news-title">
+            <div class="admin-panel-header">
+                <h2 id="pending-news-title">Tin chờ duyệt</h2>
+            </div>
+            <div class="admin-panel-body">
+                @if (data.PendingNews.Count == 0)
+                {
+                    <p class="admin-empty">Không có bài chờ duyệt. Bài mới của phóng viên được đăng ngay.</p>
+                }
+                else
+                {
+                    <ul class="admin-list">
+                        @foreach (var news in data.PendingNews)
+                        {
+                            <li>
+                                <div>
+                                    <div>
+                                        <a asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id">@news.Title</a>
+                                    </div>
+                                    <div class="admin-list-meta">@news.AuthorName · @news.CategoryName</div>
+                                </div>
+                                <div class="admin-list-side">
+                                    <span class="admin-list-meta">@news.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="NewsDetails" asp-route-id="@news.Id" data-tip="Xem nội dung và trạng thái bài chờ duyệt" aria-label="Xem @news.Title">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+                                    </a>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+
         <section class="admin-panel" aria-labelledby="recent-documents-title">
             <div class="admin-panel-header">
                 <h2 id="recent-documents-title">Tài liệu mới tải lên</h2>
@@ -330,7 +403,17 @@
                                     <div>@document.Title</div>
                                     <div class="admin-list-meta">@document.FileName · @DocumentCategories.Label(document.Category)</div>
                                 </div>
-                                <span class="admin-list-meta">@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                                <div class="admin-list-side">
+                                    <span class="admin-list-meta">@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                                    <a class="admin-icon-btn"
+                                       asp-controller="Admin"
+                                       asp-action="Documents"
+                                       asp-route-search="@(string.IsNullOrWhiteSpace(document.Title) ? document.FileName : document.Title)"
+                                       data-tip="Tìm tài liệu này trong kho để xem, tải hoặc xóa"
+                                       aria-label="Mở @document.Title trong danh sách tài liệu">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h6l2 2h8V19H4z"/></svg>
+                                    </a>
+                                </div>
                             </li>
                         }
                     </ul>

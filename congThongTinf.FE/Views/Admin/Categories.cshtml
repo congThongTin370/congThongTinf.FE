@@ -5,7 +5,10 @@
 
 <div class="admin-page-header">
     <h1 class="admin-page-title">Danh mục</h1>
-    <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateCategory">Tạo danh mục</a>
+    <a class="btn btn-primary btn-sm btn-with-icon" asp-controller="Admin" asp-action="CreateCategory" data-tip="Thêm chuyên mục tin trên cổng thông tin">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Tạo danh mục
+    </a>
 </div>
 
 @if (TempData["Message"] is string message)
@@ -57,10 +60,10 @@
                             <td>@category.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="admin-table-actions">
                                 <div class="admin-row-actions">
-                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="EditCategory" asp-route-id="@category.Id" aria-label="Sửa @category.Name" title="Sửa">
+                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="EditCategory" asp-route-id="@category.Id" data-tip="Sửa tên, mô tả và thứ tự hiển thị" aria-label="Sửa @category.Name">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
                                     </a>
-                                    <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Admin" asp-action="DeleteCategory" asp-route-id="@category.Id" aria-label="Xóa @category.Name" title="Xóa">
+                                    <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Admin" asp-action="DeleteCategory" asp-route-id="@category.Id" data-tip="Ẩn danh mục khỏi cổng thông tin" aria-label="Xóa @category.Name">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>
                                     </a>
                                 </div>

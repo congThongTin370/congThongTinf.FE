@@ -33,9 +33,10 @@ public class LeaderFormViewModel
     [Display(Name = "Cấp bậc")]
     public string Rank { get; set; } = string.Empty;
 
-    [StringLength(1000, ErrorMessage = "Đường dẫn ảnh không được vượt quá 1000 ký tự.")]
     [Display(Name = "Ảnh")]
-    public string? ImageUrl { get; set; }
+    public IFormFile? Image { get; set; }
+
+    public string? CurrentImageUrl { get; set; }
 
     [Display(Name = "Thứ tự hiển thị")]
     public int DisplayOrder { get; set; }

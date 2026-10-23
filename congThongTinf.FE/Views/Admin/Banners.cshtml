@@ -102,7 +102,10 @@
     <section class="admin-panel admin-section-gap" data-banner-pool="@position" aria-labelledby="banner-pool-@position" @(isOpen ? null : "hidden")>
         <div class="admin-panel-header banner-pool-header">
             <h2 id="banner-pool-@position">Ảnh cho @zoneName</h2>
-            <a class="btn btn-primary btn-sm" asp-controller="Admin" asp-action="CreateBanner" asp-route-position="@position">Tải ảnh vào ô này</a>
+            <a class="btn btn-primary btn-sm btn-with-icon" asp-controller="Admin" asp-action="CreateBanner" asp-route-position="@position" data-tip="Tải ảnh banner cho vị trí đang chọn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5"/><path d="M7.5 9.5L12 5l4.5 4.5"/><path d="M5 19.5h14"/></svg>
+                Tải ảnh vào ô này
+            </a>
         </div>
         <div class="admin-panel-body">
             <div class="banner-pool-search">
@@ -135,17 +138,19 @@
                                 {
                                     <span class="admin-badge admin-badge-success">Đang gắn</span>
                                 }
-                                else
-                                {
-                                    <form asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post">
-                                        <button type="submit" class="btn btn-primary btn-sm">Dùng cho vị trí này</button>
-                                    </form>
-                                }
                                 <div class="banner-seat-actions">
-                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="EditBanner" asp-route-id="@banner.Id" aria-label="Sửa @title" title="Sửa">
+                                    @if (!banner.IsActive)
+                                    {
+                                        <form class="admin-inline-form" asp-controller="Admin" asp-action="SetBannerActive" asp-route-id="@banner.Id" method="post">
+                                            <button type="submit" class="admin-icon-btn" data-tip="Gắn ảnh này làm banner đang hiện ở vị trí" aria-label="Dùng @title cho vị trí này">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg>
+                                            </button>
+                                        </form>
+                                    }
+                                    <a class="admin-icon-btn" asp-controller="Admin" asp-action="EditBanner" asp-route-id="@banner.Id" data-tip="Sửa tiêu đề và ảnh banner" aria-label="Sửa @title">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
                                     </a>
-                                    <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Admin" asp-action="DeleteBanner" asp-route-id="@banner.Id" aria-label="Xóa @title" title="Xóa">
+                                    <a class="admin-icon-btn admin-icon-btn-danger" asp-controller="Admin" asp-action="DeleteBanner" asp-route-id="@banner.Id" data-tip="Xóa banner và file ảnh" aria-label="Xóa @title">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M8 7l1 12h6l1-12"/></svg>
                                     </a>
                                 </div>

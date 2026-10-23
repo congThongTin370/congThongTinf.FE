@@ -5,7 +5,21 @@
   Base URL local: `http://localhost:5000`  
   Swagger UI: `http://localhost:5000/`  
   OpenAPI: `http://localhost:5000/swagger/v1/swagger.json`  
-  Docker Compose publish API ra cổng `5000` (container lắng nghe `8080`).
+  Docker Compose publish API ra cổng `5000` (container lắng nghe `8080`). Local development chạy hai stack riêng (cùng Docker network `congthongtinf`):
+
+  ```bash
+  .\up.bat
+  ```
+
+  Hoặc:
+
+  ```bash
+  docker network create congthongtinf
+  docker compose -f compose.storage.yml up -d --wait
+  docker compose -f compose.yml up -d --build --remove-orphans
+  ```
+
+  Stack `congthongtinf` (`compose.yml`): API + PostgreSQL. Stack `congthongtinf-storage` (`compose.storage.yml`): SeaweedFS. API gọi S3 qua `http://congthongtinf.seaweedfs:8333` trên network chung. Không dùng `-f compose.yml -f compose.storage.yml` vì Compose sẽ gộp lại thành một project.
 
   ## Docker image backend
 
@@ -34,7 +48,7 @@
 
   File không còn lưu Cloudflare R2. `IBlobService` vẫn dùng AWS SDK S3, trỏ tới SeaweedFS self-hosted (API S3-compatible). Abstraction upload/download/xóa/list không đổi.
 
-  Docker Compose service `congthongtinf.seaweedfs` (`chrislusf/seaweedfs:3.97`, `weed server -s3`). Cổng publish ra máy local:
+  Service `congthongtinf.seaweedfs` nằm trong `compose.storage.yml` (`chrislusf/seaweedfs:3.97`, `weed server -s3`). Cổng publish ra máy local:
 
   | Cổng | Thành phần | Dùng cho frontend |
   | --- | --- | --- |
@@ -44,7 +58,7 @@
 
   Trong Docker, API gọi S3 qua `ObjectStorage__ServiceUrl=http://congthongtinf.seaweedfs:8333`. Trình duyệt trên host dùng `ObjectStorage__PublicUrl=http://localhost:8333/congthongtin`. Bucket mặc định `congthongtin`. Hạn mức `ObjectStorage__StorageQuotaBytes` (mặc định 10 GiB).
 
-  Quyền S3 nằm ở `deploy/seaweedfs/s3.json` (SeaweedFS đọc `-s3.config`), không nằm trong `appsettings` hay Compose env. Compose chỉ mount file đó. Identity `anonymous` có `Read` trên toàn bucket nên GET object không chữ ký được (ảnh news/banner). Identity `congthongtin` (access/secret trùng tên) có Admin/Read/Write/List cho API. `appsettings` / `ObjectStorage__*` chỉ là credential phía app.
+  Quyền S3 nằm ở `deploy/seaweedfs/s3.json` (SeaweedFS đọc `-s3.config`), không nằm trong `appsettings` hay Compose env. `compose.storage.yml` chỉ mount file đó. Identity `anonymous` có `Read` trên toàn bucket nên GET object không chữ ký được (ảnh news/banner). Identity `congthongtin` (access/secret trùng tên) có Admin/Read/Write/List cho API. `appsettings` / `ObjectStorage__*` chỉ là credential phía app.
 
   Một bucket cho mọi loại file (`news/{userId}`, `banners`, `shared/{userId}`, tài liệu). File chia sẻ **không** trả URL public qua API; vẫn tải qua endpoint có JWT. Biết key thì vẫn GET được `:8333` vì anonymous Read. API tạo bucket `congthongtin` nếu chưa có khi client S3 được resolve lần đầu.
 
@@ -1022,35 +1036,37 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
 
   ## Leader
 
-  Thủ trưởng trên dải Ban Chỉ huy. Metadata bảng `Leaders`. Mọi endpoint dưới `LeaderController`, route `api/leaders`. Class không gắn `[Authorize]`. `GET` public. `POST`, `PUT`, `DELETE` gắn `[Authorize(Roles = "Admin")]` trên từng action. Body JSON.
+  Thủ trưởng trên dải Ban Chỉ huy. Metadata bảng `Leaders`. File ảnh lưu SeaweedFS folder `leaders`, URL public S3 lưu cột `imageUrl`. Mọi endpoint dưới `LeaderController`, route `api/leaders`. Class không gắn `[Authorize]`. `GET` public. `POST`, `PUT`, `DELETE` gắn `[Authorize(Roles = "Admin")]` trên từng action.
 
-  `imageUrl` là URL ảnh (hoặc `null`). Không upload file trên endpoint này. Gửi chuỗi rỗng khi tạo hoặc sửa thì lưu `null`.
+  Ảnh là file tải từ máy local. Server upload lên SeaweedFS (folder `leaders`), lấy URL public S3 và lưu vào `imageUrl`. Client **không** gửi URL ảnh.
 
   | Method | Path | Thành công |
   | --- | --- | --- |
   | GET | `/api/leaders` | Danh sách, sắp theo `displayOrder` rồi `fullName` |
   | GET | `/api/leaders/{id}` | Chi tiết |
-  | POST | `/api/leaders` | Tạo mới |
-  | PUT | `/api/leaders/{id}` | Sửa từng field được gửi |
-  | DELETE | `/api/leaders/{id}` | Xóa hàng trong DB |
+  | POST | `/api/leaders` | Tạo mới, `multipart/form-data` |
+  | PUT | `/api/leaders/{id}` | Sửa từng field được gửi, `multipart/form-data` |
+  | DELETE | `/api/leaders/{id}` | Xóa hàng trong DB và file trên SeaweedFS |
 
   `GET /api/leaders` — public. `value.data` là mảng `LeaderDto`. Message `Lấy danh sách thủ trưởng thành công.`
 
   `GET /api/leaders/{id}` — public. Không tồn tại: HTTP `404`, `Thủ trưởng với ID {id} không tồn tại.` Thành công: message `Lấy thủ trưởng thành công.`
 
-  `POST /api/leaders` — cần token, role `Admin`.
+  `POST /api/leaders` — cần token, role `Admin`. `multipart/form-data`.
 
   | Field | Bắt buộc | Rule |
   | --- | --- | --- |
   | `fullName` | Có | Không được chỉ khoảng trắng. Tối đa 256 ký tự |
   | `position` | Có | Chức vụ. Tối đa 200 ký tự |
   | `rank` | Có | Cấp bậc. Tối đa 100 ký tự |
-  | `imageUrl` | Không | Tối đa 1000 ký tự. Trống thì `null` |
+  | `image` | Không | File ảnh, tối đa 10 MB. Mọi ảnh được lưu thành `.webp`. Không gửi thì `imageUrl` là `null` |
   | `displayOrder` | Không | Số nguyên, mặc định `0` |
 
-  Thiếu họ tên: HTTP `400`, `Họ tên thủ trưởng là bắt buộc.` Thiếu chức vụ: `Chức vụ là bắt buộc.` Thiếu cấp bậc: `Cấp bậc là bắt buộc.` Vượt độ dài: HTTP `400` với message tương ứng. Thiếu token: HTTP `401` (framework). Không phải Admin: HTTP `403` (framework). Thành công: HTTP `200`, `value.data` là `LeaderDto`, message `Tạo thủ trưởng thành công.`
+  Thiếu họ tên: HTTP `400`, `Họ tên thủ trưởng là bắt buộc.` Thiếu chức vụ: `Chức vụ là bắt buộc.` Thiếu cấp bậc: `Cấp bậc là bắt buộc.` File không phải ảnh: `File phải là ảnh.` Vượt độ dài: HTTP `400` với message tương ứng. Thiếu token: HTTP `401` (framework). Không phải Admin: HTTP `403` (framework). Thành công: HTTP `200`, `value.data` là `LeaderDto`, message `Tạo thủ trưởng thành công.`
 
-  `PUT /api/leaders/{id}` — cần token, role `Admin`. Field không gửi thì giữ nguyên. Gửi chuỗi rỗng cho `fullName`, `position` hoặc `rank`: HTTP `400`. Gửi `imageUrl` rỗng thì xóa ảnh (`null`). Không tồn tại: HTTP `404`. Thành công: message `Cập nhật thủ trưởng thành công.`
+  Ví dụ `imageUrl` trong `LeaderDto`: `http://localhost:8333/congthongtin/leaders/{guid}.webp`.
+
+  `PUT /api/leaders/{id}` — cần token, role `Admin`. `multipart/form-data`. Field không gửi thì giữ nguyên. Gửi chuỗi rỗng cho `fullName`, `position` hoặc `rank`: HTTP `400`. Có `image` thì chuyển WebP, upload lên SeaweedFS và thay `imageUrl`. Không gửi thì giữ ảnh cũ. Client **không** gửi `imageUrl`. Không tồn tại: HTTP `404`. Thành công: message `Cập nhật thủ trưởng thành công.`
 
   `DELETE /api/leaders/{id}` — cần token, role `Admin`. Không tồn tại: HTTP `404`. Thành công: HTTP `200`, `value.data` là `true`, message `Xóa thủ trưởng thành công.`
 
@@ -1216,7 +1232,7 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
 
   - Gửi `Authorization: Bearer {accessToken}` cho `/api/auth/logout`, `/api/auth/create-journalist`, `/api/me/*`, `GET /api/dashboard`, `GET /api/admin/storage`, `GET /api/admin/news`, `GET /api/admin/banners/files`, `POST`/`PUT`/`DELETE` `/api/categories`, `POST`/`PUT`/`DELETE` `/api/news`, `POST /api/news/images`, `/api/admin/users`, `POST`/`PUT`/`DELETE` `/api/admin/banners`, `PUT /api/admin/banners/{id}/active`, `POST`/`PUT`/`DELETE` `/api/leaders`, `POST`/`DELETE` `/api/documents`, toàn bộ `/api/shared-files` (kể cả xem/tải). Query `access_token` cũng được chấp nhận trên `/api/shared-files`.
   - `GET /api/news`, `GET /api/news/{id}`, `POST /api/news/{id}/view`, `GET /api/categories`, `GET /api/documents`, `GET /api/documents/{id}/download`, `GET /api/admin/banners`, `GET /api/admin/banners/{id}`, `GET /api/leaders`, `GET /api/leaders/{id}` là public.
-  - Tạo/sửa bài báo, upload ảnh bài, tạo/sửa banner, tài liệu và file chia sẻ dùng `multipart/form-data`, không dùng JSON. `POST /api/news` và `PUT /api/news/{id}` gửi ảnh bìa qua field `coverImage`, không gửi `coverImageUrl`. `{id}` bài cần sửa nằm trên URL. `PUT /api/admin/banners/{id}` chỉ gửi field cần đổi; `file` là tùy chọn. `POST /api/shared-files` chỉ field `file`.
+  - Tạo/sửa bài báo, upload ảnh bài, tạo/sửa banner, tạo/sửa thủ trưởng, tài liệu và file chia sẻ dùng `multipart/form-data`, không dùng JSON. `POST /api/news` và `PUT /api/news/{id}` gửi ảnh bìa qua field `coverImage`, không gửi `coverImageUrl`. `{id}` bài cần sửa nằm trên URL. `POST /api/leaders` và `PUT /api/leaders/{id}` gửi ảnh qua field `image`, không gửi `imageUrl`. `PUT /api/admin/banners/{id}` chỉ gửi field cần đổi; `file` là tùy chọn. `POST /api/shared-files` chỉ field `file`.
   - Giữ token phía client. Hết 30 phút hoặc gặp 401 framework thì bắt đăng nhập lại.
   - Đọc payload ở `response.value.data`.
   - Hiện lỗi ở `response.error.message` khi `isSuccess === false`.
@@ -1228,5 +1244,5 @@ Thành công mỗi endpoint: HTTP `200`, envelope `ApiResult`, `value.data` là 
   - Nút tải tài liệu nội bộ: `<a href="@item.DownloadUrl" download="@item.FileName">Tải xuống</a>`. Không dùng `fileUrl` cho nút download. Không `fetch` endpoint download.
   - File chia sẻ: không public. `fetch` `viewUrl`/`downloadUrl` kèm JWT hoặc thêm `?access_token=`. Người nhận dùng `shareToken` gọi `GET /api/shared-files/links/{token}`. Thu hồi bằng `DELETE /api/shared-files/{id}/share`. Xóa file của mình: `DELETE /api/shared-files/{id}`.
   - `GET /api/me/role` trả `role` dạng chuỗi khi cần label đúng với claim.
-  - Ẩn dashboard (`GET /api/dashboard`), dung lượng kho lưu trữ (`GET /api/admin/storage`), bài theo tác giả (`GET /api/admin/news`), tạo phóng viên, quản lý user (`/api/admin/users`), tạo/sửa/xóa banner (`POST`/`PUT`/`DELETE` `/api/admin/banners`) và đặt banner theo vị trí (`PUT /api/admin/banners/{id}/active`), tạo/sửa/xóa thủ trưởng (`POST`/`PUT`/`DELETE` `/api/leaders`), upload tài liệu, và gọi `check-admin` khi role không phải `Admin`. Layout gọi `GET /api/admin/banners?position=0&isActive=true&pageIndex=0` (Header). Dải giữa trang chủ: `position=1`. Không cần token. Banner đang hiện của slot là `items[0]`. `linkUrl` khác null thì dùng làm `href`. Dải Ban Chỉ huy gọi `GET /api/leaders` (public), sắp sẵn theo `displayOrder`. Ảnh banner/news dùng URL public S3 (`coverImageUrl` / `imageUrl`) trỏ `localhost:8333`. File chia sẻ không dùng URL đó.
+  - Ẩn dashboard (`GET /api/dashboard`), dung lượng kho lưu trữ (`GET /api/admin/storage`), bài theo tác giả (`GET /api/admin/news`), tạo phóng viên, quản lý user (`/api/admin/users`), tạo/sửa/xóa banner (`POST`/`PUT`/`DELETE` `/api/admin/banners`) và đặt banner theo vị trí (`PUT /api/admin/banners/{id}/active`), tạo/sửa/xóa thủ trưởng (`POST`/`PUT`/`DELETE` `/api/leaders`), upload tài liệu, và gọi `check-admin` khi role không phải `Admin`. Layout gọi `GET /api/admin/banners?position=0&isActive=true&pageIndex=0` (Header). Dải giữa trang chủ: `position=1`. Không cần token. Banner đang hiện của slot là `items[0]`. `linkUrl` khác null thì dùng làm `href`. Dải Ban Chỉ huy gọi `GET /api/leaders` (public), sắp sẵn theo `displayOrder`. Ảnh banner/news/thủ trưởng dùng URL public S3 (`coverImageUrl` / `imageUrl`) trỏ `localhost:8333`. File chia sẻ không dùng URL đó.
   - Coi `/api/system/*` và `/api/blobs/*` là công cụ local/test, không đưa vào UI người dùng.

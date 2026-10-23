@@ -9,11 +9,6 @@ namespace congThongTinf.FE.Controllers
     public class JournalistController : Controller
     {
         private const string JournalistRole = "Journalist";
-        private const long MaxCoverBytes = 10 * 1024 * 1024;
-        private static readonly HashSet<string> CoverExtensions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ".jpg", ".jpeg", ".png", ".webp", ".gif"
-        };
 
         private readonly IJournalistNewsService _newsService;
         private readonly IMeService _meService;
@@ -327,16 +322,15 @@ namespace congThongTinf.FE.Controllers
                 return;
             }
 
-            if (file.Length > MaxCoverBytes)
+            if (file.Length > ImageUploadRules.MaxBytes)
             {
                 ModelState.AddModelError(nameof(NewsFormViewModel.CoverImage), "Ảnh bìa không được lớn hơn 10 MB.");
                 return;
             }
 
-            var extension = Path.GetExtension(file.FileName);
-            if (string.IsNullOrWhiteSpace(extension) || !CoverExtensions.Contains(extension))
+            if (!ImageUploadRules.IsAllowed(file))
             {
-                ModelState.AddModelError(nameof(NewsFormViewModel.CoverImage), "Ảnh bìa phải là jpg, jpeg, png, webp hoặc gif.");
+                ModelState.AddModelError(nameof(NewsFormViewModel.CoverImage), "Ảnh bìa phải là file ảnh.");
             }
         }
 

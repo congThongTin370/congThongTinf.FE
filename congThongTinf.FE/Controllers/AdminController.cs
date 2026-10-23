@@ -15,11 +15,6 @@ namespace congThongTinf.FE.Controllers
             ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt"
         };
 
-        private static readonly HashSet<string> AllowedBannerExtensions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ".jpg", ".jpeg", ".png", ".webp", ".gif"
-        };
-
         private readonly IDocumentService _documentService;
         private readonly ICategoryService _categoryService;
         private readonly INewsService _newsService;
@@ -1059,7 +1054,7 @@ namespace congThongTinf.FE.Controllers
                 FullName = leader.FullName,
                 Position = leader.Position,
                 Rank = leader.Rank,
-                ImageUrl = leader.ImageUrl,
+                CurrentImageUrl = leader.ImageUrl,
                 DisplayOrder = leader.DisplayOrder
             });
         }
@@ -1149,9 +1144,20 @@ namespace congThongTinf.FE.Controllers
             model.FullName = model.FullName?.Trim() ?? string.Empty;
             model.Position = model.Position?.Trim() ?? string.Empty;
             model.Rank = model.Rank?.Trim() ?? string.Empty;
-            model.ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl) ? null : model.ImageUrl.Trim();
             ModelState.Clear();
             TryValidateModel(model);
+
+            if (model.Image is { Length: > 0 })
+            {
+                if (model.Image.Length > ImageUploadRules.MaxBytes)
+                {
+                    ModelState.AddModelError(nameof(model.Image), "Ảnh không được lớn hơn 10 MB.");
+                }
+                else if (!ImageUploadRules.IsAllowed(model.Image))
+                {
+                    ModelState.AddModelError(nameof(model.Image), "File phải là ảnh.");
+                }
+            }
         }
 
         private void ValidateUpload(DocumentUploadViewModel model)
@@ -1194,10 +1200,9 @@ namespace congThongTinf.FE.Controllers
                     ModelState.AddModelError(nameof(model.File), "Ảnh banner không được lớn hơn 10 MB.");
                 }
 
-                var extension = Path.GetExtension(model.File.FileName);
-                if (!AllowedBannerExtensions.Contains(extension))
+                if (!ImageUploadRules.IsAllowed(model.File))
                 {
-                    ModelState.AddModelError(nameof(model.File), "Banner phải là ảnh jpg, jpeg, png, webp hoặc gif.");
+                    ModelState.AddModelError(nameof(model.File), "Banner phải là ảnh.");
                 }
             }
 

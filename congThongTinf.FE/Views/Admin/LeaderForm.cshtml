@@ -14,8 +14,9 @@
         <h2 id="leader-form-title">Thông tin thủ trưởng</h2>
     </div>
     <div class="admin-panel-body">
-        <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditLeader" : "CreateLeader")" asp-route-id="@Model.Id" method="post" class="admin-form">
+        <form asp-controller="Admin" asp-action="@(Model.IsEdit ? "EditLeader" : "CreateLeader")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="admin-form">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+            <input type="hidden" asp-for="CurrentImageUrl" />
 
             <div class="admin-form-field">
                 <label asp-for="FullName"></label>
@@ -38,18 +39,15 @@
             </div>
 
             <div class="admin-form-field">
-                <label asp-for="ImageUrl"></label>
-                <input asp-for="ImageUrl" class="form-control" maxlength="1000" />
-                <span class="admin-field-hint">Dán URL ảnh. Để trống nếu chưa có ảnh. Khi sửa, xóa URL sẽ gỡ ảnh đang hiện.</span>
-                <span asp-validation-for="ImageUrl" class="field-validation-error"></span>
+                <label asp-for="Image"></label>
+                @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl))
+                {
+                    <img class="admin-leader-preview" src="@Model.CurrentImageUrl" alt="Ảnh hiện tại" />
+                }
+                <input asp-for="Image" class="form-control" type="file" accept="image/*" />
+                <span class="admin-field-hint">@(Model.IsEdit ? "Chọn ảnh mới để thay. Không chọn thì giữ ảnh hiện tại. Ảnh được lưu thành WebP, tối đa 10 MB, cạnh tối đa 8192 px." : "Không bắt buộc. Ảnh được lưu thành WebP, tối đa 10 MB, cạnh tối đa 8192 px. Không có ảnh thì trang chủ hiện chữ cái đầu tên.")</span>
+                <span asp-validation-for="Image" class="field-validation-error"></span>
             </div>
-
-            @if (Model.IsEdit && !string.IsNullOrWhiteSpace(Model.ImageUrl))
-            {
-                <div class="admin-form-field">
-                    <img class="admin-leader-preview" src="@Model.ImageUrl" alt="Ảnh hiện tại" />
-                </div>
-            }
 
             <div class="admin-form-field">
                 <label asp-for="DisplayOrder"></label>
