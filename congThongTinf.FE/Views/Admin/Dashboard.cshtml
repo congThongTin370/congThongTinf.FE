@@ -81,7 +81,18 @@
                 {
                     new { label = "Lượt xem", data = data.TopViewedNews.Select(n => n.ViewCount).ToList(), color = "#2563EB" }
                 }
-            }
+            },
+            storage = Model.Storage.Data == null
+                ? null
+                : new
+                {
+                    labels = new[] { "Đã dùng", "Còn lại" },
+                    data = new[] { Model.Storage.Data.UsedBytes, Model.Storage.Data.RemainingBytes },
+                    colors = Model.Storage.Data.UsedPercent >= 100
+                        ? new[] { "#B42318", "#CBD5E1" }
+                        : new[] { "#2563EB", "#94A3B8" },
+                    format = "bytes"
+                }
         };
 
         var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
@@ -236,23 +247,49 @@
         </section>
     </div>
 
-    <section class="admin-panel admin-section-gap" aria-labelledby="document-category-title">
-        <div class="admin-panel-header">
-            <h2 id="document-category-title">Tài liệu theo danh mục</h2>
-        </div>
-        <div class="admin-panel-body chart-card">
-            @if (data.Documents.ByCategory.Count == 0)
-            {
-                <p class="admin-empty">Chưa có số liệu tài liệu.</p>
-            }
-            else
-            {
-                <div class="chart-canvas-wrap">
-                    <canvas id="chart-documents-by-category" aria-label="Tài liệu theo danh mục"></canvas>
-                </div>
-            }
-        </div>
-    </section>
+    <div class="admin-panel-grid admin-section-gap">
+        <section class="admin-panel" aria-labelledby="document-category-title">
+            <div class="admin-panel-header">
+                <h2 id="document-category-title">Tài liệu theo danh mục</h2>
+            </div>
+            <div class="admin-panel-body chart-card">
+                @if (data.Documents.ByCategory.Count == 0)
+                {
+                    <p class="admin-empty">Chưa có số liệu tài liệu.</p>
+                }
+                else
+                {
+                    <div class="chart-canvas-wrap">
+                        <canvas id="chart-documents-by-category" aria-label="Tài liệu theo danh mục"></canvas>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="admin-panel" aria-labelledby="storage-chart-title">
+            <div class="admin-panel-header">
+                <h2 id="storage-chart-title">Dung lượng lưu trữ</h2>
+            </div>
+            <div class="admin-panel-body chart-card">
+                @if (!Model.Storage.Success || Model.Storage.Data == null)
+                {
+                    <p class="admin-alert-error storage-error" role="alert">@(Model.Storage.ErrorMessage ?? "Không lấy được dung lượng lưu trữ.")</p>
+                }
+                else
+                {
+                    var usage = Model.Storage.Data;
+                    <div class="chart-canvas-wrap chart-canvas-wrap-donut">
+                        <canvas id="chart-storage" aria-label="Dung lượng đã dùng và còn lại"></canvas>
+                    </div>
+                    <p class="admin-field-hint">
+                        @FileSizeText(usage.UsedBytes) / @FileSizeText(usage.QuotaBytes)
+                        · @usage.UsedPercent.ToString("0.##")%
+                        · @usage.ObjectCount.ToString("N0") tệp
+                    </p>
+                }
+            </div>
+        </section>
+    </div>
 
     <div class="admin-panel-grid admin-section-gap">
         <section class="admin-panel" aria-labelledby="top-news-title">

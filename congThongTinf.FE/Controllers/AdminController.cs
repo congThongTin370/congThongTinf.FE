@@ -84,7 +84,14 @@ namespace congThongTinf.FE.Controllers
                 return View(model);
             }
 
+            var storage = await _storageService.GetUsageAsync(GetToken());
+            if (storage.SessionExpired)
+            {
+                return ExpireSession();
+            }
+
             model.Data = result.Data;
+            model.Storage = storage;
             return View(model);
         }
 

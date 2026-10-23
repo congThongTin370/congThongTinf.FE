@@ -116,10 +116,38 @@
         });
     }
 
+    function formatBytes(bytes) {
+        var value = Number(bytes);
+        if (!isFinite(value) || value < 0) {
+            value = 0;
+        }
+        var units = ["B", "KB", "MB", "GB", "TB"];
+        var unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit += 1;
+        }
+        var rounded = unit === 0 || value >= 10 ? Math.round(value) : Math.round(value * 10) / 10;
+        return rounded + " " + units[unit];
+    }
+
     function renderDoughnut(canvasId, config) {
         var canvas = document.getElementById(canvasId);
         if (!canvas || !config || !config.labels || config.labels.length === 0) {
             return;
+        }
+
+        var tooltip = {
+            backgroundColor: navy,
+            padding: 10,
+            cornerRadius: 6
+        };
+        if (config.format === "bytes") {
+            tooltip.callbacks = {
+                label: function (item) {
+                    return item.label + ": " + formatBytes(item.raw);
+                }
+            };
         }
 
         new Chart(canvas, {
@@ -138,11 +166,7 @@
                 cutout: "68%",
                 plugins: {
                     legend: { position: "bottom" },
-                    tooltip: {
-                        backgroundColor: navy,
-                        padding: 10,
-                        cornerRadius: 6
-                    }
+                    tooltip: tooltip
                 }
             }
         });
@@ -153,4 +177,5 @@
     renderBar("chart-news-by-category", payload.newsByCategory);
     renderBar("chart-documents-by-category", payload.documentsByCategory);
     renderBar("chart-top-news", payload.topViewedNews);
+    renderDoughnut("chart-storage", payload.storage);
 })();
